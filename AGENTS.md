@@ -1,6 +1,6 @@
 # Set up OpenNava
 
-Use these instructions when someone gives you this repository or a OpenNava setup link. Run commands on their own computer with its existing ADB authorization. This repository includes both profiles in **one TV APK**.
+Use these instructions when someone gives you the repository or an OpenNava setup link. Run setup on a computer with a route to their TV and Android Debug Bridge (ADB) authorization. Both profiles use **one TV APK**. The Android companion is a separate, optional phone installation.
 
 ## Full launcher
 
@@ -13,7 +13,7 @@ Use `--profile senior` for the home screen centred on live television, broadcast
 ## Installation
 
 1. If the request gives no profile, ask which of the two home screens to set up. Check whether the request includes the phone companion, default Home or automatic updates. Carry out the selected options.
-2. Use a local checkout of the official repository. In an existing checkout, preserve the user's changes. For a new one, run `git clone https://github.com/fcore247/opennava.git`. Run `python3 --version` and `adb version` (on Windows, `py -3` works too). If ADB is missing, use Google's Android SDK Platform Tools. See the [device-specific pairing instructions](README.md#connect-your-devices).
+2. Use a local checkout of the official repository. In an existing checkout, preserve the user's changes. For a new one, run `git clone https://github.com/fcore247/opennava.git` and `cd opennava`. A downloaded and extracted source archive also works. Keep the checkout's `tools/`, `release.json` and `release-key.sha256` together. The installer uses signed GitHub Release APKs and needs no compiler. Check `python3 --version` and `adb version` (on Windows, `py -3` also works). Google supplies ADB in Android SDK Platform Tools. See the [device-specific pairing instructions](README.md#connect-your-devices).
 3. Run `python3 tools/setup.py --list`. If the TV is absent or unauthorized, guide the person through developer settings and the pairing or authorization prompt. Have them enter one-time pairing codes at the local `adb pair` prompt. If several TVs match, ask them to identify their TV by model or serial. Use a phone serial only when the user wants a phone installation.
 4. Run `python3 tools/setup.py --profile full --tv TV_SERIAL` or `python3 tools/setup.py --profile senior --tv TV_SERIAL`. Add `--phone PHONE_SERIAL` to include their phone. For a phone-only request, run `python3 tools/setup.py --phone-only --phone PHONE_SERIAL`. The script validates the device type, pins downloads to this checkout's release, checks package versions and reads back the saved TV profile. An explicit `--dry-run` previews the plan.
 5. When the user asks for OpenNava as the default Home app, include `--set-home`. Record the previous Home component and restore command printed by the tool. Some Android-based Fire TV firmware reserves Home. If setting Home fails, report that device's result and use its Apps screen. No vendor-package removal is required.
@@ -23,6 +23,16 @@ Use `--profile senior` for the home screen centred on live television, broadcast
 
 The TV and phone include their own **Software updates** screen and automatic checks. If the person requests unattended updates from this computer, set up Android SDK Build Tools and Java. Keep their chosen devices connected and run `python3 tools/update.py --install-timer --tv TV_SERIAL`, optionally with `--phone PHONE_SERIAL`. This enables an hourly per-user job on macOS or Linux/systemd. Read [the update instructions](README.md#updates) for Windows, status, logs and removal. For a one-time update use `python3 tools/update.py --tv TV_SERIAL`; the command keeps the current profile and only upgrades installed packages.
 
+## Troubleshooting the handoff
+
+| Observation | Next step |
+| --- | --- |
+| Device list is empty or shows `unauthorized` | Unlock or wake the device, enable developer debugging and accept the on-screen authorization. On wireless Android, `adb pair HOST:PAIRING_PORT` and `adb connect HOST:CONNECTION_PORT` use the two ports displayed by the device. |
+| Two devices match | Read the models in the device list and pass the intended `--tv` and/or `--phone` serial explicitly. |
+| The phone opens but cannot find the TV | Check that the actual phone can reach the TV over its LAN or private VPN. Use the QR/manual connection in the installed companion. The website preview runs locally inside the browser. |
+| A newer version is already installed | Keep the installed data. Obtain the matching or newer official source checkout to change the profile. Use the update command to check for a newer stable release. |
+| The Home role stays with the vendor launcher | Open the chosen OpenNava profile from Apps. Where available, Android Settings can select the default Home app. |
+
 ## Before modifying or publishing source
 
-Keep personal device addresses, private home configuration, photos, logs, signing keys, local Android preferences and environment files out of the repository. Use placeholder serials in public examples. Publish release APKs, their hashes and the matching update manifest together. The release signing key stays outside the repository.
+Keep personal device addresses, private home configuration, photos, logs, signing keys, local Android preferences and environment files out of the repository. Use placeholder serials in public examples. For launcher changes, edit the Android sources first and stage the browser demo with `python3 tools/sync_web_demo.py`. Follow the [maintainer guide](guide/MAINTAINING.md) for tests, publishing, update verification and the website deployment. It describes which components ship through GitHub Releases and which ship through Pages.

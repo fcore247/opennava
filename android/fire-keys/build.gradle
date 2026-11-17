@@ -1,0 +1,14 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'site.navatv.keys'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'site.navatv.keys'
+        minSdk 28
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+    }
+}

@@ -1,10 +1,30 @@
 # OpenNava
 
-[NavaOS](https://navaos.site/os/) inspired me to build OpenNava.
+A home screen for Android TV, Google TV and Android-based Fire TV. Choose a full launcher for apps, YouTube and German broadcaster libraries, or a senior view that puts live channels, catch-up and recordings one press away.
 
-OpenNava gives an Android-based television two home screens. The **full launcher** puts apps and media together. The **senior view** brings live TV, broadcaster libraries, the programme guide and recordings to the front. The Android companion lets you browse on a phone and send a selection to the television.
+**[Try the TV in your browser](https://opennava.site/#preview)** · **[Download the TV app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk)** · **[Download the Android companion](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)**
 
-**[Choose your home screen](https://opennava.site/)** · **[Download the TV app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk)** · **[Download the Android companion](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)**
+[![OpenNava’s full launcher displaying a sample mountain film, live channels, installed apps and media libraries](guide/images/full-launcher.webp)](https://opennava.site/?profile=full#preview)
+
+## Choose your home screen
+
+| | Full launcher | Senior view |
+| --- | --- | --- |
+| **Home** | Featured programme, live channels, installed apps and search | Five large buttons for ARD, ZDF, ARTE, live TV and recordings |
+| **Watching** | Browse broadcaster catalogues and integrated YouTube, or open an installed app | Start a channel, find a show in a library, check the TV guide or replay a saved programme |
+| **Navigation** | App shortcuts and quick settings | Large focus outlines, an on-screen keyboard and hands-on remote-control lessons |
+| **Try it** | [Explore the full launcher](https://opennava.site/?profile=full#preview) | [Explore the senior view](https://opennava.site/?profile=senior#preview) |
+
+Both profiles ship in one TV APK. The interactive website runs the launcher's own interface with local sample programmes and footage. The installed app uses broadcaster services, plays video on the TV and can pair with the optional Android companion.
+
+**[Everyday user guide](guide/USER_GUIDE.md)** · **[How the project fits together](guide/ARCHITECTURE.md)** · **[Maintainer guide](guide/MAINTAINING.md)**
+
+## Optional tools
+
+| Tool | Download | What to read first |
+| --- | --- | --- |
+| **OpenNava Studio** | [Mac app ZIP](https://github.com/fcore247/opennava/releases/download/tools-v1.0.0/OpenNava-Studio-macOS.zip) | An ad-hoc signed macOS remote for working with an authorized television. [Studio guide](macos/README.md) |
+| **Fire TV key helper** | [Signed helper APK](https://github.com/fcore247/opennava/releases/download/tools-v1.0.0/OpenNava-Fire-Keys.apk) | Optional physical remote shortcuts for compatible Android-based Fire TV devices. [Fire TV setup](android/fire-keys/README.md) |
 
 ## Set it up with your AI agent
 
@@ -49,11 +69,11 @@ If there is exactly one eligible TV, you may omit `--tv`. To install just the ph
 
 Setup verifies the chosen release's APK SHA-256 against [release.json](release.json), installs for the active Android user and checks the installed version. It asks the TV to persist the requested profile and reads the setting back. It keeps existing OpenNava data when updating. If Android reports a different signing certificate, stop and inspect the installed app before choosing how to handle its data.
 
-**Default Home.** The commands above open OpenNava. To request the Android Home role, add `--set-home` to the TV setup command. The installer reports the previous Home component and checks Android's resolved Home activity. Press Home once to test the actual remote. Some vendor firmware reserves the Home button; where that happens, launch OpenNava under Apps.
+**Default Home.** The commands above open OpenNava. To request the Android Home role, add `--set-home` to the TV setup command. The installer reports the previous Home component and checks Android's resolved Home activity. Press Home once to test the actual remote. Some vendor firmware reserves the Home button. On those devices, open OpenNava under Apps.
 
 **Go back.** Select the previous launcher under the device's default Home app settings, or run the restore command printed by `--set-home`. Open Apps to launch OpenNava again. To remove it, use Android Settings → Apps → OpenNava → Uninstall after restoring the previous Home app. Android removes OpenNava's local data when uninstalling.
 
-**Pair the phone remote.** Open OpenNava's companion connection screen on the TV and scan its QR code from the companion's connection menu, or enter the private TV address manually. The phone establishes its own ADB identity. Complete its pairing or authorization prompt on the TV, even if this computer is already authorized.
+**Pair the phone remote.** Choose **Pair phone** in the full launcher, then **Menu → Connection → Scan QR code** on the phone. You can also enter the TV’s private address manually. The phone establishes its own ADB identity. Complete its pairing or authorization prompt on the TV. [Pairing walkthrough](guide/USER_GUIDE.md#pair-an-android-phone)
 
 ## Updates
 
@@ -88,13 +108,21 @@ On macOS, logs are in `~/Library/Logs/OpenNava/`. On Linux, use `journalctl --us
 
 ## Build from source
 
-The Android TV and phone sources live under [android](android). See the [build guide](android/BUILD.md) and [third-party notices](android/NOTICE.md).
+The Android build produces both the launcher APK and the companion APK. The companion includes the matching TV package for transfer to an authorized television. The build guide lists the SDK, JDK, pinned media dependencies and signing steps. [Android build guide](android/BUILD.md)
 
-Maintainers build both signed APKs with matching version names, then run the following commands from the checkout. Use the official OpenNava release signing key and the same version in both invocations. Review and commit the generated `release.json`, then push main **between** these steps.
+| Component | Source and documentation |
+| --- | --- |
+| TV launcher, native player, live guide and recordings | [Android TV](android/tv/) |
+| Android phone companion | [Android companion](android/companion/) |
+| OpenNava Studio for macOS | [Mac remote and build instructions](macos/README.md) |
+| Optional Fire TV remote shortcuts | [Fire TV key helper](android/fire-keys/README.md) |
+| Interactive website and custom domains | [GitHub Pages source](docs/) · [Legacy domain redirect](hosting/legacy-redirect/README.md) |
+| Installation, verification and release tooling | [Tools](tools/) · [Maintainer guide](guide/MAINTAINING.md) |
 
-```sh
-python3 tools/publish.py prepare --version 1.0.0 --assets-dir /path/to/signed-apks
-python3 tools/publish.py publish --version 1.0.0 --assets-dir /path/to/signed-apks
-```
+For publishing, follow the maintainer guide to prepare the signed files, commit the release manifest and verify GitHub's uploaded assets. Contributors can follow the architecture guide from a TV or phone action to the code that handles it. [Release and maintenance](guide/MAINTAINING.md) · [Architecture](guide/ARCHITECTURE.md)
 
-The publisher checks package identities, version names, signatures, the companion's embedded TV APK and the uploaded release hashes. Only after all four files are verified does it make the draft public. The update clients discover the new stable release on their next check. Increase each app's version code for every update intended to replace an installed build.
+## Credits
+
+NavaOS inspired me to build OpenNava. [Explore NavaOS](https://navaos.site/os/)
+
+OpenNava uses SmartTube, MediaServiceCore and SharedModules for its integrated YouTube playback. Its Android apps also use AndroidX Media3, ZXing and the companion's ADB transport. The notices credit these projects, the typefaces and the visual assets, and link their individual licenses. [SmartTube](https://github.com/yuliskov/SmartTube) · [Pinned player sources](android/player/source-pins.json) · [Third-party notices and artwork](android/NOTICE.md)

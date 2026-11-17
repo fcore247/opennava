@@ -16,6 +16,8 @@ python3 android/build.py --keystore /your/private/navatv.p12 --password-file /yo
 
 Both modes run from `OpenNava.apk`. `OpenNava-Companion.apk` includes the signed TV package for transfer to an authorized television. The build validates APK signing and alignment and verifies that the embedded binary matches the TV release. Installation and profile selection are documented in the root project.
 
+The optional [Fire Keys helper](fire-keys/README.md) can be built independently with `--only-fire-keys` and the launcher's signing key.
+
 Each build verifies the pinned Git revisions and downloaded Gradle distribution checksums. Source checkouts are cached under `~/.cache/navatv`. To use a different cache, set `NAVATV_CACHE`. An existing clean copy of the exact player revisions can be supplied through `NAVATV_PLAYER_SOURCE`. `NAVATV_GRADLE_7_5` and `NAVATV_GRADLE_8_13` accept paths to locally installed matching Gradle executables. If you use separate Gradle caches, set `GRADLE_USER_HOME` for the project build and `NAVATV_LEGACY_GRADLE_HOME` for the player.
 
 The public configuration starts in the full launcher. The installer can select the senior view, and the choice persists on the device. The senior scenery follows the time of day. To enable weather for a custom build, add an `android/tv/src/main/assets/assets/wetterort.json` file with a location name and numeric latitude and longitude.

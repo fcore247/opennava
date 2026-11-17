@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "docs",
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "https://opennava.site/",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "destination": "https://opennava.site/:path*",
+      "permanent": true
+    }
+  ]
+}

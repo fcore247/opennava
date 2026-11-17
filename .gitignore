@@ -10,3 +10,4 @@ local.properties
 .env
 .env.*
 __pycache__/
+android/tv/src/main/assets/assets/wetterort.json

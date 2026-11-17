@@ -14,4 +14,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = 'OpenNava'
-include ':tv', ':companion'
+include ':tv', ':companion', ':fire-keys'

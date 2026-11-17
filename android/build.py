@@ -101,20 +101,30 @@ def main():
     parser.add_argument('--keystore', type=Path, required=True, help='Existing RSA release or development signing keystore')
     parser.add_argument('--alias', default='navatv')
     parser.add_argument('--password-file', type=Path, required=True, help='File containing the keystore and key password')
+    parser.add_argument('--only-fire-keys', action='store_true',
+                        help='Build only the optional Fire TV shortcut helper; use the same key as the launcher.')
     args = parser.parse_args()
     env = dict(os.environ)
     if not env.get('JAVA_HOME') or not (env.get('ANDROID_HOME') or env.get('ANDROID_SDK_ROOT')):
         parser.error('Set JAVA_HOME (JDK 17) and ANDROID_HOME (Android SDK).')
     sdk = Path(env.get('ANDROID_HOME') or env['ANDROID_SDK_ROOT']).resolve()
     sdk_tools = sdk / 'build-tools/36.0.0'
-    for path in (sdk / 'platforms/android-34/android.jar', sdk / 'platforms/android-36/android.jar',
-                 sdk_tools / 'apksigner', sdk_tools / 'aapt2', sdk_tools / 'zipalign'):
+    required = [sdk / 'platforms/android-36/android.jar', sdk_tools / 'apksigner',
+                sdk_tools / 'aapt2', sdk_tools / 'zipalign']
+    if not args.only_fire_keys:
+        required.append(sdk / 'platforms/android-34/android.jar')
+    for path in required:
         if not path.is_file():
             parser.error('Android SDK component unavailable: ' + str(path))
     env.update(ANDROID_HOME=str(sdk), ANDROID_SDK_ROOT=str(sdk))
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     key, password = args.keystore.resolve(strict=True), args.password_file.resolve(strict=True)
+    if args.only_fire_keys:
+        run(gradle('8.13'), '-p', ANDROID, '--configure-on-demand', ':fire-keys:assembleRelease', env=env)
+        sign(ANDROID / 'fire-keys/build/outputs/apk/release/fire-keys-release-unsigned.apk',
+             output / 'OpenNava-Fire-Keys.apk', 28, sdk_tools, key, args.alias, password, env)
+        return
     libraries = PLAYER / 'build/export'
     player_env = dict(env, NAVATV_PLAYER_SOURCE=str(upstream()), TV_PLAYER_LIBS=str(libraries))
     if env.get('NAVATV_LEGACY_GRADLE_HOME'):
