@@ -15,7 +15,7 @@ A home screen for Android TV, Google TV and Android-based Fire TV. Choose a full
 | **Navigation** | App shortcuts and quick settings | Large focus outlines, an on-screen keyboard and hands-on remote-control lessons |
 | **Try it** | [Explore the full launcher](https://opennava.site/?profile=full#preview) | [Explore the senior view](https://opennava.site/?profile=senior#preview) |
 
-Both profiles ship in one TV APK. The interactive website runs the launcher's own interface with local sample programmes and footage. The installed app uses broadcaster services, plays video on the TV and can pair with the optional Android companion.
+Both profiles ship in one TV APK. On the interactive website, open **Live TV** in senior view or choose a station in the full launcher to watch its available public broadcast. The guide shows German programme listings. On-demand library previews use sample footage. On a television, the app also searches the broadcasters’ catalogues and pairs with the optional Android companion.
 
 **[Everyday user guide](guide/USER_GUIDE.md)** · **[How the project fits together](guide/ARCHITECTURE.md)** · **[Maintainer guide](guide/MAINTAINING.md)**
 

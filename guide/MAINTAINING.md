@@ -11,7 +11,7 @@ Use the [architecture guide](ARCHITECTURE.md) to find a component's source. Opti
 | Full launcher | `android/tv/src/main/assets/web/` and device overrides in `android/tv/src/main/assets/google/` |
 | Senior view | `android/tv/src/main/assets/index.html`, the adjacent scripts and styles, and the `assets/` media directory |
 | Android TV system functions, playback or channels | The [TV application](../android/tv), including its Java channel lineup |
-| Browser device simulation and interaction | [Demo host](../docs/demo-host). The bridge implements TV operations with bundled samples. The host fits the iframe and handles profile switches. |
+| Browser playback and TV controls | [Demo host](../docs/demo-host). It resolves live streams and programme schedules from the broadcasters, uses bundled samples for library previews and switches the embedded TV between profiles. |
 | Public page layout, setup links and downloads | [Website source](../docs) |
 
 The stage command rebuilds the generated `docs/demo/` directory from both Android launchers. It applies the full launcher's Google TV overrides, generates demo channels from the Android lineup and includes the browser device bridge in both profiles. Keep household-specific weather, images and configuration out of the staged assets.
@@ -32,6 +32,10 @@ OPENNAVA_URL=http://127.0.0.1:8000/ npm test
 ```
 
 The [browser suite](../tests/website) uses the desktop keyboard and mobile taps to operate the actual launcher UI, verify video playback and switch profiles. On-device playback, remote keys, ADB pairing and broadcaster availability require separate Android checks.
+
+Browser live TV uses the permanent station IDs from `LiveGuide.java`. [live-streams.js](../docs/demo-host/live-streams.js) resolves current HLS streams through the same broadcaster services and reads real guide data. ARD supplies its national and regional channels and the German ARTE simulcast. ZDF supplies its three channels. Guide data comes from ARD, ZDF and ARTE in the broadcaster's timezone. Availability and rewind limits depend on the channel, region and current programme. Playback uses native HLS on supported Apple browsers or [vendored hls.js](../docs/demo-host/vendor/README.md) on compatible Media Source Extensions browsers.
+
+The default live regression uses a local HLS fixture and fixed programme data. From `tests/website`, use `OPENNAVA_LIVE_SMOKE=1 npm test -- -g 'unmodified public broadcaster'` to verify that an actual broadcaster currently plays in the public demo.
 
 ## Deploy the site
 

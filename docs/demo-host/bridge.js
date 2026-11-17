@@ -1,4 +1,4 @@
-// Browser implementation of the TV WebView's native device API. All media is local demo content.
+// Browser implementation of the TV WebView's native device API. Live television uses broadcaster streams. The library catalogue uses local sample content.
 (() => {
   "use strict";
   const profile = location.pathname.includes("/senior/") ? "senior" : "full";
@@ -113,6 +113,8 @@
   let station = channels[0],
     active = null,
     layer = null,
+    liveView = null,
+    recordingUrl = null,
     previousFocus = null,
     fullFilter = "",
     openingLibrary = false;
@@ -209,7 +211,11 @@
   }
   function closeLayer(resume = true) {
     if (!layer) return;
+    liveView?.destroy();
+    liveView = null;
     media()?.pause();
+    if (recordingUrl) URL.revokeObjectURL(recordingUrl);
+    recordingUrl = null;
     layer.remove();
     layer = null;
     active = null;
@@ -287,9 +293,9 @@
     b.dataset.demoSave = p.id;
     return b;
   }
-  function play(p, live = false) {
+  function play(p) {
     if (!p) return false;
-    const el = makeLayer(live ? "live" : "player", p.title);
+    const el = makeLayer("player", p.title);
     active.programmeId = p.id;
     const video = document.createElement("video"),
       bar = document.createElement("div");
@@ -301,16 +307,7 @@
     video.src = "../full/assets/" + p.art + ".mp4";
     bar.className = "demo-controls";
     el.append(video);
-    heading(
-      el,
-      live
-        ? "CHANNEL " +
-            String(station.number).padStart(2, "0") +
-            "  ·  " +
-            station.name.toUpperCase()
-        : "MEDIA LIBRARY  ·  " + p.author,
-      p.title,
-    );
+    heading(el, "MEDIA LIBRARY  ·  " + p.author, p.title);
     const badge = document.createElement("span");
     badge.className = "sample-footage";
     badge.textContent = "Sample footage";
@@ -334,11 +331,6 @@
       };
     });
     bar.append(toggle, saveButton(p));
-    if (live)
-      bar.append(
-        btn("TV guide", guide),
-        btn("Media library", () => library(station.provider)),
-      );
     bar.append(btn("Back", back));
     el.append(bar);
     toggle.focus();
@@ -346,12 +338,35 @@
     return true;
   }
 
+  function liveScreen(id, initialView = "live") {
+    const next = channels.find((c) => c.id === id) || station;
+    station = next;
+    const el = makeLayer(
+      initialView,
+      initialView === "guide" ? "TV guide" : "Live TV",
+    );
+    liveView = window.OpenNavaLiveView.mount({
+      dialog: el,
+      station,
+      stations: channels,
+      initialView,
+      onStation: (next) => {
+        station = next;
+      },
+      onBack: back,
+      onLibrary: library,
+      onRecordings: recordings,
+      sampleFor: (ch) =>
+        channelItems(ch.provider)[
+          (ch.number - 1) % channelItems(ch.provider).length
+        ],
+      samples: () => schedule(),
+      saveSample: (id) => changeSaved(id, true),
+      playSample: (id) => play(find(id)),
+    });
+  }
   function tune(id) {
-    const next = channels.find((c) => c.id === id);
-    if (next) {
-      station = next;
-      play(playingNow(), true);
-    }
+    liveScreen(id);
   }
   function programmeList(screen, title, entries) {
     const el = makeLayer(screen, title);
@@ -384,9 +399,7 @@
     list.querySelector("button")?.focus();
   }
   function guide(id) {
-    const next = channels.find((c) => c.id === id);
-    if (next) station = next;
-    programmeList("guide", "TV guide", schedule());
+    liveScreen(id, "guide");
   }
   function recordings() {
     programmeList(
@@ -394,6 +407,69 @@
       "Recordings",
       [...records].map(find).filter(Boolean),
     );
+    const box = layer.querySelector(".demo-entries");
+    const saved = window.OpenNavaLiveView.recordings();
+    if (saved.length) box.querySelector("p")?.remove();
+    const last = box.lastElementChild;
+    for (const entry of saved) {
+      const line = document.createElement("div");
+      line.className = "demo-recording";
+      const action = btn(entry.title, async () => {
+        if (entry.kind === "reminder") {
+          guide(channels.find((c) => c.name === entry.station)?.id);
+          return;
+        }
+        if (entry.kind === "link") {
+          const url = window.OpenNavaLiveView.trustedReplay(entry.url);
+          if (url) window.open(url, "_blank", "noopener,noreferrer");
+          return;
+        }
+        const before = layer;
+        const blob = await window.OpenNavaLiveView.file(entry.id).catch(
+          () => null,
+        );
+        if (layer !== before) return;
+        if (!blob) {
+          note(
+            "Recording unavailable",
+            "The recording file is no longer stored in this browser.",
+          );
+          return;
+        }
+        const el = makeLayer("player", entry.title);
+        const video = document.createElement("video");
+        video.controls = true;
+        video.playsInline = true;
+        video.autoplay = true;
+        recordingUrl = URL.createObjectURL(blob);
+        video.src = recordingUrl;
+        const bar = document.createElement("div");
+        bar.className = "demo-controls";
+        bar.append(btn("Back", back));
+        el.append(video, bar);
+        video.play().catch(() => {});
+      });
+      action.append(
+        Object.assign(document.createElement("small"), {
+          textContent:
+            entry.station +
+            " · " +
+            (entry.kind === "link"
+              ? "Open broadcaster website"
+              : entry.kind === "reminder"
+                ? "Reminder"
+                : "Browser recording"),
+        }),
+      );
+      const remove = btn("Delete", async () => {
+        const before = layer;
+        await window.OpenNavaLiveView.remove(entry.id);
+        if (layer === before) recordings();
+      });
+      remove.setAttribute("aria-label", "Delete " + entry.title);
+      line.append(action, remove);
+      box.insertBefore(line, last);
+    }
   }
   function library(provider) {
     if (!["ard", "zdf", "arte"].includes(provider)) return;
@@ -446,11 +522,6 @@
     }
     if (value === "Enter") {
       document.activeElement?.click();
-      return;
-    }
-    if (active.screen === "live" && ["ArrowUp", "ArrowDown"].includes(value)) {
-      const i = channels.indexOf(station) + (value === "ArrowUp" ? 1 : -1);
-      tune(channels[(i + channels.length) % channels.length].id);
       return;
     }
     const buttons = [...layer.querySelectorAll("button")],
@@ -521,7 +592,7 @@
   document.addEventListener(
     "keydown",
     (e) => {
-      if (layer && keys.includes(e.key)) {
+      if (layer && !liveView && keys.includes(e.key)) {
         e.preventDefault();
         e.stopImmediatePropagation();
         handlePlayerKey(e.key);
@@ -543,10 +614,6 @@
     },
     true,
   );
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = "../../demo-host/device.css";
-  document.head.append(link);
   document.addEventListener("DOMContentLoaded", () => {
     window.dismissSeniorStartup?.();
   });

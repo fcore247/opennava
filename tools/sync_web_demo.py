@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Stage the same launcher assets as the Android WebView, adding the browser device bridge."""
 import argparse
+import base64
+import hashlib
 import json
 import re
 import shutil
@@ -15,13 +17,16 @@ GOOGLE_OVERRIDES = ("index.html", "styles.css", "native.js", "tube.js")
 
 def stage_channels(target):
     guide = ASSETS.parent / "java/site/navatv/launcher/LiveGuide.java"
-    rows = re.findall(r'new Channel\("([a-z0-9-]+)", "([^"]+)", "[^"]*", (true|false)\)', guide.read_text())
+    rows = re.findall(r'new Channel\("([a-z0-9-]+)", "([^"]+)", "([^"]*)", (true|false)\)', guide.read_text())
     if not rows or len({row[0] for row in rows}) != len(rows):
         raise ValueError("Cannot read the TV broadcaster lineup")
     channels = []
-    for number, (station, name, regional) in enumerate(rows, 1):
-        provider = "arte" if station == "arte" else "zdf" if station in {"zdf", "zdfneo", "zdfinfo", "3sat"} else "ard"
-        channels.append(dict(id=station, name=name, number=number, provider=provider, regional=regional == "true"))
+    for number, (station, name, crid, regional) in enumerate(rows, 1):
+        provider = "arte" if station == "arte" else "ard" if crid else "zdf"
+        source_id = (base64.urlsafe_b64encode(crid.encode()).decode().rstrip("=")
+                     if crid else station + "-live-beitrag-100")
+        channels.append(dict(id=station, name=name, number=number, provider=provider,
+                             sourceId=source_id, regional=regional == "true"))
     (target / "channels.js").write_text("window.openNavaStations = " + json.dumps(channels, ensure_ascii=False, indent=2) + ";\n", encoding="utf-8")
 
 
@@ -35,15 +40,26 @@ def stage(target):
     for entry in ASSETS.iterdir():
         if entry.is_file():
             shutil.copy2(entry, senior / entry.name)
-    shutil.copytree(ASSETS / "assets", senior / "assets")
+    shutil.copytree(ASSETS / "assets", senior / "assets", ignore=shutil.ignore_patterns("wetterort.json"))
     stage_channels(target)
+    host = ROOT / "docs/demo-host"
+    def asset_url(relative_url, source):
+        digest = hashlib.sha256(source.read_bytes()).hexdigest()[:12]
+        return f"{relative_url}?v={digest}"
+
+    css = asset_url("../../demo-host/device.css", host / "device.css")
+    scripts = [asset_url("../channels.js", target / "channels.js")]
+    scripts.extend(asset_url("../../demo-host/" + name, host / name)
+                   for name in ("live-streams.js", "live-tv.js", "bridge.js"))
+    tags = [f'<link rel="stylesheet" href="{css}">', *(f'<script src="{url}"></script>' for url in scripts)]
+    hook = "\n  ".join(tags)
     for folder in (full, senior):
         page = folder / "index.html"
         html = page.read_text(encoding="utf-8")
-        hook = '<script src="../channels.js"></script>\n  <script src="../../demo-host/bridge.js"></script>'
-        if html.count("<head>") != 1:
-            raise ValueError(f"Missing launcher head in {page.name}")
-        page.write_text(html.replace("<head>", "<head>\n  " + hook), encoding="utf-8")
+        charset = '<meta charset="utf-8">'
+        if html.count(charset) != 1:
+            raise ValueError(f"Missing UTF-8 declaration in {page}")
+        page.write_text(html.replace(charset, charset + "\n  " + hook), encoding="utf-8")
 
 
 def same_tree(left, right):

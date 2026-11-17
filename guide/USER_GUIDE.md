@@ -44,6 +44,12 @@ The following controls apply while watching live TV on an **installed** OpenNava
 
 A live channel controls how far it can be rewound. If a channel removes the point where you paused, OpenNava can resume at the beginning of the remaining stream. For a guided rehearsal, open **Remote guide** on the senior home screen and choose **Pause and resume**.
 
+### Try live TV in the browser
+
+Open the [interactive television in senior view](https://opennava.site/?profile=senior#preview) and choose **Live TV**. In the full launcher, select a station from the live channels row. The browser requests the channel's stream and its current schedule directly from the broadcasters. The source can restrict programmes by region or limit how far back you can seek.
+
+Use **Up** and **Down** to change station. Hold **Up** for the guide or **Down** for the channel list. **Enter** brings up the controls, holding it pauses or resumes, and **Esc** takes you back. On a touch screen, tap the picture to reveal the controls. Recordings and reminders made in the preview belong to this browser. Local video capture requires a browser that supports recording the playing stream.
+
 ## TV guide, reminders and recordings
 
 - **Watch an earlier programme.** Open **TV guide**, choose the channel and an earlier listing. Open its media-library playback when the broadcaster offers a replay.
@@ -79,7 +85,7 @@ The companion runs on Android 11 or later. Install the companion APK on your pho
 | Home on the remote opens the vendor’s launcher | Open OpenNava in **Apps**. To request the default Home role, follow the setup instructions for your device. [Default Home setup](../README.md#install-from-the-terminal) |
 | The phone cannot see the television | Wake the TV. Check **Connection** on the phone and reopen **Pair phone** on the TV. For a private VPN, enter the reachable private address if discovery does not list it. |
 | A past listing has no replay, or a live stream stops seeking | Try another listed programme or return to live. Replay availability and the time-shift window come from the channel. |
-| A website search shows fewer programmes than the TV | The website demonstrates the real launcher interface with a sample catalogue. Use the installed app for current listings, real streams, recordings and device pairing. |
+| A website search shows fewer programmes than the TV | Library searches in the preview use a sample catalogue. Select **Live TV** for actual broadcasts and current listings, or install OpenNava to search broadcaster catalogues and pair your phone. |
 | Android asks whether to install an update | Open **Software updates** on the TV or in the companion menu to review the release and follow the device prompt. [Updates and automatic checks](../README.md#updates) |
 
 [Back to the project](../README.md) · [OpenNava Studio for macOS](../macos/README.md)

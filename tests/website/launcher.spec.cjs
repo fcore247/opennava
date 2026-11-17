@@ -22,12 +22,13 @@ test.describe('Full launcher on desktop', () => {
   test.use({ viewport: { width: 1440, height: 960 } });
 
   test('navigate with a keyboard, play a sample and switch profiles inside the TV', async ({page}) => {
-    await page.goto('./', {waitUntil: 'domcontentloaded'});
+    await page.goto('./', {waitUntil: 'load'});
     await checkProfile(page, 'full');
     const tv = page.frameLocator('#demo-tv');
     const navigation = tv.getByRole('navigation', {name: 'Main navigation'});
-    await navigation.getByRole('button', {name: 'For you'}).click();
-    await page.keyboard.press('ArrowRight');
+    const forYou = navigation.getByRole('button', {name: 'For you'});
+    await forYou.click();
+    await forYou.press('ArrowRight');
     const library = navigation.getByRole('button', {name: 'Media library'});
     await expect(library).toBeFocused();
     await page.keyboard.press('Enter');
@@ -45,7 +46,7 @@ test.describe('Full launcher on desktop', () => {
     await tv.getByRole('button', {name: 'Senior view', exact: true}).click();
     await checkProfile(page, 'senior');
     await expect(tv.getByRole('button', {name: 'Open ZDF library'})).toBeVisible();
-    await page.getByText('Full launcher', {exact: true}).filter({visible: true}).first().click();
+    await page.getByRole('group', {name: 'Choose the live demo profile'}).getByText('Full launcher').click();
     await checkProfile(page, 'full');
     await expect(navigation.getByRole('button', {name: 'For you'})).toBeVisible();
   });
@@ -67,11 +68,14 @@ test.describe('Senior view on a touch screen', () => {
     const portraitWidth = (await frame.boundingBox()).width;
     await page.setViewportSize({width: 852, height: 393});
     await expect.poll(async () => (await frame.boundingBox()).width).toBeGreaterThan(portraitWidth);
+    // A landscape phone can scroll the outer article to see the TV controls.
+    // Chromium does not automatically scroll it for taps in a transformed iframe.
+    await frame.evaluate(element => element.scrollIntoView({block: 'center', behavior: 'instant'}));
     const bounds = await frame.boundingBox();
     expect(bounds.x).toBeGreaterThanOrEqual(-1);
     expect(bounds.x + bounds.width).toBeLessThanOrEqual(853);
 
-    const watch = tv.getByRole('button', {name: 'Watch live'});
+    const watch = tv.getByRole('button', {name: 'Watch Inside the forest', exact: true}).first();
     await watch.tap();
     const player = tv.getByRole('dialog');
     await checkPlaying(player);

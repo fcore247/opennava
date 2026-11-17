@@ -27,6 +27,8 @@ GitHub Pages serves the [website](../docs/index.html). The [TV host](../docs/dem
 
 The [browser tests](../tests/website/) exercise the interactive launcher. The [legacy redirect](../hosting/legacy-redirect/README.md) sends old links to the canonical site.
 
+For live television, the staging script carries the Android station IDs into the browser. [The stream adapter](../docs/demo-host/live-streams.js) resolves HLS sources and schedules from the broadcasters. [The browser player](../docs/demo-host/live-tv.js) binds the remote keys, displays the programme guide and keeps browser recordings local. The on-demand catalogue preview uses bundled sample media.
+
 ## Installation and release boundaries
 
 | Artifact | Produced by | Consumed by |
