@@ -95,13 +95,17 @@ final class ChannelPicker {
         confirm.addView(u.text(tune ? "Watch channel" : "View schedule", 17, WHITE, 680));
         footer.addView(confirm);
         page.addView(footer);
+        u.addHomeBar(page, () -> {
+            dialog.dismiss();
+            a.returnHome();
+        });
 
         page.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) -> {
             if (r - l == oldR - oldL) return;
             int margin = Math.max(u.d(20), (r - l - u.d(540)) / 2);
             header.setPadding(margin, u.d(compact ? 3 : 12), margin, 0);
             wheel.setPadding(margin, 0, margin, 0);
-            footer.setPadding(margin, u.d(4), margin, u.d(compact ? 6 : 18));
+            footer.setPadding(margin, u.d(4), margin, u.d(4));
         });
         dialog.setContentView(page);
         Window window = dialog.getWindow();

@@ -116,9 +116,8 @@ final class HomePage {
 
         menuRow(items, "cast", "Connection", a.connected() ? a.device.name : "Connect a TV", () -> a.go("devices"));
         menuRow(items, "remote", "Manual remote", "", () -> a.go("remote"));
-        menuRow(items, "settings", "Software updates", "", () -> site.navatv.updates.Updates.open(a));
+        menuRow(items, "settings", "Software updates", "", a::openUpdates);
         separator(items);
-        menuRow(items, "home", "Home", "", () -> a.go("home"));
         menuRow(items, "onair", "Live TV", "", () -> a.go("live"));
         menuRow(items, "schedule", "TV guide", "", () -> a.go("programme"));
         menuRow(items, "saved", "Recordings", "", () -> a.go("recordings"));
@@ -132,6 +131,10 @@ final class HomePage {
         }
         u.space(items, 20);
         surface.addView(list, new LinearLayout.LayoutParams(MATCH, 0, 1f));
+        u.addHomeBar(surface, () -> {
+            dismiss();
+            a.returnHome();
+        });
         dialog.setContentView(surface);
         dialog.setOnDismissListener(d -> {
             if (menu == dialog) menu = null;

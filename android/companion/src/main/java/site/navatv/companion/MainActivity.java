@@ -56,13 +56,24 @@ public final class MainActivity extends ComponentActivity {
     private final ActivityResultLauncher<ScanOptions> scanner = registerForActivityResult(
             new ScanContract(), result -> {
                 selectingQr = false;
-                if (result.getContents() != null) devices.reviewInvite(result.getContents());
+                Intent data = result.getOriginalIntent();
+                if (data != null && data.getBooleanExtra(QrScanActivity.EXTRA_HOME, false)) returnHome();
+                else if (result.getContents() != null) devices.reviewInvite(result.getContents());
             });
     private final ActivityResultLauncher<PickVisualMediaRequest> qrPhoto = registerForActivityResult(
             new ActivityResultContracts.PickVisualMedia(), uri -> {
                 if (uri != null) readQrPhoto(uri);
                 else selectingQr = false;
             });
+
+    private final ActivityResultLauncher<Intent> updates = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK) returnHome();
+            });
+
+    void openUpdates() {
+        updates.launch(new Intent(this, site.navatv.updates.UpdateActivity.class));
+    }
 
     interface IO<T> {
         T get() throws Exception;
@@ -75,7 +86,7 @@ public final class MainActivity extends ComponentActivity {
     @Override
     public void onCreate(Bundle state) {
         super.onCreate(state);
-        site.navatv.updates.Updates.home(this);
+        site.navatv.updates.Updates.home(this, this::openUpdates, this::returnHome);
         ui = new Surface(this);
         tv = new TvConnection(getApplicationContext());
         catalogue = new PhoneCatalog(getApplicationContext());
@@ -122,7 +133,8 @@ public final class MainActivity extends ComponentActivity {
         if (connecting || updating) return;
         devices.cancelReconnect();
         selectingQr = true;
-        scanner.launch(new ScanOptions().setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+        scanner.launch(new ScanOptions().setCaptureActivity(QrScanActivity.class)
+                .setDesiredBarcodeFormats(ScanOptions.QR_CODE)
                 .setOrientationLocked(false).setBeepEnabled(false)
                 .setPrompt("Point the camera at the connection code in the full launcher."));
     }
@@ -242,6 +254,7 @@ public final class MainActivity extends ComponentActivity {
         ui.pad(body, sides, 7, sides, 22);
         scroll.addView(body);
         root.addView(scroll, new LinearLayout.LayoutParams(MATCH, 0, 1));
+        ui.addHomeBar(root, this::returnHome);
         switch (page) {
             case "live": case "programme":
                 livePage.build();
@@ -324,6 +337,14 @@ public final class MainActivity extends ComponentActivity {
         connectionDot.setBackground(ui.shape(up ? 0xff5b842e : 0xff8a8d80, 5, 0));
     }
 
+    void returnHome() {
+        View focused = getCurrentFocus();
+        if (focused != null) getSystemService(android.view.inputmethod.InputMethodManager.class)
+                .hideSoftInputFromWindow(focused.getWindowToken(), 0);
+        go("home");
+        tvContext.openHome();
+    }
+
     void go(String where) {
         page = where;
         if (where.equals("catalog")) { provider = ""; query = ""; }
@@ -403,7 +424,7 @@ public final class MainActivity extends ComponentActivity {
             return;
         }
         if (device.seniorVersion < 20) {
-            new AlertDialog.Builder(this)
+            homeDialog()
                     .setTitle("Set up the TV app")
                     .setMessage(
                             "To open this programme on your TV, install the"
@@ -458,6 +479,10 @@ public final class MainActivity extends ComponentActivity {
         say("Choose the TV you want to control.");
     }
 
+    AlertDialog.Builder homeDialog() {
+        return new AlertDialog.Builder(this).setNeutralButton("Home", (dialog, which) -> returnHome());
+    }
+
     void textDialog() {
         if (!connected()) {
             needConnection();
@@ -467,7 +492,7 @@ public final class MainActivity extends ComponentActivity {
         LinearLayout box = ui.column();
         ui.pad(box, 24, 8, 24, 0);
         box.addView(input);
-        new AlertDialog.Builder(this)
+        homeDialog()
                 .setTitle("Send text")
                 .setView(box)
                 .setNegativeButton("Cancel", null)
@@ -506,7 +531,7 @@ public final class MainActivity extends ComponentActivity {
 
     void problem(String message) {
         if (alive())
-            new AlertDialog.Builder(this)
+            homeDialog()
                     .setTitle("OpenNava Companion")
                     .setMessage(message)
                     .setPositiveButton("Close", null)

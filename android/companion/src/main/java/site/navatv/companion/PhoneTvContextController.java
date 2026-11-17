@@ -2,6 +2,7 @@ package site.navatv.companion;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 
 /** Follow TV navigation while the phone is visible. Reading a screen never sends navigation to the TV. */
 final class PhoneTvContextController {
@@ -9,6 +10,8 @@ final class PhoneTvContextController {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Runnable read = this::read;
     private boolean started, pending;
+    private long homeRequest, homeDeadline;
+    private boolean sendingHome, baselineAfterHome;
     private TvConnection.Device observed;
     private TvConnection.ScreenState last;
 
@@ -29,15 +32,62 @@ final class PhoneTvContextController {
     void refresh() {
         TvConnection.Device current = app.connected() ? app.device : null;
         if (current != observed) {
+            homeRequest++;
+            sendingHome = false;
+            baselineAfterHome = false;
+            homeDeadline = 0;
             observed = current;
             last = null;
             schedule(0);
         }
     }
 
+    void openHome() {
+        TvConnection connection = app.tv;
+        TvConnection.Device target = observed;
+        baselineAfterHome = true;
+        if (!app.connected() || target == null || app.connecting) {
+            app.say("Phone is home. No TV is connected.");
+            return;
+        }
+        if (sendingHome) return;
+        final long request = ++homeRequest;
+        sendingHome = true;
+        ui.removeCallbacks(read);
+        app.runTv(() -> {
+            if (connection.device() != target) throw new java.io.IOException("Your TV connection has changed.");
+            connection.openHome();
+            return null;
+        }, ignored -> {
+            if (request != homeRequest) return;
+            sendingHome = false;
+            // Launch delivery precedes the WebView reporting its new screen.
+            homeDeadline = SystemClock.elapsedRealtime() + 8000;
+            schedule(0);
+        }, error -> {
+            if (request != homeRequest) return;
+            sendingHome = false;
+            homeDeadline = 0;
+            app.say("Could not open Home on the TV. " + app.error(error));
+            app.refreshConnectionHeader();
+            schedule(0);
+        });
+    }
+
+    private boolean consumeHomeBaseline(TvConnection.ScreenState screen) {
+        if (!baselineAfterHome) return false;
+        boolean atHome = screen.screen.equals("home") || screen.screen.equals("visitor");
+        if (atHome || SystemClock.elapsedRealtime() >= homeDeadline) {
+            baselineAfterHome = false;
+            homeDeadline = 0;
+        }
+        last = screen;
+        return true;
+    }
+
     private void schedule(long delay) {
         ui.removeCallbacks(read);
-        if (started && observed != null && observed.seniorVersion >= 39 && !pending)
+        if (started && observed != null && observed.seniorVersion >= 39 && !pending && !sendingHome)
             ui.postDelayed(read, delay);
     }
 
@@ -45,11 +95,13 @@ final class PhoneTvContextController {
         if (!started || !app.connected() || app.device != observed) { refresh(); return; }
         TvConnection connection = app.tv;
         TvConnection.Device target = observed;
+        long request = homeRequest;
         String pageAtRequest = app.page;
         pending = true;
         app.runTv(connection::screenState, screen -> {
             pending = false;
-            if (started && observed == target && connection == app.tv) {
+            if (started && observed == target && connection == app.tv && request == homeRequest
+                    && !consumeHomeBaseline(screen)) {
                 if (!screen.screen.equals("live") || !screen.section.equals("channels"))
                     app.livePage.closeMirroredChannelPicker();
                 boolean changed = !screen.sameView(last);

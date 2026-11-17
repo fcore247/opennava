@@ -160,14 +160,14 @@ final class PhoneRecordingsPage {
     private void choose(PhoneLibrary.Entry entry) {
         if (busy) return;
         if (entry.episodes.size() <= 1) { act(entry, 0, false); return; }
-        dialog = new AlertDialog.Builder(a).setTitle(entry.title)
+        dialog = a.homeDialog().setTitle(entry.title)
                 .setItems(entry.episodes.toArray(new String[0]), (d, index) -> act(entry, index, false))
                 .setNegativeButton("Cancel", null).show();
     }
 
     private void confirmDelete(PhoneLibrary.Entry entry) {
         if (busy) return;
-        dialog = new AlertDialog.Builder(a)
+        dialog = a.homeDialog()
                 .setTitle(entry.reminder ? "Delete reminder?" : "Delete recording?")
                 .setMessage("Remove “" + entry.title + "” from your TV?")
                 .setNegativeButton("Keep", null)

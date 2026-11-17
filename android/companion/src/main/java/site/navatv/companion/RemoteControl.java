@@ -63,7 +63,6 @@ final class RemoteControl {
         LinearLayout system = u.row();
         system.setBackground(u.shape(WHITE, 18, LINE));
         quick(system, "back", "Back", 4);
-        quick(system, "home", "Home", 3);
         quick(system, "minus", "Volume down", 25);
         quick(system, "plus", "Volume up", 24);
         body.addView(system);
@@ -102,7 +101,6 @@ final class RemoteControl {
         u.space(panel, 9);
         LinearLayout shortcuts = u.row();
         quick(shortcuts, "back", "Back", 4);
-        quick(shortcuts, "home", "Home", 3);
         quick(shortcuts, "menu", "Menu", 82);
         panel.addView(shortcuts, u.lp(MATCH, 59));
         body.addView(panel);

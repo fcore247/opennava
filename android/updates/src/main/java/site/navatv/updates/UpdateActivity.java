@@ -50,7 +50,27 @@ public final class UpdateActivity extends Activity {
         action.setOnClickListener(v -> { if (release == null) check(); else install(); });
         Button close = new Button(this); close.setAllCaps(false); close.setText("Back");
         close.setOnClickListener(v -> finish()); panel.addView(close);
-        setContentView(scroll); check();
+        if (ReleaseFeed.PHONE.equals(getPackageName())) {
+            LinearLayout page = new LinearLayout(this);
+            page.setOrientation(LinearLayout.VERTICAL);
+            page.setBackgroundColor(0xff152620);
+            page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+            Button home = new Button(this);
+            home.setText("Home");
+            home.setAllCaps(false);
+            home.setMinHeight(dp(50));
+            home.setOnClickListener(v -> {
+                setResult(RESULT_OK);
+                finish();
+            });
+            LinearLayout.LayoutParams footer = new LinearLayout.LayoutParams(-1, -2);
+            footer.setMargins(dp(24), dp(4), dp(24), dp(12));
+            page.addView(home, footer);
+            setContentView(page);
+        } else {
+            setContentView(scroll);
+        }
+        check();
     }
 
     @Override protected void onResume() {

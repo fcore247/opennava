@@ -25,7 +25,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class TvConnection {
     public static final String TV_PACKAGE = "site.navatv.launcher";
     private static final String OLD_NavaTV = "site.navatv.full";
-    private static final int COMPANION_VERSION = 100;
+    private static final int MIN_COMPANION_TV_VERSION = 100;
+    private static final int BUNDLED_TV_VERSION = BuildConfig.VERSION_CODE;
     private static final int LIVE_TUNE_VERSION = 37;
     private static final String LIVE_CALL = "content call --uri content://site.navatv.launcher.companion --method ";
     private static final Pattern LIVE_CHANNEL = Pattern.compile("\\bchannel=([a-z0-9_-]{1,64})\\b");
@@ -50,7 +51,7 @@ public final class TvConnection {
             this.androidId = androidId;
             this.seniorVersion = senior;
             this.navaVersion = nava;
-            this.canUpdateSenior = television && senior < COMPANION_VERSION;
+            this.canUpdateSenior = television && senior < BUNDLED_TV_VERSION;
             this.homeMigrationPending = migrateHome;
             this.supportsLiveTune = senior >= LIVE_TUNE_VERSION;
             this.hasRtl = tvVersionName.toLowerCase(Locale.ROOT).endsWith("-rtl");
@@ -270,6 +271,29 @@ public final class TvConnection {
         return found.find() ? Integer.parseInt(found.group(1)) : -1;
     }
 
+    /** Open the selected launcher profile on this TV, including when another app owns the Home key. */
+    public void openHome() throws Exception {
+        AdbConnection session = active();
+        String otherLauncher = "de.flori.aura.mediatheken";
+        String otherFull = "de.flori.aura.tv";
+        String candidates = TV_PACKAGE + " " + otherLauncher + " " + OLD_NavaTV + " " + otherFull;
+        String pkg = shell(session, "for p in " + candidates + "; do "
+                + "if pm path --user current \"$p\" 2>/dev/null | grep -q '^package:'; then echo \"$p\"; break; fi; done").trim();
+        String action;
+        if (TV_PACKAGE.equals(pkg) || otherLauncher.equals(pkg)) {
+            // The unified entry forwards to the saved profile; a synthetic HOME key may open the vendor launcher or guide.
+            action = "-a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER";
+        } else if (OLD_NavaTV.equals(pkg) || otherFull.equals(pkg)) {
+            action = "-a " + pkg + ".VISIT_HOME";
+        } else {
+            throw new IOException("Install OpenNava on the connected TV to open its home screen.");
+        }
+        String result = shell(session, "am start -W --user current --activity-clear-top --activity-single-top "
+                + action + " -n " + pkg + "/.MainActivity");
+        if (result.contains("Error") || result.contains("Exception") || !result.contains("Status: ok"))
+            throw new IOException("The TV could not open the launcher home screen.");
+    }
+
     public void key(int keyCode) throws Exception {
         switch (keyCode) {
             case 3: case 4: case 19: case 20: case 21: case 22: case 23: case 24: case 25: case 26:
@@ -335,7 +359,7 @@ public final class TvConnection {
     private void companion(String operation, String provider, String value, String title) throws Exception {
         Device device = device();
         if (device == null) throw new IOException("Connect to a TV first.");
-        if (device.seniorVersion < COMPANION_VERSION) throw new IOException("Install the TV update under Devices.");
+        if (device.seniorVersion < MIN_COMPANION_TV_VERSION) throw new IOException("Install the TV update under Devices.");
         if (!"ard".equals(provider) && !"zdf".equals(provider) && !"arte".equals(provider))
             throw new IOException("Unknown library.");
         if ("search".equals(operation) && value.length() > 220) throw new IOException("Enter a shorter search.");
@@ -438,7 +462,7 @@ public final class TvConnection {
         Device before = discover(selected.host, selected.port);
         if (!before.canUpdateSenior) {
             target = before;
-            if (before.seniorVersion >= COMPANION_VERSION) return before;
+            if (before.seniorVersion >= BUNDLED_TV_VERSION) return before;
             throw new IOException("No update is available for this TV.");
         }
         File local = File.createTempFile("fernsehen-", ".apk", context.getCacheDir());
@@ -452,7 +476,7 @@ public final class TvConnection {
                 while ((count = in.read(buffer)) != -1) { sha.update(buffer,0,count); out.write(buffer,0,count); }
             }
             PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(local.getPath(),0);
-            if (archive == null || !TV_PACKAGE.equals(archive.packageName) || archive.getLongVersionCode() != COMPANION_VERSION)
+            if (archive == null || !TV_PACKAGE.equals(archive.packageName) || archive.getLongVersionCode() != BUNDLED_TV_VERSION)
                 throw new IOException("The bundled TV app is invalid.");
             push(session, local, remote);
             String digest = shell("sha256sum " + remote).trim();
@@ -460,7 +484,7 @@ public final class TvConnection {
             String result = shell("pm install -r " + remote).trim();
             if (!result.equals("Success")) throw new IOException("Installation declined: " + result);
             Device refreshed = discover(selected.host, selected.port);
-            if (refreshed.seniorVersion != COMPANION_VERSION) throw new IOException("Could not confirm the installed version.");
+            if (refreshed.seniorVersion != BUNDLED_TV_VERSION) throw new IOException("Could not confirm the installed version.");
             target = refreshed;
             return refreshed.homeMigrationPending ? migrateFireHome() : refreshed;
         } finally {
@@ -474,7 +498,7 @@ public final class TvConnection {
     /** Transfer only the legacy Fire TV Home service that is already active on this TV. */
     public Device migrateFireHome() throws Exception {
         Device current = device();
-        if (current == null || current.seniorVersion < COMPANION_VERSION)
+        if (current == null || current.seniorVersion < MIN_COMPANION_TV_VERSION)
             throw new IOException("Install the current TV app first.");
         if (!current.homeMigrationPending) return current;
         try (InputStream script = context.getAssets().open("fire-home.sh")) {

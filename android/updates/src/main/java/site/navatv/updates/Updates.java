@@ -38,6 +38,10 @@ public final class Updates {
     }
 
     public static void home(Activity activity) {
+        home(activity, () -> open(activity), null);
+    }
+
+    public static void home(Activity activity, Runnable openUpdates, Runnable returnHome) {
         Context c = activity.getApplicationContext();
         schedule(c);
         SharedPreferences prefs = prefs(c);
@@ -49,10 +53,12 @@ public final class Updates {
                 if (release.versionCode <= current(c)) return;
                 activity.runOnUiThread(() -> {
                     if (activity.isFinishing() || activity.isDestroyed() || !activity.hasWindowFocus()) return;
-                    new AlertDialog.Builder(activity).setTitle("OpenNava " + release.version + " is available")
+                    AlertDialog.Builder prompt = new AlertDialog.Builder(activity).setTitle("OpenNava " + release.version + " is available")
                             .setMessage("Open software updates to install this release or manage automatic updates.")
                             .setNegativeButton("Later", null)
-                            .setPositiveButton("View update", (d, w) -> open(activity)).show();
+                            .setPositiveButton("View update", (d, w) -> openUpdates.run());
+                    if (returnHome != null) prompt.setNeutralButton("Home", (d, w) -> returnHome.run());
+                    prompt.show();
                 });
             } catch (Exception ignored) { /* The scheduled worker and manual check can retry. */ }
         });

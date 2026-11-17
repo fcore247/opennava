@@ -303,7 +303,7 @@ final class DevicePage {
         if (d.seniorVersion > 0) {
             u.space(a.body, 8);
             a.body.addView(row("TV software updates", "Check the paired TV for a stable release.", "arrow", () ->
-                    new AlertDialog.Builder(a).setTitle("Update this TV?")
+                    a.homeDialog().setTitle("Update this TV?")
                             .setMessage("A new release will restart OpenNava. Your profile, settings and recordings are kept.")
                             .setNegativeButton("Cancel", null)
                             .setPositiveButton("Check and install", (dialog, which) -> {
@@ -334,7 +334,7 @@ final class DevicePage {
                             "Launch the updated TV app.",
                             "home",
                             () ->
-                                    new AlertDialog.Builder(a)
+                                    a.homeDialog()
                                             .setTitle("Set up the Home button?")
                                             .setMessage(
                                                     "The Home button on this Fire TV will open"
@@ -415,15 +415,17 @@ final class DevicePage {
         }
         u.space(form, 10);
         form.addView(u.text("Your TV may ask you to approve this connection.", 14, MUTED, 480));
-        inviteDialog = new AlertDialog.Builder(a)
+        u.space(form, 10);
+        form.addView(u.button("Save for later", "saved", false, () -> {
+            prefs.edit().putString("invite", raw).apply();
+            inviteDialog.dismiss();
+            a.render();
+            a.say("TV saved.");
+        }));
+        inviteDialog = a.homeDialog()
                 .setTitle("Connect to this TV?")
                 .setView(form)
                 .setNegativeButton("Cancel", null)
-                .setNeutralButton("Save for later", (d, w) -> {
-                    prefs.edit().putString("invite", raw).apply();
-                    a.render();
-                    a.say("TV saved.");
-                })
                 .setPositiveButton("Connect", (d, w) -> {
                     String host = invite.host;
                     if (invite.lan != null) host = (String) routes.findViewById(routes.getCheckedRadioButtonId()).getTag();
@@ -443,7 +445,7 @@ final class DevicePage {
     private void update(boolean fresh) {
         if (a.updating || a.connecting || !a.connected()) return;
         String name = a.device.name;
-        new AlertDialog.Builder(a)
+        a.homeDialog()
                 .setTitle(fresh ? "Install TV app?" : "Update TV app?")
                 .setMessage(
                         (fresh ? "Install OpenNava on " : "Update the installed TV app on ")
@@ -559,7 +561,7 @@ final class DevicePage {
                         a.problem(a.error(e));
                         return;
                     }
-                    new AlertDialog.Builder(a).setTitle("Connection pending")
+                    a.homeDialog().setTitle("Connection pending")
                             .setMessage(a.error(e) + " Your TV is saved. On Google TV, open Wireless debugging to get a pairing code.")
                             .setNegativeButton("Close", null)
                             .setPositiveButton("Pair with code", (d, w) -> address(true, host, 0))
@@ -598,7 +600,7 @@ final class DevicePage {
         EditText code = a.field("Six-digit pairing code", InputType.TYPE_CLASS_NUMBER, "");
         if (pair) form.addView(code);
         AlertDialog d =
-                new AlertDialog.Builder(a)
+                a.homeDialog()
                         .setTitle(pair ? "Pair Google TV" : "Connect a TV")
                         .setView(form)
                         .setNegativeButton("Cancel", null)

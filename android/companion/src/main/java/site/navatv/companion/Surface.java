@@ -116,6 +116,15 @@ class Surface {
         return v;
     }
 
+    void addHomeBar(LinearLayout page, Runnable home) {
+        LinearLayout bar = column();
+        bar.setGravity(Gravity.CENTER);
+        pad(bar, 14, 4, 14, 5);
+        LinearLayout button = button("Home", "home", false, home);
+        bar.addView(button, lp(152, WRAP));
+        page.addView(bar, lp(MATCH, WRAP));
+    }
+
     LinearLayout button(String name, String icon, boolean primary, Runnable click) {
         LinearLayout b = row();
         b.setGravity(Gravity.CENTER);

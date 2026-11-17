@@ -81,12 +81,6 @@ final class PhoneLivePage {
         for (Channel candidate : channels) if (candidate.id.equals(selectedId)) channel = candidate;
         selectedId = channel.id;
 
-        LinearLayout back = u.row();
-        back.addView(new Art(a, "left", MUTED), u.lp(15, 15));
-        u.gap(back, 3);
-        back.addView(u.text("Home", 14, MUTED, 590));
-        u.action(back, 0, 12, 0, () -> a.go("home"));
-        a.body.addView(back, u.lp(WRAP, 42));
         LinearLayout heading = u.row();
         heading.addView(u.title(guide() ? "TV guide" : "Live TV", 44, INK), u.weight(WRAP));
         heading.addView(u.button("Choose channel", "menu", false, this::chooseChannel), u.lp(WRAP, 48));
@@ -193,7 +187,7 @@ final class PhoneLivePage {
                 : new String[]{"1 Minute", "5 minutes", "30 minutes", "60 minutes"};
         String[] commands = activeLive.recordEnd ? new String[]{"end","1","5","30","60"} : new String[]{"1","5","30","60"};
         String requested = channel.id;
-        new AlertDialog.Builder(a).setTitle(channel.name + " · Record").setItems(labels, (dialog, i) -> {
+        a.homeDialog().setTitle(channel.name + " · Record").setItems(labels, (dialog, i) -> {
             TvConnection connection = a.tv;
             // A channel change while choosing the length must never record the wrong station.
             a.runTv(() -> {
@@ -393,7 +387,7 @@ final class PhoneLivePage {
         if (show.start > now) {
             if (!a.connected()) { a.needConnection(); return; }
             if (a.device.seniorVersion < 39) { a.problem("Update the TV app to add reminders from your phone."); return; }
-            new AlertDialog.Builder(a).setTitle(show.title)
+            a.homeDialog().setTitle(show.title)
                     .setMessage(channel.name + " · " + PhoneGuide.dayLabel(show.start) + " · " + PhoneGuide.clock(show.start))
                     .setPositiveButton("Set reminder", (dialog, which) -> {
                         TvConnection target = a.tv;

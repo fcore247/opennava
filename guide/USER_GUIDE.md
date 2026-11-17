@@ -68,8 +68,10 @@ The companion runs on Android 11 or later. Install the companion APK on your pho
 3. Complete the Android authorization or wireless pairing prompt on the television. The phone registers its own identity, even if a computer is already paired.
 4. Return to the companion home screen and choose **Live TV**, **Libraries**, **TV guide** or **Recordings**. The companion remembers the television for subsequent connections.
 
+**Go home on both screens.** Tap **Home** in any companion menu to return to these four choices and open the selected OpenNava home screen on the connected TV. The TV keeps its current full or senior profile. With the TV disconnected, Home still takes you to the phone's start screen.
+
 <p align="center">
-  <img src="images/android-companion.webp" width="245" alt="Native Android companion home screen with Live TV, Libraries, TV guide and Recordings" />
+  <img src="images/android-companion.webp" width="245" alt="Android companion showing its four activity tiles and the Home button at the bottom" />
 </p>
 
 **Choose a live channel.** Tap **Live TV → Choose channel** and pick **Main channels** or **Regional**. Scroll the wheel until the station is centred, then tap **Watch channel**. When that station is playing, the phone offers **Pause** or **Resume** and the controls appropriate to the stream.
