@@ -24,7 +24,7 @@
     <link rel="icon" href="./assets/opennava-mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./style.css" />
     <script src="./site.js" defer></script>
-    <script src="./demo-host/companion.js" defer></script>
+    <script src="./demo-host/television.js" defer></script>
   </head>
   <body data-profile="full">
     <a class="skip" href="#main">Skip to content</a>
@@ -54,9 +54,6 @@
         <rect x="8" y="8" width="12" height="13" rx="2" />
         <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
       </symbol>
-      <symbol id="i-check" viewBox="0 0 24 24">
-        <path d="m4 12 5.5 5.5L20 7" />
-      </symbol>
       <symbol id="i-grid" viewBox="0 0 24 24">
         <rect x="3" y="3" width="7" height="7" rx="1.6" />
         <rect x="14" y="3" width="7" height="7" rx="1.6" />
@@ -66,18 +63,6 @@
       <symbol id="i-large" viewBox="0 0 24 24">
         <rect x="2.5" y="5" width="19" height="14" rx="2.3" />
         <path d="M3 12h18m-10 0v7" />
-      </symbol>
-      <symbol id="i-book" viewBox="0 0 24 24">
-        <path
-          d="M3.5 5h6c1.5 0 2.4.6 2.5 2.2C12.2 5.6 13 5 15 5h5.5v14H15c-2 0-2.7.6-3 1.5-.3-.9-1.1-1.5-3-1.5H3.5zM12 7v13"
-        />
-      </symbol>
-      <symbol id="i-calendar" viewBox="0 0 24 24">
-        <rect x="3" y="5" width="18" height="16" rx="2" />
-        <path d="M3 10h18M7 3v5m10-5v5m-9 6h3m3 0h2" />
-      </symbol>
-      <symbol id="i-save" viewBox="0 0 24 24">
-        <path d="M6 4h12v17l-6-4-6 4z" />
       </symbol>
     </svg>
     <header class="topbar">
@@ -125,10 +110,11 @@
           <div
             class="demo-studio"
             id="preview"
-            aria-label="Interactive TV and Android companion"
+            role="region"
+            aria-label="Interactive television"
           >
             <div class="demo-heading">
-              <div class="studio-label"><i></i> Interactive demo</div>
+              <div class="studio-label"><i></i> Interactive TV</div>
               <fieldset class="toggle">
                 <legend>Choose the live demo profile</legend>
                 <label
@@ -144,84 +130,42 @@
                 >
               </fieldset>
             </div>
-            <div class="devices">
-              <div class="virtual-tv">
-                <div class="tv-bezel">
-                  <div class="tv-viewport" id="tv-viewport">
-                    <iframe
-                      id="demo-tv"
-                      src="./demo/full/index.html"
-                      title="Interactive OpenNava launcher"
-                      sandbox="allow-scripts allow-same-origin allow-forms"
-                      allow="fullscreen"
-                      allowfullscreen
-                    ></iframe>
-                  </div>
-                  <i class="tv-led"></i>
+            <div class="virtual-tv">
+              <div class="tv-bezel">
+                <div class="tv-viewport" id="tv-viewport">
+                  <iframe
+                    id="demo-tv"
+                    src="./demo/full/index.html"
+                    title="Interactive OpenNava launcher"
+                    aria-describedby="tv-directions"
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                    allow="fullscreen"
+                    allowfullscreen
+                  ></iframe>
                 </div>
-                <div class="tv-stand" aria-hidden="true"></div>
-                <div class="demo-tools">
-                  <span>Click the TV, then use the arrow keys and Enter.</span
-                  ><button
-                    type="button"
-                    id="expand-tv"
-                    title="Expand the television"
-                  >
-                    Expand TV <svg class="icon"><use href="#i-out" /></svg>
-                  </button>
-                </div>
+                <i class="tv-led" aria-hidden="true"></i>
               </div>
-              <div
-                class="virtual-phone"
-                id="virtual-phone"
-                tabindex="-1"
-                aria-label="Interactive Android companion"
-              >
-                <div class="companion-display">
-                  <div class="phone-indicators" aria-hidden="true">
-                    <span>10:08</span><i></i><span>▴ ▰</span>
-                  </div>
-                  <div class="companion-head">
-                    <button
-                      type="button"
-                      data-phone="menu"
-                      aria-label="Companion menu"
-                      aria-expanded="false"
-                    >
-                      ☰</button
-                    ><b>OpenNava Companion</b
-                    ><button
-                      type="button"
-                      class="pair-status"
-                      data-phone="connection"
-                      aria-label="TV connection"
-                    >
-                      <i></i><span>Demo TV</span>
-                    </button>
-                  </div>
-                  <div class="companion-content" id="companion-content"></div>
-                  <div class="phone-nav">
-                    <button
-                      type="button"
-                      data-device-key="Escape"
-                      aria-label="Back on the TV"
-                    >
-                      ‹ &nbsp; Back</button
-                    ><button
-                      type="button"
-                      data-phone="remote"
-                      aria-label="Open remote control"
-                    >
-                      Remote</button
-                    ><button type="button" data-phone="tv-home">TV home</button>
-                  </div>
-                  <i class="p-handle"></i>
-                </div>
+              <div class="tv-stand" aria-hidden="true"></div>
+              <div class="demo-tools">
+                <p id="tv-directions">
+                  Click or tap the TV to explore. Use the arrow keys to move,
+                  Enter to select and Esc to go back.
+                </p>
+                <button
+                  type="button"
+                  id="expand-tv"
+                  title="Expand the television"
+                >
+                  Expand TV
+                  <svg class="icon" aria-hidden="true">
+                    <use href="#i-out" />
+                  </svg>
+                </button>
               </div>
             </div>
             <p class="sandbox-note">
-              Try the actual launcher with a simulated TV connection and sample
-              programming. The demo runs in your browser.
+              The demo runs the TV launcher in your browser with sample
+              programmes and footage.
             </p>
           </div>
         </section>
@@ -319,12 +263,6 @@
               Browse the guide, choose a channel or play a show on your paired
               TV, straight from your phone.
             </p>
-            <a
-              class="guide-link try-companion"
-              id="try-companion"
-              href="#virtual-phone"
-              >Try the companion <svg class="icon"><use href="#i-arrow" /></svg
-            ></a>
           </div>
           <div class="download-files">
             <a

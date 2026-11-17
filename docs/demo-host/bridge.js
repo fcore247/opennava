@@ -114,8 +114,6 @@
     active = null,
     layer = null,
     previousFocus = null,
-    lastState = "",
-    seniorProvider = "",
     fullFilter = "",
     openingLibrary = false;
   const q = (sel) => document.querySelector(sel);
@@ -128,16 +126,13 @@
     channelItems(station.provider)[
       (station.number - 1) % channelItems(station.provider).length
     ];
-  const post = (type, data) => {
-    if (parent !== window)
-      parent.postMessage(
-        { source: "navatv-demo", type, ...data },
-        location.origin,
-      );
-  };
   function changeProfile(next) {
     if (parent === window) location.assign("../" + next + "/index.html");
-    else post("profile", { profile: next });
+    else
+      parent.postMessage(
+        { source: "navatv-demo", type: "profile", profile: next },
+        location.origin,
+      );
     return true;
   }
   const btn = (title, action) => {
@@ -147,84 +142,12 @@
     b.onclick = action;
     return b;
   };
-  const scheduleTime = new Intl.DateTimeFormat("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  });
   function schedule() {
     const pool = channelItems(station.provider);
-    const now = new Date(),
-      start = new Date(now);
-    start.setMinutes(Math.floor(now.getMinutes() / 30) * 30, 0, 0);
     const index = pool.indexOf(playingNow());
-    return ["previous", "now", "next"].map((slot, i) => {
-      const p = pool[(index + pool.length + i - 1) % pool.length];
-      return {
-        id: p.id,
-        title: p.title,
-        slot,
-        time: scheduleTime.format(new Date(+start + (i - 1) * 1800000)),
-      };
-    });
-  }
-  function snapshot() {
-    let screen = "home",
-      provider = "",
-      title = "",
-      items = [],
-      query = "";
-    if (active) {
-      ({ screen, provider = "", title = "", items = [] } = active);
-    } else if (profile === "senior" && q("#station") && !q("#station").hidden) {
-      screen = "catalog";
-      provider = seniorProvider;
-      title = q("#station-title").textContent;
-      const field = q("#station.searching #search-text:not(.placeholder)");
-      query = field?.textContent || "";
-      const controls = q("#station.typing")
-        ? "#preview-list [data-preview-play]"
-        : "#results [data-play]";
-      items = [...document.querySelectorAll(controls)]
-        .map((b) => find(b.dataset.previewPlay || b.dataset.play))
-        .filter(Boolean);
-    } else if (q("#nava-tube")) {
-      const context = window.NavaTube?.getSearchContext() || {};
-      screen = "catalog";
-      provider =
-        context.provider === "youtube"
-          ? "youtube"
-          : fullFilter || context.channel || "all";
-      title = provider === "all" ? "Media library" : provider.toUpperCase();
-      query = q("#tube-query:not(.tube-placeholder)")?.textContent || "";
-      items = [...document.querySelectorAll("[data-yt-play]")]
-        .map((b) => find(b.dataset.ytPlay))
-        .filter(Boolean);
-    }
-    const showingChannel = screen === "live" || screen === "guide";
-    return {
-      screen,
-      provider,
-      title,
-      profile,
-      query,
-      items: items.map(({ id, title }) => ({ id, title })),
-      channels,
-      channel: showingChannel ? station.id : "",
-      schedule: showingChannel ? schedule() : [],
-      programmeId: active?.programmeId || "",
-      savedIds: [...records],
-      paused: Boolean(media()?.paused),
-      seekable: Boolean(media()?.seekable.length),
-    };
-  }
-  function sendState(force = false) {
-    const data = snapshot(),
-      key = JSON.stringify(data);
-    if (force || key !== lastState) {
-      lastState = key;
-      post("state", data);
-    }
+    return [-1, 0, 1].map(
+      (offset) => pool[(index + pool.length + offset) % pool.length],
+    );
   }
   function catalogue(id, raw, youtube) {
     let query;
@@ -281,7 +204,6 @@
             : { items },
         ),
       );
-      sendState();
     }, 0);
     return true;
   }
@@ -298,7 +220,7 @@
     }
     previousFocus = null;
   }
-  function makeLayer(screen, title, provider, items = []) {
+  function makeLayer(screen, title) {
     if (
       active &&
       active.screen !== screen &&
@@ -310,7 +232,7 @@
     const focus = previousFocus || document.activeElement;
     closeLayer(false);
     previousFocus = focus;
-    active = { screen, title, provider, items };
+    active = { screen };
     layer = document.createElement("dialog");
     layer.className = "demo-native";
     layer.setAttribute("aria-label", title);
@@ -337,16 +259,13 @@
     if (previous?.screen === "live") tune(previous.channel);
     else if (previous?.screen === "guide") guide(previous.channel);
     else if (previous?.screen === "recordings") recordings();
-    sendState();
   }
   function home() {
     backStack = [];
     closeLayer(false);
     fullFilter = "";
-    seniorProvider = "";
     window.dismissSeniorStartup?.();
     window.navaNativeHome?.();
-    sendState(true);
   }
   function changeSaved(id, saved) {
     if (!find(id)) return;
@@ -359,7 +278,6 @@
     const b = layer?.querySelector("[data-demo-save]");
     if (b && active.programmeId === id)
       b.textContent = saved ? "Remove from recordings" : "Save to recordings";
-    sendState(true);
   }
   function saveButton(p) {
     const b = btn(
@@ -371,11 +289,7 @@
   }
   function play(p, live = false) {
     if (!p) return false;
-    const el = makeLayer(
-      live ? "live" : "player",
-      p.title,
-      live ? station.provider : p.provider,
-    );
+    const el = makeLayer(live ? "live" : "player", p.title);
     active.programmeId = p.id;
     const video = document.createElement("video"),
       bar = document.createElement("div");
@@ -401,10 +315,12 @@
     badge.className = "sample-footage";
     badge.textContent = "Sample footage";
     el.append(badge);
-    const toggle = btn("Pause", () => togglePlay());
+    const toggle = btn("Pause", () => {
+      if (video.paused) video.play().catch(indicate);
+      else video.pause();
+    });
     const indicate = () => {
       toggle.textContent = video.paused ? "Play" : "Pause";
-      sendState();
     };
     video.addEventListener("loadedmetadata", indicate);
     video.addEventListener("canplay", indicate);
@@ -427,28 +343,9 @@
     el.append(bar);
     toggle.focus();
     video.play().catch(indicate);
-    sendState(true);
     return true;
   }
-  function togglePlay() {
-    const v = media();
-    if (!v) return;
-    if (v.paused) v.play().catch(() => sendState(true));
-    else v.pause();
-  }
-  function seek(delta) {
-    const v = media();
-    if (![-10, 10].includes(delta) || !v?.seekable.length) return;
-    // Seek only inside the range the browser can actually play.
-    const ranges = v.seekable;
-    const start = ranges.start(0),
-      end = ranges.end(ranges.length - 1);
-    v.currentTime = Math.max(
-      start,
-      Math.min(Math.max(start, end - 0.1), v.currentTime + delta),
-    );
-    sendState(true);
-  }
+
   function tune(id) {
     const next = channels.find((c) => c.id === id);
     if (next) {
@@ -457,7 +354,7 @@
     }
   }
   function programmeList(screen, title, entries) {
-    const el = makeLayer(screen, title, "", entries);
+    const el = makeLayer(screen, title);
     el.classList.add("demo-list");
     heading(
       el,
@@ -485,16 +382,11 @@
     }
     list.append(btn("Back", back));
     list.querySelector("button")?.focus();
-    sendState(true);
   }
   function guide(id) {
     const next = channels.find((c) => c.id === id);
     if (next) station = next;
-    programmeList(
-      "guide",
-      "TV guide",
-      schedule().map((entry) => find(entry.id)),
-    );
+    programmeList("guide", "TV guide", schedule());
   }
   function recordings() {
     programmeList(
@@ -525,55 +417,6 @@
         }
       } else window.NavaTube?.showBroadcaster(provider);
     }
-    sendState();
-  }
-  let restoreFocusFrame = 0;
-  function searchFromPhone(command) {
-    // Android has separate focus on the two devices. Keep the software keyboard on the phone
-    // while the real TV launcher restores its own remote focus during the search render.
-    if (
-      parent.document.activeElement?.matches(
-        '#virtual-phone input[type="search"]',
-      )
-    ) {
-      cancelAnimationFrame(restoreFocusFrame);
-      document.body.inert = true;
-      restoreFocusFrame = requestAnimationFrame(() => {
-        restoreFocusFrame = requestAnimationFrame(() => {
-          document.body.inert = false;
-        });
-      });
-    }
-    search(command);
-  }
-  function search(command) {
-    if (!command || typeof command.query !== "string") return;
-    const provider = command.provider,
-      query = command.query.trim().slice(0, 160);
-    if (!["ard", "zdf", "arte", "youtube", "all"].includes(provider)) return;
-    backStack = [];
-    closeLayer(false);
-    window.dismissSeniorStartup?.();
-    if (profile === "senior") {
-      if (!["ard", "zdf", "arte"].includes(provider)) return;
-      window.navaCompanion?.({ provider, operation: "search", value: query });
-    } else {
-      if (["all", "youtube"].includes(provider)) {
-        fullFilter = "";
-        q(
-          '.header [data-view="' +
-            (provider === "youtube" ? "youtube" : "mediathek") +
-            '"]',
-        )?.click();
-        if (provider === "all") q('[data-yt-broadcaster="all"]')?.click();
-      } else library(provider);
-      if (query) window.NavaTube?.search(query);
-      else
-        window.NavaTube?.focusSearch({
-          provider: provider === "youtube" ? "youtube" : "mediathek",
-        });
-    }
-    sendState();
   }
   function playId(id) {
     if (typeof id !== "string") return false;
@@ -584,7 +427,7 @@
     return play(find(id));
   }
   function note(title, text) {
-    const el = makeLayer("home", title, "");
+    const el = makeLayer("home", title);
     el.classList.add("demo-list");
     heading(el, "DEVICE PREVIEW", title);
     const box = document.createElement("div"),
@@ -594,14 +437,9 @@
     box.append(p, btn("Back", back));
     el.append(box);
     box.querySelector("button").focus();
-    sendState(true);
     return true;
   }
-  function key(value) {
-    if (!layer) {
-      window.navaRemote?.(value);
-      return;
-    }
+  function handlePlayerKey(value) {
     if (value === "Escape") {
       back();
       return;
@@ -638,10 +476,6 @@
       ]),
     mediathekRequest: (id, s) => catalogue(id, s, false),
     youtubeRequest: (id, s) => catalogue(id, s, true),
-    reportCatalogue: (provider) => {
-      seniorProvider = provider;
-      queueMicrotask(sendState);
-    },
     playMediathek: playId,
     playYouTube: playId,
     playYouTubeCard: playId,
@@ -673,7 +507,7 @@
     showPhoneLink: () =>
       note(
         "Pair a phone",
-        "The virtual phone beside this TV is already connected.",
+        "Install OpenNava Companion on an Android phone to pair it with your own TV.",
       ),
     hasPersonalView: () => true,
     isLauncherEnabled: () => true,
@@ -690,7 +524,7 @@
       if (layer && keys.includes(e.key)) {
         e.preventDefault();
         e.stopImmediatePropagation();
-        key(e.key);
+        handlePlayerKey(e.key);
       }
     },
     true,
@@ -706,76 +540,14 @@
         if (filter.dataset.ytBroadcaster === "all")
           q('[data-yt-topic="0"]')?.click();
       }
-      requestAnimationFrame(() => sendState());
     },
     true,
   );
-  window.addEventListener("message", (e) => {
-    const m = e.data;
-    if (
-      parent === window ||
-      e.source !== parent ||
-      e.origin !== location.origin ||
-      m?.source !== "navatv-site" ||
-      m.type !== "action"
-    )
-      return;
-    switch (m.action) {
-      case "key":
-        if (keys.includes(m.value)) key(m.value);
-        break;
-      case "open":
-        if (m.value === "live") tune(station.id);
-        else library(m.value);
-        break;
-      case "home":
-        home();
-        break;
-      case "guide":
-        guide(m.value);
-        break;
-      case "recordings":
-        recordings();
-        break;
-      case "playPause":
-        togglePlay();
-        break;
-      case "seek":
-        seek(m.value);
-        break;
-      case "tune":
-        tune(m.value);
-        break;
-      case "play":
-        playId(m.value);
-        break;
-      case "search":
-        searchFromPhone(m.value);
-        break;
-      case "save":
-        changeSaved(m.value, true);
-        break;
-      case "delete":
-        changeSaved(m.value, false);
-        break;
-      case "refresh":
-        sendState(true);
-        break;
-    }
-    requestAnimationFrame(() => sendState());
-  });
   const link = document.createElement("link");
   link.rel = "stylesheet";
   link.href = "../../demo-host/device.css";
   document.head.append(link);
   document.addEventListener("DOMContentLoaded", () => {
     window.dismissSeniorStartup?.();
-    new MutationObserver(() => sendState()).observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["hidden", "aria-current"],
-    });
-    sendState(true);
   });
 })();
