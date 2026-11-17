@@ -1,0 +1,12 @@
+.DS_Store
+.gradle/
+**/build/
+local.properties
+*.apk
+*.aab
+*.keystore
+*.p12
+*.jks
+.env
+.env.*
+__pycache__/
