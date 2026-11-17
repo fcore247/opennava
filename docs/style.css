@@ -1605,3 +1605,471 @@ footer {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* The companion uses the same paper, ink, card colours and hierarchy as its Android screen. */
+.virtual-phone {
+  width: min(100%, 265px);
+  height: clamp(410px, 35vw, 500px);
+}
+.companion-display {
+  padding: 9px 11px 6px;
+  background: #f6f4ed;
+}
+.companion-head {
+  margin: 13px 0 9px;
+  gap: 4px;
+  font-size: 10px;
+}
+.companion-head > .pair-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 37px;
+  height: 20px;
+  font-size: 7px;
+  color: #385543;
+  line-height: 1;
+  padding: 0 5px;
+  background: #e6eadf;
+  border: 1px solid #d9dfd4;
+  border-radius: 30px;
+  white-space: nowrap;
+}
+.virtual-phone[data-connected="false"] .pair-status i {
+  background: #8d9188;
+}
+.companion-content {
+  padding: 1px;
+  scrollbar-width: thin;
+  scrollbar-color: #b2bbac transparent;
+}
+.companion-content h3 {
+  margin: 6px 0 13px;
+  font-size: clamp(23px, 2.1vw, 32px);
+}
+.companion-content h4 {
+  font:
+    700 10px/1.3 Manrope,
+    sans-serif;
+  color: inherit;
+  margin: 10px 0 5px;
+}
+.phone-choices {
+  gap: 6px;
+}
+.phone-tile {
+  border-radius: 12px;
+  padding: 8px 7px;
+  min-height: clamp(70px, 6.3vw, 95px);
+  gap: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.tile-top,
+.tile-words {
+  display: flex;
+}
+.tile-top {
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+.tile-top .icon:first-child {
+  width: 23px;
+  height: 23px;
+  padding: 4px;
+  border-radius: 7px;
+  background: #ffffff70;
+}
+.phone-tile:first-child .tile-top .icon:first-child {
+  background: #d9edb7;
+  color: #2a4c37;
+}
+.tile-top .icon:last-child {
+  width: 10px;
+  height: 10px;
+  opacity: 0.88;
+}
+.tile-words {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.tile-words b {
+  font:
+    400 clamp(14px, 1.18vw, 18px)/1.08 Instrument,
+    Georgia,
+    serif;
+}
+.tile-words small {
+  font:
+    550 8px/1.22 Manrope,
+    sans-serif;
+}
+.phone-action,
+.phone-pill,
+.letter,
+.phone-search input {
+  font-family: Manrope, sans-serif;
+  line-height: 1.24;
+}
+.phone-action,
+.phone-pill,
+.letter {
+  cursor: pointer;
+  min-height: 28px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #f9fcf2;
+  background: #254c3e;
+  padding: 5px 7px;
+  font-size: 10px;
+  font-weight: 650;
+  touch-action: manipulation;
+}
+.phone-action.secondary,
+.phone-pill,
+.letter {
+  background: #e6eadf;
+  color: #294535;
+  border-color: #d7dfd0;
+}
+.phone-action.danger {
+  background: #75463e;
+  color: white;
+}
+.phone-action + .phone-action {
+  margin-left: 4px;
+}
+.phone-pill {
+  border-radius: 20px;
+  font-size: 9px;
+  min-height: 24px;
+  padding: 4px 7px;
+}
+.phone-action:focus-visible,
+.phone-pill:focus-visible,
+.letter:focus-visible,
+.channel-wheel:focus-visible,
+.phone-search input:focus-visible,
+.virtual-phone button:focus-visible {
+  outline: 2px solid #577c55;
+  outline-offset: -2px;
+}
+.phone-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 6px 0;
+}
+.phone-onair {
+  margin: 7px 0;
+  padding: 9px 10px;
+  border-radius: 10px;
+  display: grid;
+  gap: 5px;
+  color: white;
+  background: #254c3e;
+}
+.phone-onair small {
+  font-size: 9px;
+  color: #d9edb7;
+  font-weight: 650;
+}
+.phone-onair b {
+  font:
+    400 21px/1.05 Instrument,
+    Georgia,
+    serif;
+}
+.phone-row {
+  font-size: 11px;
+  min-height: 36px;
+  margin: 3px 0;
+}
+.phone-row small {
+  font-size: 9px;
+}
+.phone-search {
+  display: flex;
+  align-items: stretch;
+  gap: 3px;
+}
+.phone-search input {
+  min-width: 0;
+  width: 100%;
+  padding: 6px 7px;
+  font-size: 12px;
+  outline: none;
+  border: 1px solid #cfd9ca;
+  border-radius: 8px;
+  background: #fffdf7;
+  color: #183b30;
+}
+.phone-search .phone-action {
+  font-size: 9px;
+  padding: 4px 6px;
+}
+.phone-keyboard[hidden] {
+  display: none;
+}
+.phone-keyboard {
+  display: grid;
+  gap: 3px;
+  background: #e2e8dd;
+  border-radius: 7px;
+  padding: 5px 2px;
+}
+.phone-key-row {
+  display: flex;
+  gap: 1px;
+  justify-content: center;
+}
+.letter {
+  padding: 0;
+  min-height: 22px;
+  border-radius: 3px;
+  background: #fffdf7;
+  color: #294535;
+  font-size: 8px;
+  width: 9.6%;
+}
+.letter.wide {
+  width: auto;
+  min-width: 32%;
+  padding: 0 4px;
+}
+.channel-tabs {
+  display: flex;
+  gap: 3px;
+  margin: 5px 0;
+}
+.channel-tabs .phone-pill[aria-pressed="true"] {
+  background: #254c3e;
+  color: white;
+}
+.wheel-wrap {
+  position: relative;
+  margin: 5px 0;
+  padding: 0 2px;
+  background: linear-gradient(#f6f4ed, #f3f1e8, #f6f4ed);
+  border-radius: 9px;
+}
+.wheel-wrap::before {
+  content: "";
+  position: absolute;
+  top: calc(50% - 15px);
+  height: 30px;
+  left: 1px;
+  right: 1px;
+  background: #e0e8db;
+  border: 1px solid #ccd8c8;
+  border-radius: 9px;
+  pointer-events: none;
+}
+.channel-wheel {
+  --row: 30px;
+  position: relative;
+  height: calc(var(--row) * 5);
+  padding: calc(var(--row) * 2) 0;
+  scroll-snap-type: y mandatory;
+  touch-action: pan-y;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.channel-wheel::-webkit-scrollbar {
+  display: none;
+}
+.wheel-option {
+  height: var(--row);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 0 9px;
+  scroll-snap-align: center;
+  font-size: 11px;
+  opacity: 0.48;
+  cursor: pointer;
+}
+.wheel-option[aria-selected="true"] {
+  opacity: 1;
+  color: #173d2d;
+}
+.wheel-option small {
+  font:
+    600 9px/1 Manrope,
+    sans-serif;
+  min-width: 18px;
+  color: #536858;
+}
+.wheel-option b {
+  font-weight: 650;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.saved-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.saved-row .phone-row {
+  min-width: 0;
+  flex: 1;
+}
+.saved-row > .phone-pill {
+  font-size: 8px;
+  color: #73483c;
+}
+.phone-search .phone-action:hover,
+.phone-action:hover,
+.phone-pill:hover,
+.letter:hover {
+  filter: brightness(0.96);
+}
+.virtual-phone[data-page="menu"] .companion-display {
+  background: #183b30;
+  color: #fff;
+}
+.virtual-phone[data-page="menu"] .companion-content h4 {
+  color: #d8eac9;
+}
+.virtual-phone[data-page="menu"] .phone-row {
+  color: #fff;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #476659;
+  border-radius: 0;
+}
+.virtual-phone[data-page="menu"] .phone-row small,
+.virtual-phone[data-page="menu"] .row-arrow {
+  color: #c2d3c7;
+}
+.virtual-phone[data-page="menu"] .phone-nav {
+  display: none;
+}
+.try-companion {
+  margin-top: 15px;
+}
+@media (max-width: 900px) {
+  .virtual-phone {
+    height: 342px;
+  }
+  .companion-head {
+    font-size: 8px;
+  }
+  .companion-head > .pair-status {
+    font-size: 6px;
+  }
+  .phone-tile {
+    min-height: 61px;
+    gap: 6px;
+  }
+  .tile-words small {
+    font-size: 7px;
+  }
+}
+@media (min-width: 541px) and (max-width: 760px) {
+  .companion-display {
+    padding: 6px;
+  }
+  .companion-head {
+    font-size: 7px;
+  }
+  .virtual-phone {
+    height: 305px;
+  }
+  .phone-onair b {
+    font-size: 17px;
+  }
+  .phone-content h3 {
+    font-size: 21px;
+  }
+  .companion-head > .pair-status {
+    min-width: 27px;
+  }
+  .tile-words b {
+    font-size: 13px;
+  }
+  .phone-action,
+  .phone-pill {
+    font-size: 9px;
+  }
+}
+@media (max-width: 540px) {
+  .virtual-phone {
+    width: min(100%, 280px);
+    height: 408px;
+    max-width: none;
+  }
+  .companion-display {
+    padding: 7px 11px 5px;
+  }
+  .companion-head {
+    font-size: 10px;
+    margin: 8px 0 5px;
+  }
+  .companion-head > .pair-status {
+    font-size: 8px;
+  }
+  .companion-content h3 {
+    font-size: 29px;
+    margin: 8px 0 12px;
+  }
+  .phone-tile {
+    min-height: 78px;
+    gap: 6px;
+    padding: 9px;
+  }
+  .tile-words b {
+    font-size: 17px;
+  }
+  .tile-words small {
+    font-size: 9px;
+  }
+  .phone-nav button {
+    min-height: 28px;
+  }
+  .phone-row {
+    min-height: 40px;
+    padding: 7px 8px;
+  }
+  .phone-action {
+    min-height: 32px;
+    font-size: 11px;
+  }
+  .phone-search input {
+    font-size: 16px;
+  }
+  .letter {
+    font-size: 10px;
+    min-height: 27px;
+  }
+  .channel-wheel {
+    --row: 32px;
+  }
+  .wheel-wrap::before {
+    top: calc(50% - 16px);
+    height: 32px;
+  }
+  .wheel-option {
+    font-size: 13px;
+  }
+  .demo-tools > span {
+    max-width: 65%;
+  }
+  .phone-indicators {
+    font-size: 8px;
+  }
+  .devices {
+    gap: 15px;
+  }
+  .sandbox-note {
+    margin-top: 9px;
+  }
+}

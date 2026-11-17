@@ -3,14 +3,10 @@ const profiles = {
   full: {
     name: "Full launcher",
     section: "full-launcher",
-    preview:
-      "Illustrative preview of the full launcher with an alpine film and media apps",
   },
   senior: {
     name: "Senior view",
     section: "senior-view",
-    preview:
-      "Illustrative senior home screen with large buttons for ARD, ZDF, ARTE, live TV and recordings",
   },
 };
 

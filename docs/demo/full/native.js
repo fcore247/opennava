@@ -47,7 +47,7 @@ if (window.NavaTV) {
     }
     const section = document.createElement('div');
     section.className = 'native-system-shortcuts';
-    section.innerHTML = `<button data-action="native-settings" data-kind="network">Wi-Fi ${icon('chevron')}</button><button data-action="native-settings" data-kind="bluetooth">Bluetooth ${icon('chevron')}</button><button data-action="native-settings" data-kind="display">Bild ${icon('chevron')}</button>`;
+    section.innerHTML = `<button data-action="native-settings" data-kind="network">Wi-Fi ${icon('chevron')}</button><button data-action="native-settings" data-kind="bluetooth">Bluetooth ${icon('chevron')}</button><button data-action="native-settings" data-kind="display">Display ${icon('chevron')}</button>`;
     panel.querySelector('.quick-appearance').before(section);
     const updates = document.createElement('button');
     updates.className = 'native-home-toggle';
