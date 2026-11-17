@@ -57,10 +57,12 @@ test.describe('Senior view on a touch screen', () => {
 
   test('tap the TV in portrait and landscape and return to the full launcher', async ({page}) => {
     await page.goto('./', {waitUntil: 'domcontentloaded'});
+    await page.evaluate(() => document.fonts.ready);
     const toggle = page.locator('label').filter({has: page.locator('input[name="preview"][value="senior"]')});
     await toggle.tap();
     await checkProfile(page, 'senior');
     const tv = page.frameLocator('#demo-tv');
+    await expect(tv.locator('html')).toHaveAttribute('data-launcher-ready', 'true');
     await tv.getByRole('button', {name: 'Open ZDF library'}).tap();
     await expect(tv.locator('#station-title')).toContainText('ZDF');
 

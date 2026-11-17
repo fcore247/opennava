@@ -1182,6 +1182,14 @@ footer {
     );
   }
 }
+@media (pointer: coarse) {
+  .demo-heading .toggle label {
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+    touch-action: manipulation;
+  }
+}
 .brand-credit {
   margin: 0 auto 0 6px;
   color: #b9b4c3;

@@ -616,5 +616,6 @@
   );
   document.addEventListener("DOMContentLoaded", () => {
     window.dismissSeniorStartup?.();
+    document.documentElement.dataset.launcherReady = "true";
   });
 })();
