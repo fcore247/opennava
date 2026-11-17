@@ -1,0 +1,33 @@
+Direct Maven dependencies in the OpenNava video integration
+License descriptions from the dependencies’ published POMs.
+
+androidx.annotation:annotation:1.1.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+androidx.appcompat:appcompat:1.2.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+androidx.core:core-ktx:1.12.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+androidx.preference:preference:1.1.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+androidx.webkit:webkit:1.11.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+com.eclipsesource.j2v8:j2v8:6.2.1@aar | Eclipse Public License - v 1.0 https://www.eclipse.org/legal/epl-v10.html
+com.github.florianingerl.util:regex:1.1.11 | GNU General Public License, version 2 https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+com.google.code.gson:gson:2.8.2 | See project licensing (no entry in this POM)
+com.google.net.cronet:cronet-okhttp:0.1.0 | Apache-2.0 https://www.apache.org/licenses/LICENSE-2.0
+com.google.protobuf:protobuf-javalite:3.17.3 | See project licensing (POM unavailable during inventory)
+com.grack:nanojson:1.7 | See project licensing (no entry in this POM)
+com.jakewharton:disklrucache:2.0.2 | Apache License Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+com.jayway.jsonpath:json-path:2.4.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+com.localebro:okhttpprofiler:1.0.8 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+com.squareup.okhttp3:logging-interceptor:3.12.13 | See project licensing (no entry in this POM)
+com.squareup.okhttp3:okhttp-brotli:4.1.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+com.squareup.okhttp3:okhttp-dnsoverhttps:3.12.13 | See project licensing (no entry in this POM)
+com.squareup.okhttp3:okhttp:3.12.13 | See project licensing (no entry in this POM)
+com.squareup.retrofit2:converter-gson:2.5.0 | See project licensing (no entry in this POM)
+com.squareup.retrofit2:retrofit:2.5.0 | See project licensing (no entry in this POM)
+dnsjava:dnsjava:2.1.9 | BSD-2-Clause https://opensource.org/licenses/BSD-2-Clause
+info.guardianproject.netcipher:netcipher:2.1.0 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+io.reactivex.rxjava2:rxandroid:2.1.1 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+io.reactivex.rxjava2:rxjava:2.2.21 | The Apache Software License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+org.checkerframework:checker-compat-qual:2.5.0 | GNU General Public License, version 2 (GPL2), with the classpath exception http://www.gnu.org/software/classpath/license.html; The MIT License http://opensource.org/licenses/MIT
+org.checkerframework:checker-qual:2.5.0 | The MIT License http://opensource.org/licenses/MIT
+org.chromium.net:cronet-api:105.5195.68 | Chromium and built-in dependencies https://storage.cloud.google.com/chromium-cronet/android/105.0.5195.68/Release/cronet/LICENSE
+org.chromium.net:cronet-embedded:105.5195.68 | Chromium and built-in dependencies https://storage.cloud.google.com/chromium-cronet/android/@105.0.5195.68/Release/cronet/LICENSE
+org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.10 | The Apache License, Version 2.0 http://www.apache.org/licenses/LICENSE-2.0.txt
+org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3 | The Apache Software License, Version 2.0 https://www.apache.org/licenses/LICENSE-2.0.txt

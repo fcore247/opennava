@@ -1,0 +1,18 @@
+OpenNava Companion includes LibADB Android 3.1.1, revision c849886ebc6d48e7b46d967e78a6bb65c90c3b74.
+https://github.com/MuntashirAkon/libadb-android/tree/3.1.1
+The Java sources in android/companion/vendor/libadb include modifications to
+ADB stream delivery, pairing cleanup, UTF-8 packet lengths, request bounds
+and EOF handling. See libadb/COPYING, Apache-2.0, BSD-3-Clause and MIT.
+
+SPAKE2 Android 2.2.1 is licensed under LGPL-3.0. The library and its native
+component are provided at revisions 7615ddd680b990e14513ebb66eac4cb0dbf82464
+and 0d15933e5ba3e662cb01245a7ac0dc9fca3eac31, respectively.
+https://github.com/MuntashirAkon/spake2-java/tree/2.2.1
+SPAKE2-2.2.1-source.zip in this directory includes the source and build files.
+See SPAKE2-LGPL-3.0.txt and GPL-3.0.txt. To relink a modified version, build
+its Android AAR, replace the spake2-android dependency in
+android/companion/transport.gradle, and rebuild and sign OpenNava Companion
+using android/build.py in the public project.
+
+Conscrypt Android 2.5.3: https://github.com/google/conscrypt/tree/2.5.3
+Bouncy Castle bcprov-jdk15to18 1.81: https://github.com/bcgit/bc-java/tree/r1rv81

@@ -1,0 +1,10 @@
+<resources>
+    <string name="home_description">Opens your selected OpenNava view from the Google TV home screen. Press Home twice in Senior mode to open the programme guide.</string>
+    <style name="NavaTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">#10211B</item>
+        <item name="android:colorAccent">#D4EDC3</item>
+        <item name="android:navigationBarColor">#10211B</item>
+    </style>
+</resources>

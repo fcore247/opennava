@@ -1,0 +1,98 @@
+#home::before {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background-image: linear-gradient(90deg, #101a16f0, #131c17ba 58%, #141e17a3),
+                    linear-gradient(0deg, #101916cc, transparent 65%), var(--landschaft);
+  background-size: cover;
+  background-position: center;
+  pointer-events: none;
+}
+body:not(.at-station) { isolation: isolate; }
+#welcome {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  isolation: isolate;
+  overflow: hidden;
+  background: #10211b;
+  color: #fffbef;
+}
+#welcome.is-leaving {
+  opacity: 0;
+  transition: opacity 400ms ease-in-out;
+}
+.welcome-landscape, .welcome-light {
+  position: absolute;
+  inset: 0;
+}
+.welcome-landscape {
+  background: var(--landschaft, url('assets/starttal.jpg')) center 46% / cover no-repeat;
+  filter: var(--landschaft-licht, none);
+  animation: reveal-landscape 3.1s cubic-bezier(.15,.64,.3,1) both;
+}
+.welcome-light {
+  background:
+    linear-gradient(90deg, #0b1b19d9, #12251c52 52%, transparent 81%),
+    linear-gradient(0deg, #0b1913bf, transparent 58%),
+    linear-gradient(180deg, #132b2926, transparent 36%);
+}
+.welcome-content {
+  position: absolute;
+  left: 8.3%;
+  bottom: 16%;
+  max-width: 84%;
+}
+.welcome-date {
+  display: flex;
+  align-items: center;
+  gap: .9em;
+  color: #e9e8cb;
+  font-size: clamp(13px, 1.65vw, 38px);
+  font-weight: 580;
+  letter-spacing: .025em;
+  animation: welcome-appear .55s .04s ease-out both;
+}
+.welcome-rule {
+  width: 2.7em;
+  height: 2px;
+  background: #dfcf9a;
+  transform-origin: left;
+  animation: welcome-line 1.2s ease-out both;
+}
+#welcome-greeting {
+  margin: .22em 0 .32em -.045em;
+  font-size: clamp(44px, min(8.6vw, 15vh), 180px);
+  line-height: 1.08;
+  font-weight: 520;
+  letter-spacing: -.06em;
+  text-shadow: 0 2px 24px #15201538;
+  animation: welcome-appear .66s .09s cubic-bezier(.18,.72,.28,1) both;
+}
+.welcome-stations {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.38vw, 32px);
+  animation: welcome-appear .6s .19s ease-out both;
+}
+.welcome-stations img {
+  width: clamp(43px, 5.15vw, 99px);
+  height: clamp(20px, 2.6vw, 50px);
+  object-fit: contain;
+  opacity: .9;
+}
+.welcome-stations .welcome-zdf { width: clamp(33px, 3.7vw, 78px); }
+.welcome-stations span { width: 1px; height: clamp(12px, 1.5vw, 28px); background: #fff8d761; }
+@keyframes reveal-landscape {
+  from { transform: scale(1.045); opacity: .48; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes welcome-appear {
+  from { opacity: 0; transform: translateY(.12em); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes welcome-line { from { transform: scaleX(.15); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) {
+  #welcome *, #welcome.is-leaving { animation: none; transition: none; }
+}

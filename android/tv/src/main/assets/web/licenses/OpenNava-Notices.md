@@ -1,0 +1,13 @@
+# Sources and artwork
+
+OpenNava uses the launcher and companion source in this repository. Component licenses, credits, and applicable notices ship in the APK assets.
+
+- The full launcher builds its media integration from fixed SmartTube, MediaServiceCore and SharedModules revisions. The upstream revisions and URLs are in [player/source-pins.json](player/source-pins.json). The original upstream notices for these projects, the ExoPlayer fork, Commons IO and J2V8 are in [the TV notices](tv/src/main/assets/web/licenses). The build uses the specified upstream source directories and builds their libraries locally.
+- The unmodified Android J2V8 binding comes from [Maven Central](https://repo.maven.apache.org/maven2/com/eclipsesource/j2v8/j2v8/6.2.1/). The [J2V8 6.2.1 source and build instructions](https://github.com/eclipsesource/J2V8/tree/097f55dd79c84285a6809a4269afb23265d832b9) are available from its publisher under the Eclipse Public License 1.0.
+- The television also uses AndroidX Media3 and ZXing under the Apache License 2.0. The companion uses AndroidX, ZXing, JourneyApps and the ADB transport described in [ADB-Sources.txt](companion/src/main/assets/licenses/ADB-Sources.txt). The original notices and corresponding SPAKE2 source with its pinned native submodule accompany the phone APK. The corresponding Regex 1.1.11 sources accompany the TV APK. Both apps can be rebuilt and signed with a user's own key.
+- Instrument Serif and Manrope are distributed under their [SIL Open Font Licenses](tv/src/main/assets/assets/fonts).
+- The senior home, search cards and ambient view use the project's generated landscape artwork. Station names identify their respective services. Remote catalogue artwork and programmes are supplied by the broadcasters at runtime. Availability depends on the broadcaster and location.
+- The full launcher's photographs and animated crops are based on these Unsplash images: [mountains](https://images.unsplash.com/photo-1464822759023-fed622ff2c3b), [Earth](https://images.unsplash.com/photo-1446776811953-b23d57bd21aa), [forest](https://images.unsplash.com/photo-1441974231531-c6227db76b6e), [ocean](https://images.unsplash.com/photo-1518837695005-2083093ee35b) and [hills](https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05). The [Unsplash License](https://unsplash.com/license) applies to them.
+- The public build contains public-service channels from ARD, ZDF and ARTE. Weather-aware landscapes work with an optional build-time weather location. If configured, weather data is provided by [Open-Meteo](https://open-meteo.com/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
+The individual upstream licenses and notices apply to their respective files and dependencies.

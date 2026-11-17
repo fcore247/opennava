@@ -1,0 +1,6 @@
+{
+  "SmartTube": {"url": "https://github.com/yuliskov/SmartTube.git", "commit": "4e4ef9c61da05c83e9d9d462a728f87d6986921b"},
+  "MediaServiceCore": {"url": "https://github.com/yuliskov/MediaServiceCore", "commit": "7ba53b445c5c45113e4969703a29385c76c6c7ae"},
+  "SharedModules": {"url": "https://github.com/yuliskov/SharedModules", "commit": "5475d31808139e21c0e55f4d3462481002afae63"},
+  "gradle": "7.5", "androidGradlePlugin": "7.4.2", "kotlin": "1.8.10"
+}

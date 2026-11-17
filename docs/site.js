@@ -1,7 +1,17 @@
-const guide = "https://github.com/fcore247/navatv/blob/main/AGENTS.md";
+const guide = "https://github.com/fcore247/opennava/blob/main/AGENTS.md";
 const profiles = {
-  full: { name: "Full launcher", section: "full-launcher", preview: "Illustrative preview of the full launcher with an alpine film and media apps" },
-  senior: { name: "Senior view", section: "senior-view", preview: "Illustrative senior home screen with large buttons for ARD, ZDF, ARTE, live TV and recordings" }
+  full: {
+    name: "Full launcher",
+    section: "full-launcher",
+    preview:
+      "Illustrative preview of the full launcher with an alpine film and media apps",
+  },
+  senior: {
+    name: "Senior view",
+    section: "senior-view",
+    preview:
+      "Illustrative senior home screen with large buttons for ARD, ZDF, ARTE, live TV and recordings",
+  },
 };
 
 const profileRadios = document.querySelectorAll('input[type="radio"]');
@@ -16,12 +26,21 @@ function showProfile(id, changeURL = true) {
   document.body.dataset.profile = selected;
   for (const radio of profileRadios) radio.checked = radio.value === selected;
   document.querySelector("#profile-name").textContent = profile.name;
-  document.querySelector("#tv-preview").setAttribute("aria-label", profile.preview);
+  document.dispatchEvent(
+    new CustomEvent("navatv:profile", { detail: selected }),
+  );
   const link = guide + "#" + profile.section;
   document.querySelector("#agent-guide").href = link;
-  promptText.textContent = "Help me install NavaTV on my TV using the " + profile.name +
-    " profile (" + selected + "). Follow " + link + ". Guide me through connecting the device, " +
-    "then use the project’s setup tool with --profile " + selected +
+  promptText.textContent =
+    "Help me install OpenNava on my TV using the " +
+    profile.name +
+    " profile (" +
+    selected +
+    "). Follow " +
+    link +
+    ". Guide me through connecting the device, " +
+    "then use the project’s setup tool with --profile " +
+    selected +
     ". If I also want the Android companion, help me install and pair it.";
   clearTimeout(resetTimer);
   copyButton.querySelector("span").textContent = "Copy setup prompt";
@@ -33,8 +52,11 @@ function showProfile(id, changeURL = true) {
   }
 }
 
-for (const radio of profileRadios) radio.addEventListener("change", () => showProfile(radio.value));
-function readURL() { showProfile(new URL(location.href).searchParams.get("profile"), false); }
+for (const radio of profileRadios)
+  radio.addEventListener("change", () => showProfile(radio.value));
+function readURL() {
+  showProfile(new URL(location.href).searchParams.get("profile"), false);
+}
 window.addEventListener("popstate", readURL);
 readURL();
 
@@ -51,7 +73,11 @@ copyButton.addEventListener("click", async () => {
     field.className = "clipboard-field";
     document.body.append(field);
     field.select();
-    try { copied = document.execCommand("copy"); } catch { /* Display the prompt for manual copying. */ }
+    try {
+      copied = document.execCommand("copy");
+    } catch {
+      /* Display the prompt for manual copying. */
+    }
     field.remove();
     copyButton.focus();
   }

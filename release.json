@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "version": "1.0.0",
+  "apps": {
+    "tv": {
+      "package": "site.navatv.launcher",
+      "versionCode": 100,
+      "asset": "OpenNava.apk",
+      "sha256": "293b3717f9c0739d0a78902ed2ef2572656cc34ae257fc124219c30860530b02"
+    },
+    "phone": {
+      "package": "site.navatv.companion",
+      "versionCode": 100,
+      "asset": "OpenNava-Companion.apk",
+      "sha256": "39ac14e6b40bb45fe81e39d2337fe8b85967f132314b1a8d4037b1ba74ac707f"
+    }
+  }
+}

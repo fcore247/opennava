@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="../../demo-host/bridge.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#151b19">
+  <title>Media libraries</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="start.css">
+  <link rel="stylesheet" href="hilfe.css">
+  <script defer src="hilfe.js"></script>
+  <script defer src="app.js"></script>
+  <script defer src="landschaft.js"></script>
+  <script defer src="start.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="mast-title"><span class="screen-symbol" aria-hidden="true"></span>Media libraries</div>
+    <div class="clock"><span id="today"></span><time id="clock-time"></time></div>
+  </header>
+  <main id="home" aria-labelledby="greeting">
+    <h1 id="greeting">Welcome</h1>
+    <div class="station-choices" aria-label="Choose what to watch">
+      <button class="station-choice ard" data-open="ard" aria-label="Open ARD library">
+        <img class="station-picture" src="assets/ard-cover.jpg" alt="">
+        <span class="card-shade"></span><img class="station-mark" src="assets/ard-logo.svg" alt="">
+        <span class="station-caption"><strong>ARD library</strong><span class="open-arrow" aria-hidden="true">→</span></span>
+      </button>
+      <button class="station-choice zdf" data-open="zdf" aria-label="Open ZDF library">
+        <img class="station-picture" src="assets/zdf-cover.jpg" alt="">
+        <span class="card-shade"></span><img class="station-mark" src="assets/zdf-logo.svg" alt="">
+        <span class="station-caption"><strong>ZDF library</strong><span class="open-arrow" aria-hidden="true">→</span></span>
+      </button>
+      <button class="station-choice arte" data-open="arte" aria-label="Open ARTE library">
+        <img class="station-picture" src="assets/arte-cover.jpg" alt="">
+        <span class="card-shade"></span><img class="station-mark" src="assets/arte-logo.svg" alt="">
+        <span class="station-caption"><strong>ARTE library</strong><span class="open-arrow" aria-hidden="true">→</span></span>
+      </button>
+      <button class="station-choice live-tv" data-open="live-tv" aria-label="Open live TV">
+        <span class="live-emblem" aria-hidden="true"><i></i></span>
+        <span class="station-caption"><strong>Live TV</strong><span class="open-arrow" aria-hidden="true">→</span></span>
+      </button>
+      <button class="station-choice recordings" data-open="recordings" aria-label="Open recordings">
+        <span class="record-emblem" aria-hidden="true"><i></i></span>
+        <span class="station-caption"><strong>Recordings</strong><span class="open-arrow" aria-hidden="true">→</span></span>
+      </button>
+    </div>
+    <div class="home-footer">
+      <button id="programme" data-command="programme">TV guide</button>
+      <button id="instructions" data-command="instructions" aria-haspopup="dialog">Remote guide</button>
+      <button id="change-view" data-command="change-view" aria-haspopup="dialog" aria-controls="view-choice" aria-expanded="false">Switch view</button>
+    </div>
+  </main>
+  <main id="station" hidden aria-labelledby="station-title">
+    <div class="station-heading"><button data-command="back" class="back-button" aria-label="Back to channel selection"><span aria-hidden="true">‹</span> <span id="back-destination">Channel selection</span></button><h1 id="station-title"></h1></div>
+    <nav class="station-nav" aria-label="Channel section">
+      <button data-page="home">Latest</button>
+      <button id="watch-live" data-command="watch-live"><i class="live-dot" aria-hidden="true"></i> Watch live</button>
+      <button data-page="search"><span class="search-symbol" aria-hidden="true"></span> Search</button>
+      <button id="official-app" data-command="official-app"><span id="official-label">Open broadcaster app</span><span aria-hidden="true">↗</span></button>
+    </nav>
+    <div id="live-feedback" role="status" aria-live="polite" hidden></div>
+    <section id="search-area" hidden aria-label="Search shows">
+      <div id="search-head">
+        <div class="search-brand"><img id="search-logo" alt=""><span>Media library</span></div>
+        <button class="search-back" data-command="station-home"><span aria-hidden="true">‹</span> Back to library</button>
+      </div>
+      <div class="search-spread">
+        <button id="search-field" data-command="keyboard" aria-controls="tv-keyboard" aria-expanded="false">
+          <span class="query-entry"><span id="search-text"></span><span class="cursor" aria-hidden="true"></span></span>
+          <span class="search-symbol" aria-hidden="true"></span>
+        </button>
+        <section id="search-preview" aria-labelledby="preview-title" hidden>
+          <h2 id="preview-title" aria-live="polite"></h2>
+          <div id="preview-list"></div>
+        </section>
+      </div>
+      <div id="tv-keyboard" role="group" aria-label="On-screen keyboard" hidden></div>
+    </section>
+    <nav id="topics" aria-label="Topics"></nav>
+    <div id="results" aria-busy="false"></div>
+  </main>
+  <dialog id="view-choice" aria-labelledby="view-choice-title">
+    <h2 id="view-choice-title">Switch view</h2>
+    <button data-command="stay" autofocus>Stay in senior view</button>
+    <button data-command="visitor">Open full launcher</button>
+    <button data-command="software-updates">Software updates</button>
+    <p id="visitor-message" role="status" aria-live="polite"></p>
+  </dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="welcome" hidden aria-hidden="true">
+    <div class="welcome-landscape"></div>
+    <div class="welcome-light"></div>
+    <div class="welcome-content">
+      <div class="welcome-date"><span class="welcome-rule"></span><span id="welcome-date"></span></div>
+      <div id="welcome-greeting"></div>
+      <div class="welcome-stations">
+        <img src="assets/ard-logo.svg" alt=""><span></span><img class="welcome-zdf" src="assets/zdf-logo.svg" alt=""><span></span><img src="assets/arte-logo.svg" alt="">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

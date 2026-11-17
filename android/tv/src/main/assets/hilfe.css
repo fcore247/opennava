@@ -1,0 +1,179 @@
+@font-face {
+  font-family: Senior-Hilfeschrift;
+  src: url("assets/fonts/InstrumentSerif-Regular.ttf") format("truetype");
+  font-display: swap;
+}
+html.ih-open, html.ih-open body { overflow: hidden; }
+#senior-help {
+  --ih-paper: #faf2e1;
+  --ih-muted: #d4d0c1;
+  --ih-cream: #fff1cd;
+  --ih-line: rgba(235,228,204,.25);
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: #232820;
+  color: var(--ih-paper);
+  font-family: Manrope, system-ui, sans-serif;
+  overflow: auto;
+  isolation: isolate;
+}
+#senior-help::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(102deg,rgba(22,29,24,.94),rgba(29,32,27,.86) 60%,rgba(43,42,29,.83)),
+    var(--landschaft,url("assets/landschaften/evening.jpg")) center 45% / cover;
+}
+#senior-help * { box-sizing: border-box; }
+#senior-help .ih-page {
+  width: min(100%,1800px);
+  min-height: 100%;
+  margin: auto;
+  padding: clamp(16px,4.2vh,48px) clamp(24px,5.7vw,100px);
+  display: flex;
+  flex-direction: column;
+}
+#senior-help .ih-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: clamp(12px,2.5vh,27px);
+  border-bottom: 1px solid var(--ih-line);
+}
+#senior-help .ih-sign, #senior-help .ih-close {
+  display: flex; align-items:center; gap: .68em;
+  font-size: clamp(14px,1.55vw,29px);
+  letter-spacing: -.025em;
+}
+#senior-help .ih-sign {font-weight:650;}
+#senior-help .ih-sign i {
+  position: relative; width:.78em; height:1.23em; transform:rotate(16deg);
+  border: .09em solid #e2d8b8; border-radius:.35em;
+}
+#senior-help .ih-sign i::before {
+  content:""; position:absolute; top:.13em; left:.12em; width:.31em; height:.31em;
+  border:.07em solid #e2d8b8; border-radius:50%;
+}
+#senior-help .ih-close {
+  border-radius:2em; border:1px solid var(--ih-line); background:rgba(40,47,39,.75);
+  padding: .35em .85em; color:var(--ih-paper);
+}
+#senior-help .ih-close span {font:500 1.3em/1 Manrope,sans-serif;}
+#senior-help .ih-content {
+  flex: 1; display:grid; align-content:center; align-items:center;
+  grid-template-columns:minmax(0,1fr) minmax(0,2.25fr);
+  gap:clamp(20px,4.4vw,82px);
+  padding:clamp(13px,3vh,36px) 0;
+}
+#senior-help .ih-topics {display:flex; flex-direction:column; align-self:center; gap:clamp(4px,.9vh,12px);}
+#senior-help .ih-topics button {
+  display:block; position:relative; text-align:left;
+  width:100%; padding:.67em 1.25em .67em .8em;
+  border:1px solid transparent; border-radius:.68em; color:var(--ih-muted);
+  font-size:clamp(15px,1.72vw,32px); line-height:1.24; font-weight:570;
+}
+#senior-help .ih-topics [aria-current="step"] {
+  color:var(--ih-paper); background:rgba(228,222,188,.105); border-color:var(--ih-line);
+}
+#senior-help .ih-topics [aria-current="step"]::before {
+  content:""; position:absolute; top:28%; bottom:28%; left:-1px;
+  width:3px; border-radius:3px; background:#e8d4a2;
+}
+#senior-help .ih-topics .ih-ticked::after {
+  content:"✓"; position:absolute; right:.5em; top:50%; transform:translateY(-50%); color:#c8dcb7;
+}
+#senior-help .ih-lesson {min-width:0; max-width:100%;}
+#senior-help .ih-title {
+  color:var(--ih-paper); font:400 clamp(34px,4.15vw,76px)/1.03 Senior-Hilfeschrift,Georgia,serif;
+  letter-spacing:-.035em; margin:0;
+}
+#senior-help .ih-description, #senior-help .ih-task {
+  margin: .46em 0 0; color:var(--ih-muted); line-height:1.42;
+  font-size:clamp(14px,1.45vw,28px); font-weight:500; letter-spacing:-.015em;
+}
+#senior-help .ih-stage {
+  margin:clamp(12px,2.6vh,31px) 0 0; width:100%; position:relative; overflow:hidden;
+  display:block; text-align:left; color:var(--ih-paper); user-select:none; touch-action:manipulation;
+  height:clamp(136px,31vh,350px); min-height:8.5em;
+  border-radius:clamp(14px,1.7vw,32px); border:1px solid rgba(250,243,216,.36);
+  background:linear-gradient(90deg,rgba(19,23,23,.28) 38%,rgba(20,26,24,.5) 61%,#232c27 80%),
+    linear-gradient(0deg,rgba(13,18,18,.9),rgba(17,23,18,.16) 84%),
+    var(--ih-photo,url("assets/suche-tagesschau.jpg")) 36% 45% / cover;
+  box-shadow:0 .65em 2em rgba(0,0,0,.22);
+}
+#senior-help .ih-stage-head {
+  position:absolute; top:10%; left:4.5%; color:#fff5df;
+  font-size:clamp(11px,1.1vw,22px); font-weight:650;
+  text-shadow:0 1px 4px #141a17;
+}
+#senior-help .ih-picture {position:absolute;left:4.5%;right:26%;bottom:13%;display:block;}
+#senior-help .ih-network {
+  display:block; font-size:clamp(12px,1.35vw,26px); font-weight:650; color:#ede2c4;
+  line-height:1.35; text-shadow:0 1px 3px #20251f;
+}
+#senior-help .ih-programme {
+  display:block; margin:.08em 0 0; color:#fffaf1;
+  font:400 clamp(22px,2.8vw,52px)/1.05 Senior-Hilfeschrift,Georgia,serif;
+  letter-spacing:-.022em; text-shadow:0 1px 8px #222b24;
+}
+#senior-help .ih-options {display:flex;flex-wrap:wrap;gap:.28em;margin-top:.38em;font-size:clamp(11px,1.15vw,22px);}
+#senior-help .ih-options:empty {display:none;}
+#senior-help .ih-options span {padding:.2em .5em;border-radius:.9em;background:#243029;color:#e9eadc;border:1px solid #7d8476;font-weight:620;}
+#senior-help .ih-options .ih-chosen {background:#eee2c1;border-color:#fff1cd;color:#253027;}
+#senior-help .ih-handset {
+  position:absolute; right:6%; top:9%; width:16%; height:95%;
+  border:1px solid #767770; border-bottom:0; border-radius:42% 42% 0 0 / 24% 24% 0 0;
+  background:linear-gradient(105deg,#50534c 0%,#333931 14%,#3b4039 66%,#272d27 99%);
+  box-shadow:-.22em .45em .65em #11191280;
+}
+#senior-help .ih-ring {
+  display:block;position:relative; aspect-ratio:1; width:83%; margin:14% auto 0;
+  border:1px solid #686d61;border-radius:50%;background:linear-gradient(140deg,#4f554b,#353a32);
+  box-shadow:0 1px 4px #121912ad,inset 0 1px 1px #afb3a333;
+}
+#senior-help .ih-ring b {
+  position:absolute; inset:24%; display:grid; place-items:center; border:1px solid #747a6b;
+  background:#3b4238;border-radius:50%;color:#eee8d7;font-size:clamp(11px,1.2vw,24px);
+}
+#senior-help .ih-ring i {position:absolute;width:10%;height:10%;border-top:2px solid #e2e4d2;border-left:2px solid #e2e4d2;}
+#senior-help .ih-up {top:10%; left:45%; transform:rotate(45deg);}
+#senior-help .ih-down {bottom:10%;left:45%;transform:rotate(225deg);}
+#senior-help .ih-left {left:10%;top:45%;transform:rotate(-45deg);}
+#senior-help .ih-right {right:10%;top:45%;transform:rotate(135deg);}
+#senior-help [data-cue="up"] .ih-up, #senior-help [data-cue="down"] .ih-down,
+#senior-help [data-cue="right"] .ih-right, #senior-help [data-cue="vertical"] :is(.ih-up,.ih-down) {border-color:#ffe9a4; filter:drop-shadow(0 0 3px #ffdf8b);}
+#senior-help [data-cue="vertical"] .ih-options {flex-direction:column;align-items:flex-start;}
+#senior-help [data-cue="ok"] .ih-ring b {background:#f1dfac;border-color:#fff3ce;color:#303429;box-shadow:0 0 .6em #ffe6a63b;}
+#senior-help [data-cue="up-hold"] .ih-ring {
+  background:conic-gradient(from -43deg,#f2dfaa 0deg 86deg,#3d443a 86deg 360deg);
+  border-color:#a49e82;
+}
+#senior-help [data-cue="up-hold"] .ih-up {border-color:#2d362e;}
+#senior-help .ih-task {
+  min-height:2.78em;margin-top:.72em;color:#fff1d3;
+  font-size:clamp(15px,1.68vw,32px);font-weight:620;
+}
+#senior-help .ih-task.ih-success {color:#d6e4c6;}
+#senior-help .ih-actions {display:flex;gap:.7em;margin-top:.42em;}
+#senior-help .ih-actions button {
+  padding:.45em .85em;border-radius:2em;border:1px solid var(--ih-line);
+  color:var(--ih-paper);background:#28312a;font-size:clamp(13px,1.4vw,25px);font-weight:610;
+}
+#senior-help .ih-actions .ih-next {background:#e9dfc5;color:#293027;border-color:#e9dfc5;}
+#senior-help button:focus {outline:3px solid var(--ih-cream);outline-offset:3px;}
+@media (max-height:460px) {
+  #senior-help .ih-page {padding-top:10px;padding-bottom:10px;}
+  #senior-help .ih-head {padding-bottom:8px;}
+  #senior-help .ih-content {padding:12px 0;gap:4vw;}
+  #senior-help .ih-stage {height:29vh;min-height:108px;margin-top:8px;}
+  #senior-help .ih-title {font-size:clamp(28px,4vw,45px);}
+}
+@media (max-width:590px) {
+  #senior-help .ih-page {padding:16px;}
+  #senior-help .ih-content {display:flex;flex-direction:column;align-items:stretch;gap:14px;}
+  #senior-help .ih-topics {align-self:stretch;flex-direction:row;flex-wrap:wrap;}
+  #senior-help .ih-topics button {width:auto;font-size:13px;padding:.4em .6em;}
+  #senior-help .ih-topics .ih-ticked::after {display:none;}
+}

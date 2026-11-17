@@ -1,102 +1,404 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#101116">
-  <meta name="description" content="Your own home screen for live TV, apps and German media libraries. Choose the full launcher or senior view and set it up with your AI agent.">
-  <meta property="og:title" content="NavaTV – Your TV. Your way.">
-  <meta property="og:description" content="Two TV interfaces, an optional Android companion and setup instructions for your AI agent.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://navatv.site/">
-  <meta property="og:image" content="https://navatv.site/assets/alpine-lake.webp">
-  <title>NavaTV – Your home screen for Android TV</title>
-  <link rel="icon" href="./assets/navatv-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./style.css">
-  <script src="./site.js" defer></script>
-</head>
-<body data-profile="full">
-<a class="skip" href="#main">Skip to content</a>
-<svg class="icon-source" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
-  <symbol id="i-out" viewBox="0 0 24 24"><path d="M7 17 18 6M8 6h10v10"/></symbol>
-  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4"/></symbol>
-  <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2.4"/><path d="M8 21h8m-4-4v4"/></symbol>
-  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 18.5h3"/></symbol>
-  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
-  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5.5 5.5L20 7"/></symbol>
-  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></symbol>
-  <symbol id="i-large" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.3"/><path d="M3 12h18m-10 0v7"/></symbol>
-  <symbol id="i-book" viewBox="0 0 24 24"><path d="M3.5 5h6c1.5 0 2.4.6 2.5 2.2C12.2 5.6 13 5 15 5h5.5v14H15c-2 0-2.7.6-3 1.5-.3-.9-1.1-1.5-3-1.5H3.5zM12 7v13"/></symbol>
-  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M7 3v5m10-5v5m-9 6h3m3 0h2"/></symbol>
-  <symbol id="i-save" viewBox="0 0 24 24"><path d="M6 4h12v17l-6-4-6 4z"/></symbol>
-</svg>
-<header class="topbar">
-  <div class="frame nav-inner">
-    <a class="brand" href="#main" aria-label="NavaTV home"><img src="./assets/navatv-mark.svg" width="40" height="32" alt="">Nava<span>TV</span></a>
-    <nav aria-label="Main navigation"><a href="#preview">Preview</a><a href="#setup">Setup</a><a href="#downloads">Downloads</a></nav>
-    <a class="github" href="https://github.com/fcore247/navatv">GitHub <svg class="icon"><use href="#i-out"/></svg></a>
-  </div>
-</header>
-<main id="main">
-  <div class="hero-ground">
-    <section class="hero frame" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <p class="kicker"><span class="on-dot"></span> Open-source TV launcher</p>
-        <h1 id="hero-title">Your TV.<br><em>Your way.</em></h1>
-        <p class="intro">Make room for live TV, apps and German media libraries on your home screen. Pick an interface and let your AI agent guide you through setup.</p>
-        <div class="hero-actions"><a class="btn primary" href="#setup">Set up NavaTV <svg class="icon"><use href="#i-arrow"/></svg></a><a class="btn text-link" href="#downloads">Android app <svg class="icon"><use href="#i-down"/></svg></a></div>
-        <p class="compat"><svg class="icon"><use href="#i-monitor"/></svg> Android TV · Google TV · Fire TV <span>(Fire OS)</span></p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101116" />
+    <meta
+      name="description"
+      content="Your own home screen for live TV, apps and German media libraries. Choose the full launcher or senior view and set it up with your AI agent."
+    />
+    <meta property="og:title" content="OpenNava – Your TV. Your way." />
+    <meta
+      property="og:description"
+      content="Two TV interfaces, an optional Android companion and setup instructions for your AI agent."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://opennava.site/" />
+    <link rel="canonical" href="https://opennava.site/" />
+    <meta
+      property="og:image"
+      content="https://opennava.site/assets/alpine-lake.webp"
+    />
+    <title>OpenNava – Your home screen for Android TV</title>
+    <link rel="icon" href="./assets/opennava-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./site.js" defer></script>
+    <script src="./demo-host/companion.js" defer></script>
+  </head>
+  <body data-profile="full">
+    <a class="skip" href="#main">Skip to content</a>
+    <svg
+      class="icon-source"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M4 12h15m-6-6 6 6-6 6" />
+      </symbol>
+      <symbol id="i-out" viewBox="0 0 24 24">
+        <path d="M7 17 18 6M8 6h10v10" />
+      </symbol>
+      <symbol id="i-down" viewBox="0 0 24 24">
+        <path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4" />
+      </symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24">
+        <rect x="2.5" y="4" width="19" height="13" rx="2.4" />
+        <path d="M8 21h8m-4-4v4" />
+      </symbol>
+      <symbol id="i-phone" viewBox="0 0 24 24">
+        <rect x="6" y="2" width="12" height="20" rx="3" />
+        <path d="M10.5 18.5h3" />
+      </symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24">
+        <rect x="8" y="8" width="12" height="13" rx="2" />
+        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m4 12 5.5 5.5L20 7" />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="1.6" />
+        <rect x="14" y="3" width="7" height="7" rx="1.6" />
+        <rect x="3" y="14" width="7" height="7" rx="1.6" />
+        <rect x="14" y="14" width="7" height="7" rx="1.6" />
+      </symbol>
+      <symbol id="i-large" viewBox="0 0 24 24">
+        <rect x="2.5" y="5" width="19" height="14" rx="2.3" />
+        <path d="M3 12h18m-10 0v7" />
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 24 24">
+        <path
+          d="M3.5 5h6c1.5 0 2.4.6 2.5 2.2C12.2 5.6 13 5 15 5h5.5v14H15c-2 0-2.7.6-3 1.5-.3-.9-1.1-1.5-3-1.5H3.5zM12 7v13"
+        />
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M3 10h18M7 3v5m10-5v5m-9 6h3m3 0h2" />
+      </symbol>
+      <symbol id="i-save" viewBox="0 0 24 24">
+        <path d="M6 4h12v17l-6-4-6 4z" />
+      </symbol>
+    </svg>
+    <header class="topbar">
+      <div class="frame nav-inner">
+        <a class="brand" href="#main" aria-label="OpenNava home"
+          ><img
+            src="./assets/opennava-mark.svg"
+            width="40"
+            height="32"
+            alt=""
+          />Open<span>Nava</span></a
+        >
+        <nav aria-label="Main navigation">
+          <a href="#preview">Preview</a><a href="#setup">Setup</a
+          ><a href="#downloads">Downloads</a>
+        </nav>
+        <a class="github" href="https://github.com/fcore247/opennava"
+          >GitHub <svg class="icon"><use href="#i-out" /></svg
+        ></a>
       </div>
-      <div class="product-hero" id="preview" aria-label="Preview of the two TV interfaces">
-        <div class="tv-set">
-          <div class="tv-frame" role="img" aria-label="Illustrative preview of the full launcher with an alpine film and media apps" id="tv-preview">
-            <div class="tv-screen" aria-hidden="true">
-              <div class="tv-header"><div class="tv-brand"><img src="./assets/navatv-mark.svg" alt=""> NavaTV</div><div class="tv-nav full-only"><b>For you</b><span>Discover</span><span>My list</span></div><time>20:15</time></div>
-              <div class="tv-editorial full-only"><p>◉ &nbsp; Nature film</p><strong>Alpine<br>evening</strong></div>
-              <div class="tv-apps full-only"><span class="app-tile first">Das Erste</span><span class="app-tile second">ZDF</span><span class="app-tile third">arte</span><span class="app-tile fourth">Live TV</span></div>
-              <div class="senior-home senior-only"><p>Media libraries</p><strong>Good evening.</strong><div class="senior-tiles"><span>ARD</span><span>ZDF</span><span>ARTE</span></div><div class="senior-links"><span>▷ &nbsp; Live TV</span><span>▤ &nbsp; Recordings</span></div></div>
+    </header>
+    <main id="main">
+      <div class="hero-ground">
+        <section class="hero frame" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <p class="kicker">
+              <span class="on-dot"></span> Open-source TV launcher
+            </p>
+            <h1 id="hero-title">Your TV.<br /><em>Your way.</em></h1>
+            <p class="intro">
+              A home screen for live TV, apps and German media libraries. Try
+              both interfaces here, then let your AI agent set up your TV.
+            </p>
+            <div class="hero-actions">
+              <a class="btn primary" href="#setup"
+                >Set up OpenNava
+                <svg class="icon"><use href="#i-arrow" /></svg></a
+              ><a class="btn text-link" href="#downloads"
+                >Android app <svg class="icon"><use href="#i-down" /></svg
+              ></a>
             </div>
-            <i class="tv-led"></i>
+            <p class="compat">
+              <svg class="icon"><use href="#i-monitor" /></svg> Android TV ·
+              Google TV · Fire TV <span>(Fire OS)</span>
+            </p>
           </div>
-          <i class="tv-foot left"></i><i class="tv-foot right"></i>
+          <div
+            class="demo-studio"
+            id="preview"
+            aria-label="Interactive TV and Android companion"
+          >
+            <div class="demo-heading">
+              <div class="studio-label"><i></i> Interactive demo</div>
+              <fieldset class="toggle">
+                <legend>Choose the live demo profile</legend>
+                <label
+                  ><input
+                    type="radio"
+                    name="preview"
+                    value="full"
+                    checked
+                  />Full launcher</label
+                ><label
+                  ><input type="radio" name="preview" value="senior" />Senior
+                  view</label
+                >
+              </fieldset>
+            </div>
+            <div class="devices">
+              <div class="virtual-tv">
+                <div class="tv-bezel">
+                  <div class="tv-viewport" id="tv-viewport">
+                    <iframe
+                      id="demo-tv"
+                      src="./demo/full/index.html"
+                      title="Interactive OpenNava launcher"
+                      sandbox="allow-scripts allow-same-origin allow-forms"
+                      allow="fullscreen"
+                      allowfullscreen
+                    ></iframe>
+                  </div>
+                  <i class="tv-led"></i>
+                </div>
+                <div class="tv-stand" aria-hidden="true"></div>
+                <div class="demo-tools">
+                  <span>Click the TV, then use the arrow keys and Enter.</span
+                  ><button
+                    type="button"
+                    id="expand-tv"
+                    title="Expand the television"
+                  >
+                    Expand TV <svg class="icon"><use href="#i-out" /></svg>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="virtual-phone"
+                id="virtual-phone"
+                aria-label="Interactive Android companion"
+              >
+                <div class="companion-display">
+                  <div class="phone-indicators" aria-hidden="true">
+                    <span>10:08</span><i></i><span>▴ ▰</span>
+                  </div>
+                  <div class="companion-head">
+                    <button
+                      type="button"
+                      data-phone="menu"
+                      aria-label="Companion menu"
+                      aria-expanded="false"
+                    >
+                      ☰</button
+                    ><b>OpenNava</b
+                    ><span class="pair-status"><i></i> Demo TV</span>
+                  </div>
+                  <div class="companion-content" id="companion-content"></div>
+                  <div class="phone-nav">
+                    <button
+                      type="button"
+                      data-device-key="Escape"
+                      aria-label="Back on the TV"
+                    >
+                      ‹ &nbsp; Back</button
+                    ><button
+                      type="button"
+                      data-phone="remote"
+                      aria-label="Open remote control"
+                    >
+                      Remote</button
+                    ><button type="button" data-phone="tv-home">TV home</button>
+                  </div>
+                  <i class="p-handle"></i>
+                </div>
+              </div>
+            </div>
+            <p class="sandbox-note">
+              Try the actual launcher with a simulated TV connection and sample
+              programming. The demo runs in your browser.
+            </p>
+          </div>
+        </section>
+      </div>
+      <section
+        class="setup section frame"
+        id="setup"
+        aria-labelledby="setup-title"
+      >
+        <div class="section-head">
+          <div>
+            <p class="section-label"><span></span> Setup</p>
+            <h2 id="setup-title">How do you <em>watch?</em></h2>
+          </div>
+          <p>
+            Both interfaces come in one TV app. Choose the one you’d like your
+            agent to set up.
+          </p>
         </div>
-        <div class="preview-controls"><span>Preview</span><fieldset class="toggle"><legend>Interface to preview</legend><label><input type="radio" name="preview" value="full" checked>Full launcher</label><label><input type="radio" name="preview" value="senior">Senior view</label></fieldset></div>
+        <fieldset class="profile-options">
+          <legend>Choose a setup profile</legend>
+          <label class="profile-card"
+            ><input type="radio" name="profile" value="full" checked /><span
+              class="card-line"
+              ><svg class="icon"><use href="#i-grid" /></svg
+              ><span class="radio-ui"></span></span
+            ><strong>Full launcher</strong
+            ><span
+              >Your apps, media libraries and quick settings together on a
+              customizable TV home screen.</span
+            ></label
+          >
+          <label class="profile-card"
+            ><input type="radio" name="profile" value="senior" /><span
+              class="card-line"
+              ><svg class="icon"><use href="#i-large" /></svg
+              ><span class="radio-ui"></span></span
+            ><strong>Senior view</strong
+            ><span
+              >Large buttons open ARD, ZDF, ARTE, live TV and recordings
+              directly from the home screen.</span
+            ></label
+          >
+        </fieldset>
+        <div class="agent-panel">
+          <div>
+            <h3>Set up with your AI agent</h3>
+            <p>
+              Paste this prompt into your AI agent on your computer. It will
+              help you connect your TV and install the selected interface.
+            </p>
+            <details class="prompt-details">
+              <summary>Read the setup prompt</summary>
+              <p id="prompt-text" tabindex="0"></p>
+            </details>
+            <a
+              id="agent-guide"
+              class="guide-link"
+              href="https://github.com/fcore247/opennava/blob/main/AGENTS.md#full-launcher"
+              >Read the guide on GitHub
+              <svg class="icon"><use href="#i-out" /></svg
+            ></a>
+          </div>
+          <div class="copy-box">
+            <span class="agent-choice"
+              >Selected <b id="profile-name">Full launcher</b></span
+            ><button id="copy-prompt" class="btn primary" type="button">
+              <svg class="icon"><use href="#i-copy" /></svg
+              ><span>Copy setup prompt</span>
+            </button>
+            <p class="copy-status" id="copy-status" aria-live="polite"></p>
+          </div>
+        </div>
+        <noscript
+          ><p>
+            Read the
+            <a href="https://github.com/fcore247/opennava/blob/main/AGENTS.md"
+              >setup guide</a
+            >
+            and tell your agent which profile you want, <code>full</code> or
+            <code>senior</code>.
+          </p></noscript
+        >
+      </section>
+      <section
+        class="downloads"
+        id="downloads"
+        aria-labelledby="download-title"
+      >
+        <div class="frame download-inner">
+          <div class="download-copy">
+            <p class="section-label"><span></span> Android companion</p>
+            <h2 id="download-title">Your guide.<br /><em>In your hand.</em></h2>
+            <p>
+              Browse the guide, choose a channel or play a show on your paired
+              TV, straight from your phone.
+            </p>
+          </div>
+          <div class="download-files">
+            <a
+              class="release-file"
+              href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk"
+              ><span class="release-icon"
+                ><svg class="icon"><use href="#i-phone" /></svg
+              ></span>
+              <div>
+                <strong>Download Android app</strong
+                ><small>Companion for Android 11 or later · APK</small>
+              </div>
+              <svg class="icon file-arrow"><use href="#i-down" /></svg
+            ></a>
+            <a
+              class="release-file"
+              href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk"
+              ><span class="release-icon"
+                ><svg class="icon"><use href="#i-monitor" /></svg
+              ></span>
+              <div>
+                <strong>Download the TV app</strong
+                ><small>Full launcher and senior view · APK</small>
+              </div>
+              <svg class="icon file-arrow"><use href="#i-down" /></svg
+            ></a>
+            <a
+              class="release-more"
+              href="https://github.com/fcore247/opennava/releases"
+              >All releases <svg class="icon"><use href="#i-out" /></svg
+            ></a>
+          </div>
+        </div>
+      </section>
+      <section class="questions frame" aria-labelledby="questions-title">
+        <h2 id="questions-title">Good to know.</h2>
+        <div>
+          <details>
+            <summary>What do I need to get started?</summary>
+            <p>
+              You’ll need an Android TV, Google TV or Android-based Fire OS
+              device. Use an AI agent that can run local commands on your
+              computer. The agent helps you connect, and you approve the initial
+              debugging request on your TV.
+            </p>
+          </details>
+          <details>
+            <summary>How do TV updates work?</summary>
+            <p>
+              OpenNava checks signed releases from the GitHub project. Your
+              paired Android companion or setup agent can install a TV update.
+              Your device may ask you to confirm the installation.
+            </p>
+          </details>
+          <details>
+            <summary>Do I need the phone app?</summary>
+            <p>
+              Both interfaces work with your TV remote. Install the optional
+              Android companion and pair it with your TV whenever you like.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <div class="frame footer-inner">
+        <a class="brand" href="#main"
+          ><img
+            src="./assets/opennava-mark.svg"
+            width="31"
+            height="28"
+            alt=""
+          />Open<span>Nava</span></a
+        >
+        <p class="brand-credit">
+          <a href="https://navaos.site/os/">NavaOS</a> inspired me to build
+          OpenNava.
+        </p>
+        <div>
+          <a href="https://github.com/fcore247/opennava"
+            >Source code <svg class="icon"><use href="#i-out" /></svg></a
+          ><a href="https://github.com/fcore247/opennava/releases"
+            >Releases <svg class="icon"><use href="#i-out" /></svg
+          ></a>
+        </div>
       </div>
-    </section>
-  </div>
-  <section class="setup section frame" id="setup" aria-labelledby="setup-title">
-    <div class="section-head"><div><p class="section-label"><span></span> Setup</p><h2 id="setup-title">How do you <em>watch?</em></h2></div><p>Both interfaces come in one TV app. Choose the one you’d like your agent to set up.</p></div>
-    <fieldset class="profile-options"><legend>Choose a setup profile</legend>
-      <label class="profile-card"><input type="radio" name="profile" value="full" checked><span class="card-line"><svg class="icon"><use href="#i-grid"/></svg><span class="radio-ui"></span></span><strong>Full launcher</strong><span>Your apps, media libraries and quick settings together on a customizable TV home screen.</span></label>
-      <label class="profile-card"><input type="radio" name="profile" value="senior"><span class="card-line"><svg class="icon"><use href="#i-large"/></svg><span class="radio-ui"></span></span><strong>Senior view</strong><span>Large buttons open ARD, ZDF, ARTE, live TV and recordings directly from the home screen.</span></label>
-    </fieldset>
-    <div class="agent-panel">
-      <div><h3>Set up with your AI agent</h3><p>Paste this prompt into your AI agent on your computer. It will help you connect your TV and install the selected interface.</p>
-        <details class="prompt-details"><summary>Read the setup prompt</summary><p id="prompt-text" tabindex="0"></p></details>
-        <a id="agent-guide" class="guide-link" href="https://github.com/fcore247/navatv/blob/main/AGENTS.md#full-launcher">Read the guide on GitHub <svg class="icon"><use href="#i-out"/></svg></a>
-      </div>
-      <div class="copy-box"><span class="agent-choice">Selected <b id="profile-name">Full launcher</b></span><button id="copy-prompt" class="btn primary" type="button"><svg class="icon"><use href="#i-copy"/></svg><span>Copy setup prompt</span></button><p class="copy-status" id="copy-status" aria-live="polite"></p></div>
-    </div>
-    <noscript><p>Read the <a href="https://github.com/fcore247/navatv/blob/main/AGENTS.md">setup guide</a> and tell your agent which profile you want, <code>full</code> or <code>senior</code>.</p></noscript>
-  </section>
-  <section class="downloads" id="downloads" aria-labelledby="download-title">
-    <div class="frame download-inner">
-      <div class="phone-stage" role="img" aria-label="Preview of the Android app with Live TV, Media libraries, TV guide and Recordings">
-        <div class="phone-device" aria-hidden="true"><div class="phone-display"><div class="p-status">10:08 <i></i><span>▴ ▰</span></div><div class="p-header"><b>☰</b> NavaTV <span>● Connected</span></div><p>What would you<br>like to do?</p><div class="p-tiles"><div><svg class="icon"><use href="#i-monitor"/></svg>Live TV</div><div><svg class="icon"><use href="#i-book"/></svg>Media libraries</div><div><svg class="icon"><use href="#i-calendar"/></svg>TV guide</div><div><svg class="icon"><use href="#i-save"/></svg>Recordings</div></div><i class="p-handle"></i></div></div>
-      </div>
-      <div class="download-copy"><p class="section-label"><span></span> Android companion</p><h2 id="download-title">Your guide.<br><em>In your hand.</em></h2><p>Browse the guide, choose a channel or play a show on your paired TV, straight from your phone.</p>
-        <a class="btn primary" href="https://github.com/fcore247/navatv/releases/latest/download/NavaTV-Companion.apk"><svg class="icon"><use href="#i-down"/></svg> Download Android app</a><span class="file-note">APK for phones running Android 11 or later</span>
-        <div class="tv-download"><svg class="icon"><use href="#i-monitor"/></svg><div><strong>For your television</strong><a href="https://github.com/fcore247/navatv/releases/latest/download/NavaTV.apk">Download the TV app <svg class="icon"><use href="#i-down"/></svg></a></div></div>
-      </div>
-    </div>
-  </section>
-  <section class="questions frame" aria-labelledby="questions-title"><h2 id="questions-title">Good to know.</h2><div>
-    <details><summary>What do I need to get started?</summary><p>You’ll need an Android TV, Google TV or Android-based Fire OS device. Use an AI agent that can run local commands on your computer. The agent helps you connect, and you approve the initial debugging request on your TV.</p></details>
-    <details><summary>How do TV updates work?</summary><p>NavaTV checks signed releases from the GitHub project. Your paired Android companion or setup agent can install a TV update. Your device may ask you to confirm the installation.</p></details>
-    <details><summary>Do I need the phone app?</summary><p>Both interfaces work with your TV remote. Install the optional Android companion and pair it with your TV whenever you like.</p></details>
-  </div></section>
-</main>
-<footer><div class="frame footer-inner"><a class="brand" href="#main"><img src="./assets/navatv-mark.svg" width="31" height="28" alt="">Nava<span>TV</span></a><div><a href="https://github.com/fcore247/navatv">Source code <svg class="icon"><use href="#i-out"/></svg></a><a href="https://github.com/fcore247/navatv/releases">Releases <svg class="icon"><use href="#i-out"/></svg></a></div></div></footer>
-</body>
+    </footer>
+  </body>
 </html>

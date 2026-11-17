@@ -1,0 +1,21 @@
+// Export the same release libraries that were built for the original SmartTube-based player.
+gradle.projectsEvaluated {
+    def app = rootProject.project(':app')
+    def libraries = rootProject.subprojects.findAll { it != app }
+    app.tasks.register('exportPlayerLibraries') {
+        def dest = new File(System.getenv('TV_PLAYER_LIBS'))
+        dependsOn libraries.collect { it.tasks.named('bundleReleaseAar') }
+        doLast {
+            dest.mkdirs()
+            def artifacts = app.configurations.releaseRuntimeClasspath.incoming.resolutionResult.allComponents
+            def external = artifacts.findAll {
+                it.id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier
+            }.collect { it.id.displayName }.unique().sort()
+            new File(dest, 'dependencies.txt').text = external.join('\n') + '\n'
+            libraries.each { project ->
+                def aar = project.tasks.named('bundleReleaseAar').get().archiveFile.get().asFile
+                copy { from aar; into dest }
+            }
+        }
+    }
+}

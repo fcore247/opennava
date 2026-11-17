@@ -1,0 +1,34 @@
+plugins { id 'com.android.application' }
+
+def libs = rootProject.file('player/build/export')
+android {
+    sourceSets.main.java.srcDir(rootProject.file('updates/src/main/java'))
+    namespace 'site.navatv.launcher'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    buildFeatures { buildConfig = true }
+    defaultConfig {
+        applicationId 'site.navatv.launcher'
+        minSdk 26
+        targetSdk 34
+        versionCode 100
+        versionName '1.0.0'
+        buildConfigField 'boolean', 'RTL_ENABLED', 'false'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+    androidResources { noCompress += ['mp4','ttf','jpg','png'] }
+    packaging {
+        jniLibs { useLegacyPackaging = true }
+        resources { excludes += ['META-INF/DEPENDENCIES','META-INF/INDEX.LIST','META-INF/*.kotlin_module'] }
+    }
+}
+dependencies {
+    implementation 'com.google.zxing:core:3.5.4'
+    implementation fileTree(dir: libs, include: ['*.aar'])
+    new File(libs,'dependencies.txt').eachLine { coordinate ->
+        def artifact = coordinate.startsWith('com.eclipsesource.j2v8:j2v8:') ? coordinate + '@aar' : coordinate
+        implementation(artifact) { transitive = false }
+    }
+    implementation 'androidx.media3:media3-exoplayer:1.11.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.11.1'
+}

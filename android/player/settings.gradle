@@ -1,0 +1,4 @@
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+rootProject.name = 'OpenNava'
+include ':app', ':sharedutils', ':commonsio', ':mediaserviceinterfaces', ':youtubeapi', ':exo-core', ':exo-dash', ':exo-hls', ':exo-sabr', ':exo-cronet'
+rootProject.children.each { it.projectDir = new File(settingsDir, 'gradle-modules/' + it.name) }
