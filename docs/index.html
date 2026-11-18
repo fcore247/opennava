@@ -1,356 +1,460 @@
 <!doctype html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#101116" />
+    <meta name="theme-color" content="#101115" />
+    <title>OpenNava × Luna Browser · Vom Web auf den Fernseher</title>
     <meta
       name="description"
-      content="Your own home screen for live TV, apps and German media libraries. Choose the full launcher or senior view and set it up with your AI agent."
+      content="Entdecke Luna Browser und OpenNava. Probiere aus, wie du Sendungen vormerkst und später auf dem Fernseher öffnest."
     />
-    <meta property="og:title" content="OpenNava – Your TV. Your way." />
+    <meta property="og:title" content="OpenNava × Luna Browser" />
     <meta
       property="og:description"
-      content="Two TV interfaces, an optional Android companion and setup instructions for your AI agent."
+      content="Im Web entdecken. Am TV ansehen. Eine interaktive Demo für Browser und Fernseher."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://opennava.site/" />
-    <link rel="canonical" href="https://opennava.site/" />
     <meta
       property="og:image"
       content="https://opennava.site/assets/alpine-lake.webp"
     />
-    <title>OpenNava – Your home screen for Android TV</title>
+    <link rel="canonical" href="https://opennava.site/" />
     <link rel="icon" href="./assets/opennava-mark.svg" type="image/svg+xml" />
-    <link rel="preload" href="./assets/fonts/Manrope.ttf" as="font" type="font/ttf" crossorigin />
-    <link rel="preload" href="./assets/fonts/InstrumentSerif-Regular.ttf" as="font" type="font/ttf" crossorigin />
+    <link
+      rel="preload"
+      href="./assets/fonts/Manrope.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="./assets/fonts/InstrumentSerif-Regular.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
     <link rel="stylesheet" href="./style.css" />
     <script src="./site.js" defer></script>
     <script src="./demo-host/television.js" defer></script>
+    <script src="./watchlist-demo.js" defer></script>
   </head>
   <body data-profile="full">
-    <a class="skip" href="#main">Skip to content</a>
-    <svg
-      class="icon-source"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <symbol id="i-arrow" viewBox="0 0 24 24">
-        <path d="M4 12h15m-6-6 6 6-6 6" />
-      </symbol>
-      <symbol id="i-out" viewBox="0 0 24 24">
-        <path d="M7 17 18 6M8 6h10v10" />
-      </symbol>
-      <symbol id="i-down" viewBox="0 0 24 24">
-        <path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4" />
-      </symbol>
-      <symbol id="i-monitor" viewBox="0 0 24 24">
-        <rect x="2.5" y="4" width="19" height="13" rx="2.4" />
+    <a class="skip" href="#main">Zum Inhalt</a>
+    <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <symbol id="i-tv" viewBox="0 0 24 24">
+        <rect x="2.5" y="4" width="19" height="13" rx="2.5" />
         <path d="M8 21h8m-4-4v4" />
       </symbol>
-      <symbol id="i-phone" viewBox="0 0 24 24">
-        <rect x="6" y="2" width="12" height="20" rx="3" />
-        <path d="M10.5 18.5h3" />
+      <symbol id="i-browser" viewBox="0 0 24 24">
+        <rect x="2.5" y="4" width="19" height="16" rx="3" />
+        <path d="M3 9h18m-15-2.5h.1m2.5 0h.1" />
       </symbol>
-      <symbol id="i-copy" viewBox="0 0 24 24">
-        <rect x="8" y="8" width="12" height="13" rx="2" />
-        <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
+      <symbol id="i-bookmark" viewBox="0 0 24 24">
+        <path
+          d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5v16L12 17l-6 3.5z"
+        />
       </symbol>
-      <symbol id="i-grid" viewBox="0 0 24 24">
-        <rect x="3" y="3" width="7" height="7" rx="1.6" />
-        <rect x="14" y="3" width="7" height="7" rx="1.6" />
-        <rect x="3" y="14" width="7" height="7" rx="1.6" />
-        <rect x="14" y="14" width="7" height="7" rx="1.6" />
+      <symbol id="i-play" viewBox="0 0 24 24">
+        <path d="m8 5 11 7-11 7z" />
       </symbol>
-      <symbol id="i-large" viewBox="0 0 24 24">
-        <rect x="2.5" y="5" width="19" height="14" rx="2.3" />
-        <path d="M3 12h18m-10 0v7" />
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m4.5 12 5 5L20 6.5" />
+      </symbol>
+      <symbol id="i-expand" viewBox="0 0 24 24">
+        <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 24 24">
+        <rect x="5" y="10" width="14" height="11" rx="2" />
+        <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+      </symbol>
+      <symbol id="i-close" viewBox="0 0 24 24">
+        <path d="m6 6 12 12M18 6 6 18" />
       </symbol>
     </svg>
-    <header class="topbar">
-      <div class="frame nav-inner">
-        <a class="brand" href="#main" aria-label="OpenNava home"
-          ><img
-            src="./assets/opennava-mark.svg"
-            width="40"
-            height="32"
-            alt=""
-          />Open<span>Nava</span></a
-        >
-        <nav aria-label="Main navigation">
-          <a href="#preview">Preview</a><a href="#setup">Setup</a
-          ><a href="#downloads">Downloads</a>
-        </nav>
-        <a class="github" href="https://github.com/fcore247/opennava"
-          >GitHub <svg class="icon"><use href="#i-out" /></svg
-        ></a>
-      </div>
+    <header class="mast frame">
+      <a
+        class="brand"
+        aria-label="OpenNava und Luna Browser, zur Startseite"
+        href="#main"
+        ><img
+          src="./assets/opennava-mark.svg"
+          width="28"
+          height="24"
+          alt=""
+        />OpenNava <span class="cross" aria-hidden="true">×</span
+        ><img src="./assets/luna-icon.svg" width="24" height="24" alt="" /><span
+          >Luna<span class="brand-extra"> Browser</span></span
+        ></a
+      >
+      <nav aria-label="Hauptnavigation">
+        <a href="#demo">Demo</a><a href="#produkte">Produkte</a
+        ><a class="nav-button" href="#setup">Einrichten</a>
+      </nav>
     </header>
     <main id="main">
-      <div class="hero-ground">
-        <section class="hero frame" aria-labelledby="hero-title">
-          <div class="hero-copy">
-            <p class="kicker"><span class="on-dot"></span> TV launcher</p>
-            <h1 id="hero-title">Your TV.<br /><em>Your way.</em></h1>
-            <p class="intro">
-              A home screen for live TV, apps and German media libraries. Try
-              both interfaces here, then let your AI agent set up your TV.
-            </p>
-            <div class="hero-actions">
-              <a class="btn primary" href="#setup"
-                >Set up OpenNava
-                <svg class="icon"><use href="#i-arrow" /></svg></a
-              ><a class="btn text-link" href="#downloads"
-                >Android app <svg class="icon"><use href="#i-down" /></svg
-              ></a>
-            </div>
-            <p class="compat">
-              <svg class="icon"><use href="#i-monitor" /></svg> Android TV ·
-              Google TV · Fire TV <span>(Fire OS)</span>
-            </p>
+      <section class="hero frame" aria-labelledby="hero-title">
+        <img
+          class="hero-image"
+          alt=""
+          src="./assets/alpine-lake.webp"
+          fetchpriority="high"
+        />
+        <div class="hero-shade"></div>
+        <div class="hero-text">
+          <h1 id="hero-title">
+            Im Web entdecken.<br /><em>Am TV ansehen.</em>
+          </h1>
+          <p>
+            Merke dir eine Sendung im Luna Browser und öffne sie später mit
+            OpenNava auf deinem Fernseher.
+          </p>
+          <div class="hero-actions">
+            <a href="#demo" class="button light"
+              ><svg class="icon"><use href="#i-play" /></svg>Demo ausprobieren</a
+            >
+            <a href="#setup" class="button ghost">Einrichten</a>
           </div>
-          <div
-            class="demo-studio"
-            id="preview"
-            role="region"
-            aria-label="Interactive television"
-          >
-            <div class="demo-heading">
-              <div class="studio-label"><i></i> Interactive TV</div>
-              <fieldset class="toggle">
-                <legend>Choose the live demo profile</legend>
-                <label
-                  ><input
-                    type="radio"
-                    name="preview"
-                    value="full"
-                    checked
-                  />Full launcher</label
-                ><label
-                  ><input type="radio" name="preview" value="senior" />Senior
-                  view</label
+        </div>
+        <button
+          type="button"
+          class="film-caption"
+          id="hero-film"
+          aria-label="Beispielclip Über den Wolken abspielen"
+        >
+          <span class="play-circle"
+            ><svg class="icon"><use href="#i-play" /></svg></span
+          ><span><small>Beispielclip</small><b>Über den Wolken</b></span>
+        </button>
+      </section>
+      <section class="workspace frame" id="demo" aria-labelledby="lab-title">
+        <div class="lab-head">
+          <div>
+            <h2 id="lab-title">Die gemeinsame Merkliste.</h2>
+            <p>Wähle eine Sendung in Luna und öffne sie auf dem Demo-TV.</p>
+          </div>
+          <div class="device-tabs" role="tablist" aria-label="Demogerät wählen">
+            <button
+              type="button"
+              role="tab"
+              id="luna-tab"
+              aria-selected="true"
+              aria-controls="luna-panel"
+            >
+              <svg class="icon"><use href="#i-browser" /></svg>Luna Browser
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="tv-tab"
+              aria-selected="false"
+              aria-controls="tv-panel"
+              tabindex="-1"
+            >
+              <svg class="icon"><use href="#i-tv" /></svg>OpenNava TV
+            </button>
+          </div>
+        </div>
+        <div
+          class="lab-panel"
+          role="tabpanel"
+          id="luna-panel"
+          aria-labelledby="luna-tab"
+        >
+          <div class="lab-copy">
+            <h3>Sendung auswählen</h3>
+            <div
+              class="film-list"
+              id="film-list"
+              role="group"
+              aria-label="Beispielsendungen"
+            >
+              <button type="button" data-film="alpine" aria-pressed="true">
+                <img src="./demo/full/assets/mountains.jpg" alt="" /><span
+                  ><small>ARD · Demofilm</small><b>Über den Wolken</b></span
                 >
-              </fieldset>
+              </button>
+              <button type="button" data-film="ocean" aria-pressed="false">
+                <img
+                  src="./demo/full/assets/ocean.jpg"
+                  alt=""
+                  loading="lazy"
+                /><span
+                  ><small>ARTE · Demofilm</small><b>Die blaue Stunde</b></span
+                >
+              </button>
+              <button type="button" data-film="netflix" aria-pressed="false">
+                <span class="netflix-art" aria-hidden="true">N</span
+                ><span
+                  ><small>Netflix · Titellink</small><b>Unser Planet</b></span
+                >
+              </button>
             </div>
-            <div class="virtual-tv">
-              <div class="tv-bezel">
-                <div class="tv-viewport" id="tv-viewport">
-                  <iframe
-                    id="demo-tv"
-                    src="./demo/full/index.html"
-                    title="Interactive OpenNava launcher"
-                    aria-describedby="tv-directions"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
-                    allow="fullscreen"
-                    allowfullscreen
-                  ></iframe>
-                </div>
-                <i class="tv-led" aria-hidden="true"></i>
-              </div>
-              <div class="tv-stand" aria-hidden="true"></div>
-              <div class="demo-tools">
-                <p id="tv-directions">
-                  Click or tap the TV to explore. Use the arrow keys to move,
-                  Enter to select and Esc to go back.
-                </p>
+            <button type="button" class="button outline" id="start-tv">
+              <svg class="icon"><use href="#i-tv" /></svg>Demo-TV starten
+            </button>
+          </div>
+          <div class="browser-mock" data-luna-theme="rose">
+            <div class="browser-chrome">
+              <span class="traffic" aria-hidden="true"
+                ><i></i><i></i><i></i></span
+              ><span class="address"
+                ><svg class="icon"><use href="#i-lock" /></svg
+                ><span id="address"></span></span
+              ><label class="theme-control">
+                <span class="sr-only">Luna-Farbthema</span>
+                <select id="luna-theme" aria-label="Luna-Farbthema">
+                  <option value="rose">Rosé</option>
+                  <option value="ocean">Ozean</option>
+                  <option value="graphite">Graphit</option>
+                </select>
+              </label>
+            </div>
+            <div class="film-screen" id="film-screen">
+              <img id="film-art" src="./demo/full/assets/mountains.jpg" alt="" />
+              <div class="feature-text">
+                <div class="film-kind" id="film-kind"></div>
+                <h4 id="film-title">Über den Wolken</h4>
+                <p id="film-description"></p>
                 <button
+                  class="button light"
                   type="button"
-                  id="expand-tv"
-                  title="Expand the television"
+                  id="save-film"
+                  aria-pressed="false"
                 >
-                  Expand TV
-                  <svg class="icon" aria-hidden="true">
-                    <use href="#i-out" />
-                  </svg>
+                  <svg class="icon"><use href="#i-bookmark" /></svg
+                  ><span>Für OpenNava vormerken</span>
                 </button>
               </div>
             </div>
-            <p class="sandbox-note">
-              Live TV plays available broadcaster streams. The launcher’s
-              on-demand library uses sample programmes and footage.
-            </p>
           </div>
-        </section>
-      </div>
-      <section
-        class="setup section frame"
-        id="setup"
-        aria-labelledby="setup-title"
-      >
-        <div class="section-head">
-          <div>
-            <p class="section-label"><span></span> Setup</p>
-            <h2 id="setup-title">How do you <em>watch?</em></h2>
-          </div>
-          <p>
-            Both interfaces come in one TV app. Choose the one you’d like your
-            agent to set up.
-          </p>
         </div>
-        <fieldset class="profile-options">
-          <legend>Choose a setup profile</legend>
-          <label class="profile-card"
-            ><input type="radio" name="profile" value="full" checked /><span
-              class="card-line"
-              ><svg class="icon"><use href="#i-grid" /></svg
-              ><span class="radio-ui"></span></span
-            ><strong>Full launcher</strong
-            ><span
-              >Your apps, media libraries and quick settings together on a
-              customizable TV home screen.</span
-            ></label
-          >
-          <label class="profile-card"
-            ><input type="radio" name="profile" value="senior" /><span
-              class="card-line"
-              ><svg class="icon"><use href="#i-large" /></svg
-              ><span class="radio-ui"></span></span
-            ><strong>Senior view</strong
-            ><span
-              >Large buttons open ARD, ZDF, ARTE, live TV and recordings
-              directly from the home screen.</span
-            ></label
-          >
-        </fieldset>
-        <div class="agent-panel">
-          <div>
-            <h3>Set up with your AI agent</h3>
+        <div
+          class="lab-panel"
+          role="tabpanel"
+          id="tv-panel"
+          aria-labelledby="tv-tab"
+          hidden
+        >
+          <div class="lab-copy">
+            <h3>Fernseher bedienen</h3>
             <p>
-              Paste this prompt into your AI agent on your computer. It will
-              help you connect your TV and install the selected interface.
+              Im Vollmodus steht dein zuletzt vorgemerkter Titel auf der
+              Startseite. Über „Luna watchlist“ öffnest du alle Titel. Darunter
+              erreichst du Live-TV und YouTube.
             </p>
-            <details class="prompt-details">
-              <summary>Read the setup prompt</summary>
-              <p id="prompt-text" tabindex="0"></p>
-            </details>
-            <a
-              id="agent-guide"
-              class="guide-link"
-              href="https://github.com/fcore247/opennava/blob/main/AGENTS.md#full-launcher"
-              >Read the guide on GitHub
-              <svg class="icon"><use href="#i-out" /></svg
-            ></a>
-          </div>
-          <div class="copy-box">
-            <span class="agent-choice"
-              >Selected <b id="profile-name">Full launcher</b></span
-            ><button id="copy-prompt" class="btn primary" type="button">
-              <svg class="icon"><use href="#i-copy" /></svg
-              ><span>Copy setup prompt</span>
+            <fieldset class="profile-switch">
+              <legend>TV-Profil wählen</legend>
+              <label
+                ><input type="radio" name="preview" value="full" checked /><span
+                  >Vollmodus</span
+                ></label
+              ><label
+                ><input type="radio" name="preview" value="senior" /><span
+                  >Seniorenmodus</span
+                ></label
+              >
+            </fieldset>
+            <button class="button outline" id="expand-tv" type="button">
+              <svg class="icon"><use href="#i-expand" /></svg>TV vergrößern
             </button>
-            <p class="copy-status" id="copy-status" aria-live="polite"></p>
+            <p class="fine" id="tv-directions">
+              Mit Klick, Antippen oder Pfeiltasten bedienen. Enter wählt aus,
+              Esc geht zurück.
+            </p>
+          </div>
+          <div class="tv-frame" id="preview">
+            <div class="tv-viewport" id="tv-viewport">
+              <iframe
+                id="demo-tv"
+                src="about:blank"
+                title="Interaktiver OpenNava-Fernseher"
+                aria-describedby="tv-directions"
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+                allow="fullscreen"
+                allowfullscreen
+              ></iframe>
+            </div>
+            <div class="tv-foot" aria-hidden="true"></div>
           </div>
         </div>
+        <div
+          id="demo-status"
+          class="sr-only"
+          role="status"
+          aria-live="polite"
+        ></div>
         <noscript
           ><p>
-            Read the
-            <a href="https://github.com/fcore247/opennava/blob/main/AGENTS.md"
-              >setup guide</a
-            >
-            and tell your agent which profile you want, <code>full</code> or
-            <code>senior</code>.
+            Die interaktive Demo benötigt JavaScript. Anleitungen und Downloads
+            findest du weiter unten.
           </p></noscript
         >
       </section>
-      <section
-        class="downloads"
-        id="downloads"
-        aria-labelledby="download-title"
-      >
-        <div class="frame download-inner">
-          <div class="download-copy">
-            <p class="section-label"><span></span> Android companion</p>
-            <h2 id="download-title">Your guide.<br /><em>In your hand.</em></h2>
+      <section id="produkte" class="products frame" aria-label="Die Produkte">
+        <article class="product">
+          <img src="./assets/luna-icon.svg" width="40" height="40" alt="" />
+          <div>
+            <h2>Luna Browser</h2>
             <p>
-              Browse the guide, choose a channel or play a show on your paired
-              TV, straight from your phone.
+              Dein Desktop-Browser mit Farbthemen, Mausgesten und einer
+              persönlichen Startseite. Die Vorschaufunktion sendet Links im
+              Heimnetz an deinen gekoppelten Fernseher. Ist er aus, versucht
+              Luna es erneut, solange der Browser läuft.
             </p>
+            <a class="text-link" href="https://luna-browser.com/"
+              >Luna entdecken</a
+            >
           </div>
-          <div class="download-files">
-            <a
-              class="release-file"
-              href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk"
-              ><span class="release-icon"
-                ><svg class="icon"><use href="#i-phone" /></svg
-              ></span>
-              <div>
-                <strong>Download Android app</strong
-                ><small>Companion for Android 11 or later · APK</small>
-              </div>
-              <svg class="icon file-arrow"><use href="#i-down" /></svg
-            ></a>
-            <a
-              class="release-file"
-              href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk"
-              ><span class="release-icon"
-                ><svg class="icon"><use href="#i-monitor" /></svg
-              ></span>
-              <div>
-                <strong>Download the TV app</strong
-                ><small>Full launcher and senior view · APK</small>
-              </div>
-              <svg class="icon file-arrow"><use href="#i-down" /></svg
-            ></a>
-            <a
-              class="release-more"
-              href="https://github.com/fcore247/opennava/releases"
-              >All releases <svg class="icon"><use href="#i-out" /></svg
-            ></a>
+        </article>
+        <article class="product">
+          <img src="./assets/opennava-mark.svg" width="42" height="40" alt="" />
+          <div>
+            <h2>OpenNava</h2>
+            <p>
+              Dein Startbildschirm für Android TV und Fire TV mit Fire OS. Öffne
+              Apps, Live-TV und Mediatheken per Fernbedienung oder nutze die
+              großen Tasten im Seniorenmodus.
+            </p>
+            <a class="text-link" href="https://github.com/fcore247/opennava"
+              >Zum OpenNava-Projekt</a
+            >
           </div>
+        </article>
+      </section>
+      <section
+        class="getting-started frame"
+        id="setup"
+        aria-label="Einrichtung und Downloads"
+      >
+        <div class="setup-card">
+          <h2>OpenNava einrichten</h2>
+          <p>
+            Wähle die Ansicht für deinen Fernseher und kopiere die
+            Einrichtungshilfe für deinen KI-Agenten.
+          </p>
+          <fieldset class="profile-switch">
+            <legend>Profil für die Einrichtung</legend>
+            <label
+              ><input type="radio" name="profile" value="full" checked /><span
+                >Vollmodus</span
+              ></label
+            ><label
+              ><input type="radio" name="profile" value="senior" /><span
+                >Seniorenmodus</span
+              ></label
+            >
+          </fieldset>
+          <button type="button" id="copy-prompt" class="button light">
+            <span>Einrichtungshilfe kopieren</span>
+          </button>
+          <p class="fine" id="copy-status" role="status"></p>
+          <details>
+            <summary>Einrichtungshilfe lesen</summary>
+            <p id="prompt-text" tabindex="0"></p>
+            <a
+              class="text-link"
+              id="agent-guide"
+              href="https://github.com/fcore247/opennava/blob/main/AGENTS.md#full-launcher"
+              >Anleitung auf GitHub</a
+            >
+          </details>
+        </div>
+        <div class="downloads-card" id="downloads">
+          <h2>Downloads</h2>
+          <p>
+            Die Downloads führen zu den stabilen Versionen. Die neue Übertragung
+            aus Luna ist eine Vorschaufunktion und lässt sich oben ausprobieren.
+          </p>
+          <a
+            class="download"
+            href="https://github.com/fcore247/luna-browser/releases/latest"
+            ><span>Luna Browser</span><small>Desktop</small></a
+          >
+          <a
+            class="download"
+            href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk"
+            ><span>OpenNava TV</span><small>Android · APK</small></a
+          >
+          <a
+            class="download"
+            href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk"
+            ><span>OpenNava Companion</span><small>Android · APK</small></a
+          >
         </div>
       </section>
-      <section class="questions frame" aria-labelledby="questions-title">
-        <h2 id="questions-title">Good to know.</h2>
+      <section class="faq frame" aria-labelledby="questions">
+        <h2 id="questions">Häufige Fragen</h2>
         <div>
           <details>
-            <summary>What do I need to get started?</summary>
+            <summary>Welche Geräte brauche ich?</summary>
             <p>
-              You’ll need an Android TV, Google TV or Android-based Fire OS
-              device. Use an AI agent that can run local commands on your
-              computer. The agent helps you connect, and you approve the initial
-              debugging request on your TV.
+              OpenNava läuft auf Android TV, Google TV und Fire TV mit
+              Android-basiertem Fire OS. Für die Ersteinrichtung über deinen
+              Computer bestätigst du die Debugging-Anfrage am Fernseher.
             </p>
           </details>
           <details>
-            <summary>How do TV updates work?</summary>
+            <summary>Wozu dient die Begleitapp?</summary>
             <p>
-              OpenNava checks signed releases from the GitHub project. Your
-              paired Android companion or setup agent can install a TV update.
-              Your device may ask you to confirm the installation.
+              Mit dem optionalen Android Companion kannst du auf dem Handy durch
+              das Programm blättern und eine Sendung am gekoppelten Fernseher
+              öffnen. Beide TV-Ansichten lassen sich auch direkt mit der
+              Fernbedienung bedienen.
             </p>
           </details>
           <details>
-            <summary>Do I need the phone app?</summary>
+            <summary>Wie funktionieren TV-Updates?</summary>
             <p>
-              Both interfaces work with your TV remote. Install the optional
-              Android companion and pair it with your TV whenever you like.
+              OpenNava sucht nach signierten Versionen im GitHub-Projekt. Ein
+              Update kannst du über die gekoppelte Android-Begleitapp oder
+              deinen Einrichtungsagenten installieren. Je nach Gerät musst du
+              die Installation am TV bestätigen.
+            </p>
+          </details>
+          <details>
+            <summary>Wie öffnet OpenNava einen Netflix-Titel?</summary>
+            <p>
+              Beim Öffnen eines vorgemerkten Netflix-Links übernimmt die
+              installierte Netflix-App. Ob sie direkt den Titel oder ihre
+              Startseite zeigt, hängt vom Gerät ab. In der Website-Demo kannst
+              du die offizielle Netflix-Titelseite öffnen.
             </p>
           </details>
         </div>
       </section>
     </main>
-    <footer>
-      <div class="frame footer-inner">
-        <a class="brand" href="#main"
-          ><img
-            src="./assets/opennava-mark.svg"
-            width="31"
-            height="28"
-            alt=""
-          />Open<span>Nava</span></a
-        >
-        <p class="brand-credit">
-          <a href="https://navaos.site/os/">NavaOS</a> inspired me to build
-          OpenNava.
-        </p>
-        <div>
-          <a href="https://github.com/fcore247/opennava"
-            >Source code <svg class="icon"><use href="#i-out" /></svg></a
-          ><a href="https://github.com/fcore247/opennava/releases"
-            >Releases <svg class="icon"><use href="#i-out" /></svg
-          ></a>
-        </div>
+    <footer class="frame">
+      <span>OpenNava × Luna Browser</span>
+      <div>
+        <a href="https://github.com/fcore247/opennava/releases"
+          >OpenNava-Releases</a
+        ><a href="https://navaos.site/os/">Inspiriert von NavaOS</a>
       </div>
     </footer>
+    <dialog class="clip-dialog" id="clip-dialog" aria-labelledby="clip-title">
+      <header>
+        <h2 id="clip-title">Über den Wolken</h2>
+        <button
+          type="button"
+          class="round-button"
+          id="close-film"
+          aria-label="Clip schließen"
+        >
+          <svg class="icon"><use href="#i-close" /></svg>
+        </button>
+      </header>
+      <video
+        controls
+        playsinline
+        preload="none"
+        poster="./assets/alpine-lake.webp"
+        aria-label="Beispielvideo über den Bergen"
+      >
+        <source src="./demo/full/assets/mountains.mp4" type="video/mp4" />
+      </video>
+    </dialog>
   </body>
 </html>

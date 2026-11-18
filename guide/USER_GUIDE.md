@@ -6,11 +6,28 @@ Choose the home screen that suits the person holding the remote. Both profiles s
 
 ## Full launcher
 
-The **For you** screen brings together a featured programme, live channels, apps installed on the device and recent library programmes. Select a show to play it. Choose **All apps** to launch another service, or use the search icon to find a title. The **YouTube** section opens OpenNava’s integrated YouTube interface.
+The preview opens on **Home**. **Open title** takes you to your latest Luna programme. If the watchlist is empty, **Watch now** opens the featured programme when one is available. Use the **Live TV** shortcut at the bottom to start watching a channel or **YouTube** to search for a video. During live playback, hold **Down** to open the channel list.
 
-![Full launcher featuring an alpine film above the live channels and app shortcuts](images/full-launcher.webp)
+In the top bar, **Media library** opens the broadcaster catalogues and integrated YouTube. Choose **Filters** to narrow the selection. **Apps** shows the apps installed on your TV. The search icon opens search and **Settings** includes **Pair phone** and **Senior view**.
 
-*The TV screenshots show the public browser demo with sample programmes. Your installed launcher loads its own channels, listings and installed apps.*
+In the stable release, the same areas are reached through **For you**, **All apps**, the search icon and the **YouTube** section.
+
+![OpenNava Home showing the saved ARD programme Über den Wolken, its Open title button and the Live TV and YouTube shortcuts](images/full-launcher.webp)
+
+*The screenshots show the interactive demo with sample programmes. Your installed launcher loads its own channels, listings and installed apps.*
+
+### Save a programme from Luna Browser
+
+This feature requires the Luna Browser and OpenNava TV preview builds. Install Android SDK Platform Tools on the computer running Luna and connect the computer and Fire TV to the same private network. To try the flow on one screen, use the [interactive Luna and OpenNava demo](https://opennava.site/#demo).
+
+1. On the Fire TV, enable **ADB Debugging** under **Settings → My Fire TV → Developer Options**. Read the stick’s IP address under **About → Network**. [Fire TV connection instructions](../README.md#connect-your-devices)
+2. In Luna, open **⋯ → OpenNava watchlist**. Choose **Connect by TV IP address**, enter the Fire TV’s private address and click **Connect to address**. Luna uses port 5555 unless you specify another port.
+3. Approve the connection on the Fire TV and select that stick in Luna’s device list. **Find a TV** refreshes the list and also shows TVs already authorised through OpenNava Studio or ADB.
+4. Open a programme page on ARD, ZDF, ARTE or Netflix. Choose the TV icon **Save to OpenNava** in the address bar, check the title and click **Save to TV**. You can also paste a programme link into the watchlist dialog. If the TV is asleep, Luna keeps the title locally and retries while the browser is open, including after a restart.
+
+In Luna’s German interface, the same controls are **OpenNava-Merkliste**, **Mit TV-IP verbinden**, **Fernseher suchen** and **Auf dem TV vormerken**.
+
+In the full launcher, the newest saved title appears at the top of **Home**. Press **OK** on **Open title** to open it, or choose **Luna watchlist** to open or remove another title. The senior home keeps its usual destinations. OpenNava passes Netflix links to the installed Netflix app. Depending on the device, Netflix opens the title or its start screen. Choose your Netflix profile and sign in there if requested.
 
 ## Senior view
 
@@ -18,7 +35,7 @@ The top row has five destinations. Select **ARD**, **ZDF** or **ARTE** to browse
 
 ![Senior view with large buttons for ARD, ZDF, ARTE, Live TV and Recordings](images/senior-view.webp)
 
-To visit the full launcher, select **Switch view → Open full launcher**. To come back, choose **Senior view** in the full launcher’s top bar or quick settings, depending on the device. To set the profile that opens by default, run the setup tool with your preferred profile. [Choose the startup profile](../README.md#install-from-the-terminal)
+To visit the full launcher, select **Switch view → Open full launcher**. To come back from the preview, choose **Settings → Senior view**. In the stable release, **Senior view** is in the top bar or quick settings, depending on the device. To set the profile that opens by default, run the setup tool with your preferred profile. [Choose the startup profile](../README.md#install-from-the-terminal)
 
 ### Find a programme
 
@@ -46,7 +63,7 @@ A live channel controls how far it can be rewound. If a channel removes the poin
 
 ### Try live TV in the browser
 
-Open the [interactive television in senior view](https://opennava.site/?profile=senior#preview) and choose **Live TV**. In the full launcher, select a station from the live channels row. The browser requests the channel's stream and its current schedule directly from the broadcasters. The source can restrict programmes by region or limit how far back you can seek.
+Open the [interactive television in senior view](https://opennava.site/?profile=senior#preview) and choose **Live TV**. In the full launcher, choose **Home → Live TV**. The browser requests the channel's stream and its current schedule directly from the broadcasters. The source can restrict programmes by region or limit how far back you can seek.
 
 Use **Up** and **Down** to change station. Hold **Up** for the guide or **Down** for the channel list. **Enter** brings up the controls, holding it pauses or resumes, and **Esc** takes you back. On a touch screen, tap the picture to reveal the controls. Recordings and reminders made in the preview belong to this browser. Local video capture requires a browser that supports recording the playing stream.
 
@@ -64,7 +81,7 @@ OpenNava can keep a playable reference to a broadcaster’s archived programme. 
 The companion runs on Android 11 or later. Install the companion APK on your phone and open the full launcher on the TV for the first connection. [Download the Android companion](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)
 
 1. Connect the phone and TV to the same private network. An existing private VPN can work if the phone can reach the TV.
-2. Choose **Pair phone** on the TV. On the phone, open **Menu → Connection → Scan QR code** and scan the code displayed on the TV. Manual connection is also available in **Connection**.
+2. Choose **Pair phone** on the TV (**Settings → Pair phone** in the preview). On the phone, open **Menu → Connection → Scan QR code** and scan the code displayed on the TV. Manual connection is also available in **Connection**.
 3. Complete the Android authorization or wireless pairing prompt on the television. The phone registers its own identity, even if a computer is already paired.
 4. Return to the companion home screen and choose **Live TV**, **Libraries**, **TV guide** or **Recordings**. The companion remembers the television for subsequent connections.
 

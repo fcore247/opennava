@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const cache = {items: [], live: [], loadedAt: 0, loading: false, error: ''};
+  let renderedWatchlist;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const validId = value => typeof value === 'string' && /^[A-Za-z0-9._:-]{1,180}$/.test(value);
   const text = (value, limit = 250) => typeof value === 'string' ? value.trim().slice(0, limit) : '';
@@ -33,44 +34,94 @@
   function metadata(item) {
     return [item.channel || item.author, dateLabel(item.publishedAt), item.isLive ? 'Live' : item.duration].filter(Boolean).join(' · ');
   }
-  function liveCard(item) {
-    const mark = /das erste/i.test(item.title) ? '①' : /tagesschau24/i.test(item.title) ? 'ts24' : /^arte/i.test(item.title) ? 'arte' : item.channel || 'ARD';
-    return `<button class="nava-live-card" data-home-play="${esc(item.id)}" aria-label="${esc(item.title)} live">
-      <span class="nava-live-monogram">${esc(mark)}</span><span class="nava-live-copy"><strong>${esc(item.title)}</strong><small>Watch live TV</small></span>
-      <span class="nava-live-dot" aria-hidden="true"></span></button>`;
+  // Local scenery used only as soft, blurred ambience when a title has no cover of its own.
+  const ambience = ['forest', 'mountains', 'ocean', 'hills', 'earth'];
+  function ambientArt(seed) {
+    let hash = 0;
+    for (const char of String(seed)) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+    return `assets/${ambience[hash % ambience.length]}.jpg`;
   }
-  function videoCard(item) {
-    return `<button class="nava-broadcast-card" data-home-play="${esc(item.id)}" aria-label="Play ${esc(item.title)}">
-      <span class="nava-broadcast-art">${item.thumbnail ? `<img src="${esc(item.thumbnail)}" alt="" loading="lazy">` : icon('monitor')}<span class="nava-broadcast-source">${esc(item.channel || item.author || 'Media library')}</span><span class="nava-broadcast-play">${icon('play')}</span></span>
-      <strong>${esc(item.title)}</strong><small>${esc([dateLabel(item.publishedAt), item.duration].filter(Boolean).join(' · '))}</small></button>`;
+  // Plain broadcaster names from the live list; no invented logos or monograms.
+  function liveNames() {
+    return cache.live.slice(0, 3).map(item => item.title.replace(/\s+(live|HD)$/i, '')).join(' · ');
   }
-  function render() {
+  function entry(kind, iconName, title, subtitle, attributes) {
+    return `<button class="nava-entry" data-entry="${kind}" ${attributes}><span class="nava-entry-icon" aria-hidden="true">${icon(iconName)}</span>
+      <span class="nava-entry-copy"><strong>${esc(title)}</strong>${subtitle ? `<small>${esc(subtitle)}</small>` : ''}</span></button>`;
+  }
+
+  function watchlist() {
+    try {
+      const items = JSON.parse(window.NavaTV?.getLunaWatchlist?.() || '[]');
+      return items.filter(item => item && validId(item.id) && text(item.title) && text(item.provider));
+    } catch { return []; }
+  }
+
+  function showWatchlist(focusId, removeFocus = false) {
+    const items = watchlist();
+    if (!items.length) {
+      if (panel.open) closePanel();
+      render();
+      focusHome();
+      return;
+    }
+    const rows = items.map(item => `<div class="luna-programme">
+      <button class="luna-title" data-luna-play="${esc(item.id)}"><small>${esc(item.provider)}</small><strong>${esc(item.title)}</strong></button>
+      <button class="luna-remove" data-luna-remove="${esc(item.id)}" aria-label="Remove ${esc(item.title)}">Remove</button></div>`).join('');
+    openPanel(`${closeButton()}<div class="panel-body"><h2 id="panel-title">Luna watchlist</h2><div class="luna-programmes">${rows}</div></div>`,
+      focusId && items.some(item => item.id === focusId) ? `[data-luna-${removeFocus ? 'remove' : 'play'}="${focusId}"]` : '[data-luna-play]', 'luna-watchlist');
+  }
+
+  function focusHome() {
+    (main.querySelector('.nava-home-actions .primary') || main.querySelector('button'))?.focus({preventScroll:true});
+  }
+
+  function wake() {
+    if (watchlist().length) window.navaNativeHome?.();
+  }
+
+  function watchlistChanged() {
+    if (state.view !== 'home') return;
+    const items = watchlist();
+    if (renderedWatchlist === JSON.stringify(items)) return;
+    render(items);
+    if (panel.open && panel.classList.contains('luna-watchlist')) {
+      const button = document.activeElement;
+      showWatchlist(button?.dataset.lunaPlay || button?.dataset.lunaRemove, !!button?.dataset.lunaRemove);
+    }
+  }
+
+  function render(saved = watchlist()) {
     if (!window.NavaTV || state.view !== 'home') return;
     const focused = document.activeElement;
-    const focusKey = focused?.dataset?.homePlay || focused?.dataset?.homeAction || focused?.dataset?.app;
+    const focusKey = focused?.dataset?.lunaPlay || focused?.dataset?.homePlay || focused?.dataset?.homeAction || focused?.dataset?.app;
     const wasInside = main.contains(focused);
-    const phoneLink = typeof window.NavaTV.showPhoneLink === 'function' && window.NavaTV.hasPersonalView()
-      ? `<button class="secondary" data-home-action="phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>Pair phone</button>` : '';
+    const heroFocused = wasInside && focused.matches('.nava-home-actions .primary');
+    renderedWatchlist = JSON.stringify(saved);
+    const latest = saved[0];
     const hero = cache.items.find(item => /tagesschau/i.test(item.title)) || cache.items[0];
-    const backdrop = document.getElementById('backdrop');
-    if (backdrop) backdrop.style.backgroundImage = hero?.thumbnail
-      ? `linear-gradient(90deg,#101312 0%,#101312e0 28%,#10131230 76%),linear-gradient(0deg,#101312,transparent 70%),url("${hero.thumbnail}")`
-      : 'radial-gradient(ellipse at 78% 25%,#45635466,transparent 60%),linear-gradient(120deg,#101312,#17251c)';
-    main.innerHTML = `<div id="nava-home" class="nava-home">
-      <section class="nava-home-hero" aria-label="${hero ? 'Current show' : 'Welcome to OpenNava'}">
-        <div class="nava-home-eyebrow"><span></span>${hero ? esc(hero.channel || 'MEDIA LIBRARY') + ' · CATCH UP' : 'YOUR TELEVISION'}</div>
-        <h1>${hero ? esc(hero.title) : 'What would you like to watch?'}</h1>
-        <p>${hero ? esc(metadata(hero)) : 'Media libraries, YouTube and live TV.'}</p>
-        <div class="nava-home-actions">${hero ? `<button class="primary" data-home-play="${esc(hero.id)}">${icon('play')}Watch now</button>` : `<button class="primary" data-home-action="mediathek">${icon('search')}Open media library</button>`}<button class="secondary" data-home-action="search">${icon('search')}Search</button>${phoneLink}</div>
+    const thumb = !latest && hero?.thumbnail;
+    const title = latest?.title || hero?.title || 'Media library';
+    const source = latest?.provider || (hero ? metadata(hero) : '');
+    const heading = latest ? 'Saved from Luna' : hero ? 'Featured programme' : 'On demand';
+    const action = latest ? `data-luna-play="${esc(latest.id)}"` : hero ? `data-home-play="${esc(hero.id)}"` : 'data-home-action="mediathek"';
+    const actionLabel = latest ? 'Open title' : hero ? 'Watch now' : 'Browse shows';
+    const art = thumb ? `<img src="${esc(thumb)}" alt="">` : `<img class="is-ambient" src="${esc(ambientArt(title))}" alt="">`;
+    const names = liveNames();
+    const live = cache.live.length ? entry('live', 'live', 'Live TV', names, `data-home-play="${esc(cache.live[0].id)}"`)
+      : entry('live', 'live', 'Live TV', 'Watch the broadcasters live', 'data-home-action="live"');
+    main.innerHTML = `<div id="nava-home" class="nava-home ${thumb ? 'has-cover' : 'no-cover'}">
+      <div class="nava-art" aria-hidden="true">${art}</div>
+      <section class="nava-hero" aria-labelledby="home-title">
+        <p class="nava-eyebrow">${latest ? icon('bookmark') : ''}<span>${heading}</span></p>
+        <h1 id="home-title">${esc(title)}</h1>
+        ${source ? `<p class="nava-hero-meta">${esc(source)}</p>` : ''}
+        <div class="nava-home-actions"><button class="primary" ${action}>${icon('play')}${actionLabel}</button>
+          ${latest ? `<button class="secondary" data-home-action="luna-list">Luna watchlist (${saved.length})</button>` : ''}</div>
       </section>
-      <div class="nava-home-shelves">
-        <section class="nava-home-live"><div class="section-heading"><h2>Live now</h2><button class="nava-text-link" data-home-action="live">All channels ${icon('chevron')}</button></div>
-          ${cache.live.length ? `<div class="nava-live-grid">${cache.live.slice(0,4).map(liveCard).join('')}</div>` : `<div class="nava-home-note">${cache.loading ? 'Loading channels…' : 'Find live TV in the media library.'}</div>`}</section>
-        <section class="app-section"><div class="section-heading"><h2>Your apps</h2><button class="nava-text-link" data-view="apps">All apps ${icon('chevron')}</button></div><div class="app-grid">${apps.slice(0,6).map(app => `<button class="app-card" data-app="${esc(app.id)}" aria-label="Open ${esc(app.name)}">${app.logo}</button>`).join('')}</div></section>
-        <section class="nava-home-latest"><div class="section-heading"><h2>Latest from the libraries</h2><span class="subtle">ARD &amp; ZDF</span></div>
-          ${cache.items.length ? `<div class="nava-broadcast-grid">${cache.items.slice(0,8).map(videoCard).join('')}</div>` : `<div class="nava-home-note" role="status">${cache.loading ? 'Loading recent shows…' : esc(cache.error || 'Search for shows in the media library.')} ${!cache.loading ? '<button data-home-action="refresh">Reload</button>' : ''}</div>`}</section>
-      </div></div>`;
-    if (wasInside && focusKey) [...main.querySelectorAll('button')].find(button => (button.dataset.homePlay || button.dataset.homeAction || button.dataset.app) === focusKey)?.focus({preventScroll:true});
+      <nav class="nava-entries" aria-label="Quick access">${live}${entry('youtube', 'youtube', 'YouTube', 'Search and watch', 'data-home-action="youtube"')}</nav></div>`;
+    if (heroFocused) focusHome();
+    else if (wasInside && focusKey) [...main.querySelectorAll('button')].find(button => (button.dataset.lunaPlay || button.dataset.homePlay || button.dataset.homeAction || button.dataset.app) === focusKey)?.focus({preventScroll:true});
     if (!cache.loading && Date.now() - cache.loadedAt > 5 * 60 * 1000) refresh();
   }
   async function refresh() {
@@ -90,7 +141,7 @@
         if (result.status === 'rejected') throw result.reason;
         const next = entries(result.value);
         if (index === 1) {
-          const rank = item => { const position = [/das erste/i,/tagesschau24/i,/^zdf\b/i,/arte/i,/phoenix/i].findIndex(pattern => pattern.test(item.title)); return position < 0 ? 20 : position; };
+          const rank = item => { const position = [/das erste/i,/^zdf\b/i,/arte/i,/tagesschau24/i,/phoenix/i].findIndex(pattern => pattern.test(item.title)); return position < 0 ? 20 : position; };
           next.sort((a,b) => rank(a) - rank(b));
         }
         cache[index === 0 ? 'items' : 'live'] = next;
@@ -100,6 +151,13 @@
     render();
   }
   document.addEventListener('click', event => {
+    const action = event.target.closest('#nava-home [data-luna-play], .luna-watchlist [data-luna-play], .luna-watchlist [data-luna-remove]');
+    if (action) {
+      if (action.dataset.lunaPlay) window.NavaTV.openLunaProgramme(action.dataset.lunaPlay);
+      else if (window.NavaTV.removeLunaProgramme(action.dataset.lunaRemove)) watchlistChanged();
+      else toast('Could not remove this title.');
+      return;
+    }
     const button = event.target.closest('#nava-home button');
     if (!button) return;
     if (button.dataset.homePlay) {
@@ -108,12 +166,11 @@
       return;
     }
     switch (button.dataset.homeAction) {
-      case 'phone': window.NavaTV.showPhoneLink(); break;
-      case 'search': window.navaOpenGlobalSearch?.('mediathek'); break;
+      case 'luna-list': showWatchlist(); break;
       case 'mediathek': navigate('mediathek'); break;
       case 'live': window.NavaTube?.showLive?.(); break;
-      case 'refresh': refresh(); break;
+      case 'youtube': navigate('youtube'); break;
     }
   });
-  window.NavaHome = Object.freeze({render, refresh});
+  window.NavaHome = Object.freeze({render, refresh, focusHome, watchlistChanged, wake});
 })();

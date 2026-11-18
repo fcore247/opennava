@@ -12,6 +12,7 @@ import java.lang.ref.WeakReference;
 public class StartupSignals extends Application {
     private boolean pending = true;
     private boolean interactive;
+    private boolean fullWakePending;
     private boolean playerOpen;
     private WeakReference<MainActivity> main = new WeakReference<>(null);
 
@@ -32,6 +33,10 @@ public class StartupSignals extends Application {
                 }
                 if (interactive || !Intent.ACTION_SCREEN_ON.equals(intent.getAction())) return;
                 interactive = true;
+                fullWakePending = VisitorMode.isVisitor(StartupSignals.this);
+                android.app.Activity current = ProgrammeReminders.foreground();
+                if (fullWakePending && current instanceof site.navatv.full.MainActivity)
+                    ((site.navatv.full.MainActivity) current).handleScreenWake();
                 pending = !playerOpen && !VisitorMode.isVisitor(StartupSignals.this);
                 MainActivity activity = main.get();
                 if (pending && activity != null) activity.dispatchStartup();
@@ -42,6 +47,11 @@ public class StartupSignals extends Application {
     MainActivity guidePracticeActivity() {
         MainActivity activity = main.get();
         return activity != null && activity.practisingHomeKey() ? activity : null;
+    }
+    public boolean takeFullWake() {
+        if (!fullWakePending) return false;
+        fullWakePending = false;
+        return true;
     }
     void attach(MainActivity activity) { main = new WeakReference<>(activity); }
     void detach(MainActivity activity) { if (main.get() == activity) main.clear(); }

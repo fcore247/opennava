@@ -2,6 +2,7 @@ const tvFrame = document.querySelector("#demo-tv");
 const viewport = document.querySelector("#tv-viewport");
 
 function loadTelevision(profile) {
+  if (document.getElementById("tv-panel").hidden) return;
   const view = profile === "senior" ? "senior" : "full";
   const url = "./demo/" + view + "/index.html";
   if (tvFrame.getAttribute("src") !== url) tvFrame.src = url;

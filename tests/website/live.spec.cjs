@@ -4,6 +4,7 @@ const {broadcasters} = require('./fixtures/live/broadcasters.cjs');
 async function openLive(page, profile, touch = false) {
   await page.goto('./', {waitUntil: 'domcontentloaded'});
   if (touch) await page.evaluate(() => document.fonts.ready);
+  await page.getByRole('tab', {name: 'OpenNava TV'}).click();
   if (profile === 'senior') {
     const toggle = page.locator('label').filter({has: page.locator('input[name="preview"][value="senior"]')});
     if (touch) await toggle.tap(); else await toggle.click();
@@ -13,7 +14,7 @@ async function openLive(page, profile, touch = false) {
   await screen.scrollIntoViewIfNeeded();
   const tv = page.frameLocator('#demo-tv');
   await expect(tv.locator('html')).toHaveAttribute('data-launcher-ready', 'true');
-  const opener = tv.getByRole('button', {name: profile === 'senior' ? 'Open live TV' : 'Das Erste live', exact: true});
+  const opener = tv.getByRole('button', profile === 'senior' ? {name: 'Open live TV', exact: true} : {name: /^Live TV/});
   await expect(opener).toBeVisible();
   if (touch) await opener.tap(); else await opener.press('Enter');
   const player = tv.getByRole('dialog', {name: 'Live TV'});
