@@ -56,6 +56,12 @@ def stage(target):
     for folder in (full, senior):
         page = folder / "index.html"
         html = page.read_text(encoding="utf-8")
+        if folder == full:
+            # Reuse cached assets only when they match this edition of the full launcher.
+            def version_local_asset(match):
+                attribute, name = match.groups()
+                return f'{attribute}="{asset_url(name, folder / name)}"'
+            html = re.sub(r'\b(src|href)="([\w.-]+\.(?:js|css))"', version_local_asset, html)
         charset = '<meta charset="utf-8">'
         if html.count(charset) != 1:
             raise ValueError(f"Missing UTF-8 declaration in {page}")

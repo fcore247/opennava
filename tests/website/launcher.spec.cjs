@@ -26,14 +26,12 @@ test.describe('Full launcher on desktop', () => {
     await page.getByRole('tab', {name: 'OpenNava TV'}).click();
     await checkProfile(page, 'full');
     const tv = page.frameLocator('#demo-tv');
-    const navigation = tv.getByRole('navigation', {name: 'Main navigation'});
-    const home = navigation.getByRole('button', {name: 'Home', exact: true});
-    await home.click();
-    await home.press('ArrowRight');
-    const library = navigation.getByRole('button', {name: 'Media library'});
-    await expect(library).toBeFocused();
-    await page.keyboard.press('Enter');
-    await expect(library).toHaveAttribute('aria-current', 'page');
+    const home = tv.locator('#nava-home');
+    const library = home.getByRole('button', {name:/^Media library\b/i});
+    await expect(library).toBeVisible();
+    await expect(home.locator('[data-luna-play]')).toHaveCount(0);
+    await library.press('Enter');
+    await expect(tv.getByRole('heading', {name:'Media library', exact:true})).toBeVisible();
 
     const sample = tv.getByRole('button', {name: 'Play Above the clouds', exact: true});
     await sample.press('Enter');
@@ -50,7 +48,7 @@ test.describe('Full launcher on desktop', () => {
     await expect(tv.getByRole('button', {name: 'Open ZDF library'})).toBeVisible();
     await page.getByRole('group', {name: 'TV-Profil wählen'}).getByText('Vollmodus').click();
     await checkProfile(page, 'full');
-    await expect(navigation.getByRole('button', {name: 'Home', exact: true})).toBeVisible();
+    await expect(home.getByRole('button', {name:/^Live TV\b/i})).toBeVisible();
   });
 });
 
@@ -97,6 +95,6 @@ test.describe('Senior view on a touch screen', () => {
     await tv.getByRole('button', {name: 'Switch view', exact: true}).tap();
     await tv.getByRole('button', {name: 'Open full launcher'}).tap();
     await checkProfile(page, 'full');
-    await expect(tv.getByRole('button', {name: 'Home', exact: true})).toBeVisible();
+    await expect(tv.locator('#nava-home').getByRole('button', {name:/^Live TV\b/i})).toBeVisible();
   });
 });

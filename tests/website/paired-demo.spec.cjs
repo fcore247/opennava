@@ -9,16 +9,21 @@ test('mark in Luna, watch on TV, switch profiles, open a Netflix link and remove
   await expect(save).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', {name: 'Demo-TV starten'}).click();
   await page.locator('#demo-tv').evaluate((frame) => frame.scrollIntoView({block: 'center', behavior: 'instant'}));
-  await expect(tv.getByText('Über den Wolken', {exact: true}).first()).toBeVisible();
-  await tv.locator('[data-luna-play="alpine"]').first().click();
+  const watchlist = tv.locator('[data-home-action="luna-list"]');
+  const home = tv.locator('#nava-home');
+  await expect(home).toBeVisible();
+  await expect(home.getByText('Über den Wolken', {exact: true})).toHaveCount(0);
+  await watchlist.press('Enter');
+  await tv.locator('[data-luna-play="alpine"]').press('Enter');
   await expect(tv.getByRole('dialog', {name: 'Über den Wolken'}).locator('video')).toHaveJSProperty('paused', false);
   await page.keyboard.press('Escape');
 
   await page.getByRole('group', {name: 'TV-Profil wählen'}).getByText('Seniorenmodus').click();
   await expect(tv.getByRole('button', {name: 'Open ZDF library'})).toBeVisible();
-  await expect(tv.locator('[data-luna-play]')).toHaveCount(0);
+  await expect(watchlist).toHaveCount(0);
   await page.getByRole('group', {name: 'TV-Profil wählen'}).getByText('Vollmodus').click();
-  await expect(tv.locator('[data-luna-play="alpine"]').first()).toBeVisible();
+  await watchlist.click();
+  await expect(tv.locator('[data-luna-play="alpine"]')).toBeVisible();
   await luna.click();
 
   await page.locator('[data-film="netflix"]').click();
@@ -26,10 +31,13 @@ test('mark in Luna, watch on TV, switch profiles, open a Netflix link and remove
   await page.reload();
   await page.getByRole('tab', {name: 'OpenNava TV'}).click();
   await page.locator('#demo-tv').evaluate((frame) => frame.scrollIntoView({block: 'center', behavior: 'instant'}));
-  await tv.locator('[data-luna-play="netflix"]').first().click();
+  await expect(home.getByText('Unser Planet', {exact: true})).toHaveCount(0);
+  await watchlist.press('Enter');
+  const netflix = tv.locator('[data-luna-play="netflix"]');
+  await expect(netflix).toBeFocused();
+  await netflix.press('Enter');
   await expect(tv.getByRole('link', {name: 'Titelseite bei Netflix öffnen'})).toHaveAttribute('href', 'https://www.netflix.com/de/title/80049832');
   await tv.getByRole('button', {name: 'Back', exact: true}).click();
-  await tv.locator('[data-home-action="luna-list"]').click();
   await tv.locator('[data-luna-remove="netflix"]').click();
   await luna.click();
   await page.locator('[data-film="netflix"]').click();

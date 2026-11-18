@@ -14,7 +14,8 @@ async function openLive(page, profile, touch = false) {
   await screen.scrollIntoViewIfNeeded();
   const tv = page.frameLocator('#demo-tv');
   await expect(tv.locator('html')).toHaveAttribute('data-launcher-ready', 'true');
-  const opener = tv.getByRole('button', profile === 'senior' ? {name: 'Open live TV', exact: true} : {name: /^Live TV/});
+  const opener = profile === 'senior' ? tv.getByRole('button', {name: 'Open live TV', exact: true})
+    : tv.locator('#nava-home').getByRole('button', {name: /^Live TV/});
   await expect(opener).toBeVisible();
   if (touch) await opener.tap(); else await opener.press('Enter');
   const player = tv.getByRole('dialog', {name: 'Live TV'});
@@ -89,7 +90,7 @@ test.describe('Full launcher · live TV with the keyboard', () => {
     await frames(video);
     await page.keyboard.press('Escape');
     await expect(player).toHaveCount(0);
-    await expect(opener).toBeVisible();
+    await expect(opener).toBeFocused();
   });
 });
 

@@ -6,13 +6,13 @@ Choose the home screen that suits the person holding the remote. Both profiles s
 
 ## Full launcher
 
-The preview opens on **Home**. **Open title** takes you to your latest Luna programme. If the watchlist is empty, **Watch now** opens the featured programme when one is available. Use the **Live TV** shortcut at the bottom to start watching a channel or **YouTube** to search for a video. During live playback, hold **Down** to open the channel list.
+The preview opens on **Home** with five destinations. Use the directional pad to choose **Luna watchlist**, **Live TV**, **Media library**, **Apps** or **YouTube**, then press **OK**. The number on the watchlist shows how many titles you have saved. When it is empty, Home initially highlights **Live TV**.
 
-In the top bar, **Media library** opens the broadcaster catalogues and integrated YouTube. Choose **Filters** to narrow the selection. **Apps** shows the apps installed on your TV. The search icon opens search and **Settings** includes **Pair phone** and **Senior view**.
+**Media library** opens the broadcaster catalogues, where **Filters** narrows the selection. **Apps** shows the apps installed on your TV. The top bar provides search and **Settings**, including **Pair phone** and **Senior view**.
 
 In the stable release, the same areas are reached through **For you**, **All apps**, the search icon and the **YouTube** section.
 
-![OpenNava Home showing the saved ARD programme Über den Wolken, its Open title button and the Live TV and YouTube shortcuts](images/full-launcher.webp)
+![OpenNava Home with the Luna watchlist selected, a count of two saved titles and four other destinations](images/full-launcher.webp)
 
 *The screenshots show the interactive demo with sample programmes. Your installed launcher loads its own channels, listings and installed apps.*
 
@@ -27,7 +27,7 @@ This feature requires the Luna Browser and OpenNava TV preview builds. Install A
 
 In Luna’s German interface, the same controls are **OpenNava-Merkliste**, **Mit TV-IP verbinden**, **Fernseher suchen** and **Auf dem TV vormerken**.
 
-In the full launcher, the newest saved title appears at the top of **Home**. Press **OK** on **Open title** to open it, or choose **Luna watchlist** to open or remove another title. The senior home keeps its usual destinations. OpenNava passes Netflix links to the installed Netflix app. Depending on the device, Netflix opens the title or its start screen. Choose your Netflix profile and sign in there if requested.
+On startup, the full launcher selects **Luna watchlist** when you have saved programmes. Press **OK** to open the list. Its newest title is already selected. Press **OK** again to open it, or move down to choose a different programme. Choose **Remove** beside a title to take it off the list. The senior home keeps its usual destinations. OpenNava passes Netflix links to the installed Netflix app. Depending on the device, Netflix opens the title or its start screen. Choose your Netflix profile and sign in there if requested.
 
 ## Senior view
 

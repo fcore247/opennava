@@ -66,89 +66,51 @@
 .native-tv .header .icon-button svg { width: 52%; height: 52%; stroke-width: 1.9; }
 .native-tv #clock { margin-left: .7em; color: var(--muted); font-size: clamp(14px, 1.45vw, 30px); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* Home: one statement, one action, two quiet doors. */
+/* Home: one small, connected group of equal destinations. No recommendation, cover or banner. */
+.native-tv:not(.other-view) .header nav { display: none; }
+.native-tv .header-tools { grid-column: 3; }
 .nava-home {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  place-items: center;
   min-height: calc(100vh - clamp(70px, 15vh, 150px));
-  padding: 0 var(--pad) clamp(18px, 5vh, 64px);
+  padding: 0 var(--pad) clamp(40px, 14vh, 160px);
+  background: radial-gradient(ellipse 50% 40% at 50% 46%, #ebb9d50d, transparent 70%);
 }
-.nava-art { position: fixed; inset: 0 0 0 34%; z-index: -1; overflow: hidden; pointer-events: none; }
-.nava-art img { width: 100%; height: 100%; object-fit: cover; object-position: center 40%; display: block; }
-.nava-art::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(90deg, var(--bg) 0, #14171df0 14%, #14171d8c 46%, #14171d38 100%),
-    linear-gradient(0deg, var(--bg) 4%, #14171d00 46%),
-    linear-gradient(180deg, #14171dcc 0, #14171d00 24%);
+.nava-dock {
+  display: flex;
+  gap: .5vw;
+  padding: .8vw;
+  border: 1px solid #ffffff12;
+  border-radius: 2.6vw;
+  background: #ffffff08;
 }
-.nava-home.no-cover .nava-art img { filter: blur(34px) saturate(.55) brightness(.9); transform: scale(1.25); opacity: .34; }
-.nava-home.no-cover .nava-art::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: radial-gradient(ellipse 62% 70% at 82% 34%, #ebb9d533, transparent 70%), radial-gradient(ellipse 55% 55% at 100% 100%, #7b5a8a33, transparent 72%);
-}
-.nava-hero {
-  flex: 1;
+.nava-dock-item {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  width: min(58%, 1100px);
-  padding: 1vh 0 3vh;
-}
-.nava-eyebrow {
-  display: flex;
   align-items: center;
-  gap: .6em;
-  color: var(--accent);
-  font-size: clamp(12px, 1.2vw, 23px);
+  gap: 1.1vw;
+  width: 12.4vw;
+  padding: 1.9vw .5vw 1.6vw;
+  border-radius: 1.9vw;
+  color: var(--text);
+}
+.nava-dock-icon { position: relative; display: grid; place-items: center; width: 5.2vw; height: 5.2vw; }
+.nava-dock-icon svg { width: 100%; height: 100%; stroke-width: 1.5; }
+.nava-dock-count {
+  position: absolute;
+  top: -.5vw;
+  right: -.9vw;
+  min-width: 1.9vw;
+  padding: .1vw .5vw;
+  border-radius: 2vw;
+  background: #ffffff1f;
+  color: var(--text);
+  font-size: clamp(11px, 1.2vw, 24px);
   font-weight: 700;
-  letter-spacing: .14em;
-  text-transform: uppercase;
+  line-height: 1.5;
+  text-align: center;
 }
-.nava-eyebrow svg { width: 1.15em; height: 1.15em; }
-.nava-hero h1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  margin: .35em 0 .22em;
-  padding-bottom: .06em;
-  font-size: clamp(36px, 5.7vw, 112px);
-  letter-spacing: -.055em;
-  line-height: 1.04;
-  font-weight: 650;
-  color: #fff;
-}
-.nava-hero-meta { color: var(--muted); font-size: clamp(14px, 1.5vw, 30px); font-weight: 500; }
-.nava-home-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 1.2vw; margin-top: clamp(20px, 5vh, 60px); }
-.native-tv .nava-home-actions button {
-  height: auto;
-  min-height: 2.7em;
-  padding: .6em 1.5em;
-  border-radius: 100px;
-  font-size: clamp(14px, 1.4vw, 28px);
-  line-height: 1.3;
-  font-weight: 700;
-}
-.native-tv .nava-home-actions .primary { display: inline-flex; align-items: center; gap: .6em; background: var(--accent); color: var(--accent-ink); }
-.native-tv .nava-home-actions .primary svg { height: 1em; width: 1em; }
-.native-tv .nava-home-actions .secondary { color: var(--text); background: #ffffff12; border: 0; backdrop-filter: none; }
-.nava-entries { display: grid; grid-template-columns: repeat(2, minmax(0, 28em)); gap: 1.2vw; padding-top: clamp(10px, 2.4vh, 28px); border-top: 1px solid #ffffff14; font-size: clamp(13px, 1.3vw, 26px); }
-.nava-entry { display: flex; align-items: center; gap: 1em; min-width: 0; padding: .8em 1em; border-radius: 1.1em; text-align: left; }
-.nava-entry-icon { display: grid; place-items: center; flex: none; width: 2.9em; height: 2.9em; border-radius: 50%; background: #ffffff10; color: var(--text); }
-.nava-entry-icon svg { width: 1.45em; height: 1.45em; stroke-width: 1.8; }
-.nava-entry-copy { min-width: 0; }
-.nava-entry-copy strong, .nava-entry-copy small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.nava-entry-copy strong { font-size: 1.22em; font-weight: 650; letter-spacing: -.03em; color: var(--text); }
-.nava-entry-copy small { margin-top: .2em; color: var(--muted); font-size: 1em; font-weight: 500; }
+.nava-dock-label { display: flex; align-items: flex-start; justify-content: center; min-height: 1.3em; font-size: clamp(14px, 1.55vw, 31px); font-weight: 650; line-height: 1.25; letter-spacing: -.02em; text-align: center; }
 
 /* Focus: a clear fill plus a rosé ring that is visible from the sofa. */
 .native-tv button:focus, .native-tv .quick-settings button:focus, .native-tv .app-card:focus-visible, .native-tv .tube-video-open:focus {
@@ -156,9 +118,12 @@
   outline-offset: clamp(3px, .28vw, 6px);
   transform: none;
 }
-.native-tv .header .icon-button:focus, .native-tv .header .nav-button:focus, .native-tv .nava-entry:focus, .native-tv .nava-home-actions .secondary:focus { background: #ffffff1f; color: #fff; }
-.native-tv .nava-entry:focus .nava-entry-icon { background: var(--accent); color: var(--accent-ink); }
-.native-tv .nava-entry:hover, .native-tv .app-card:focus, .native-tv .app-card:hover { background: #ffffff12; }
+.native-tv .header .icon-button:focus, .native-tv .header .nav-button:focus { background: #ffffff24; color: #fff; }
+.native-tv .nava-dock-item:focus { background: var(--accent); color: var(--accent-ink); outline-offset: .35vw; }
+.native-tv .nava-dock-item:focus .nava-dock-count { background: var(--accent-ink); color: var(--accent); }
+.native-tv .nava-dock-item:hover, .native-tv .app-card:focus, .native-tv .app-card:hover { background: #ffffff12; }
+.native-tv .nava-dock-item:focus:hover { background: var(--accent); }
+.luna-empty { max-width: 24em; color: var(--muted); font-size: clamp(14px, 1.5vw, 29px); line-height: 1.55; }
 .native-tv .page, .native-tv .tube-page { padding: 2vh var(--pad) 5vh; }
 .native-tv .page h1, .native-tv .tube-intro h1 { color: var(--text); font-size: clamp(30px, 4vw, 76px); font-weight: 600; line-height: 1.12; letter-spacing: -.06em; margin: 0; }
 .native-tv .native-all-apps { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1.45vw; margin-top: 4vh; }
@@ -211,14 +176,15 @@
 .luna-title small { margin-bottom: .2em; color: var(--muted); }
 .luna-title strong { font-weight: 600; overflow-wrap: anywhere; }
 .luna-remove { color: var(--muted); font-size: clamp(12px,1.15vw,23px); }
-.native-tv.compact .nava-hero h1 { font-size: clamp(32px, 4.6vw, 88px); }
 @media (max-width: 700px) {
   .native-tv .header { gap: .5em; grid-template-columns: auto 1fr auto; }
   .native-tv .header nav { justify-self: center; }
   .native-tv .header .brand span, .native-tv .header #clock { display: none; }
   .native-tv .header .nav-button { padding: .5em .7em; }
-  .nava-hero { width: 100%; }
-  .nava-entries { grid-template-columns: 1fr; gap: 4px; }
+  .nava-dock { flex-wrap: wrap; justify-content: center; max-width: 92vw; border-radius: 28px; }
+  .nava-dock-item { width: 26vw; padding: 3vw 1vw; border-radius: 20px; gap: 8px; }
+  .nava-dock-icon { width: 11vw; height: 11vw; }
+  .nava-dock-label { font-size: 13px; }
   .native-tv .tube-top { align-items: flex-start; flex-direction: column; gap: 12px; }
   .native-tv .tube-search-region { min-width: 0; }
   .native-tv .tube-grid, .native-tv .native-all-apps { grid-template-columns: repeat(2,minmax(0,1fr)); }

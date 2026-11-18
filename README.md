@@ -4,17 +4,17 @@ A home screen for Android TV, Google TV and Android-based Fire TV. Choose a full
 
 **[Try the TV in your browser](https://opennava.site/#preview)** · **[Download the TV app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk)** · **[Download the Android companion](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)**
 
-**Try the Luna watchlist preview.** Save a programme on the Luna screen, then open it on the OpenNava TV. The interactive demo runs in your browser. For a physical TV, install the matching Luna and OpenNava preview builds, then connect the TV by its private IP address in Luna. The download links above point to the stable releases. [Try the paired demo](https://opennava.site/#demo) · [Connect Luna to your TV](guide/USER_GUIDE.md#save-a-programme-from-luna-browser)
+**Try the Luna watchlist preview.** Save a programme in Luna, then open the watchlist on the OpenNava TV. Its newest title is selected and ready to open. The interactive demo runs in your browser. For a physical TV, install the matching Luna and OpenNava preview builds, then connect the TV by its private IP address in Luna. The download links above point to the stable releases. [Try the paired demo](https://opennava.site/#demo) · [Connect Luna to your TV](guide/USER_GUIDE.md#save-a-programme-from-luna-browser)
 
-[![OpenNava Home with Über den Wolken saved from Luna and shortcuts to Live TV and YouTube](guide/images/full-launcher.webp)](https://opennava.site/?profile=full#preview)
+[![OpenNava Home with the Luna watchlist focused alongside Live TV, Media library, Apps and YouTube](guide/images/full-launcher.webp)](https://opennava.site/?profile=full#preview)
 
 ## Choose your home screen
 
 | | Full launcher | Senior view |
 | --- | --- | --- |
-| **Home** | Latest Luna title or a featured programme, with Live TV and YouTube shortcuts in the preview | Five large buttons for ARD, ZDF, ARTE, live TV and recordings |
+| **Home** | The preview opens on Luna watchlist, Live TV, Media library, Apps and YouTube | Five large buttons for ARD, ZDF, ARTE, live TV and recordings |
 | **Watching** | Browse broadcaster catalogues and integrated YouTube, or open an installed app | Start a channel, find a show in a library, check the TV guide or replay a saved programme |
-| **Navigation** | In the preview, Home, Media library and Apps with Search and Settings in the top bar | Large focus outlines, an on-screen keyboard and hands-on remote-control lessons |
+| **Navigation** | Use the directional pad to choose a destination and press OK to open it | Large focus outlines, an on-screen keyboard and hands-on remote-control lessons |
 | **Try it** | [Explore the full launcher](https://opennava.site/?profile=full#preview) | [Explore the senior view](https://opennava.site/?profile=senior#preview) |
 
 Both profiles ship in one TV APK. On the interactive website, **Live TV** in either home screen opens the available public broadcast. The guide shows German programme listings. On-demand library previews use sample footage. On a television, the app also searches the broadcasters’ catalogues and pairs with the optional Android companion.

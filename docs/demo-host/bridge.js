@@ -171,7 +171,7 @@
         ? channelItems(provider)
         : programmes.filter((p) => p.provider !== "youtube");
     if (query.method === "home" && provider === "all") {
-      // The home hero uses one of the original sample films. News listings remain searchable.
+      // The default library selection contains sample films. Search also includes news listings.
       items = items.filter(
         (p) => !["tagesschau", "heute", "stadt"].includes(p.id),
       );
