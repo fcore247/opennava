@@ -6,7 +6,7 @@ async function checkProfile(page, profile) {
   await expect(page.locator('#demo-tv')).toHaveAttribute('src', './demo/' + profile + '/index.html');
   await expect(page.locator('input[name="preview"][value="' + profile + '"]')).toBeChecked();
   await expect(page.locator('#virtual-phone, [data-phone], a[href="#virtual-phone"]')).toHaveCount(0);
-  const download = page.getByRole('link', {name: /OpenNava Companion/i});
+  const download = page.getByRole('link', {name: /Download Android app/i});
   await expect(download).toBeVisible();
   await expect(download).toHaveAttribute('href', companionDownload);
 }
@@ -23,15 +23,16 @@ test.describe('Full launcher on desktop', () => {
 
   test('navigate with a keyboard, play a sample and switch profiles inside the TV', async ({page}) => {
     await page.goto('./', {waitUntil: 'load'});
-    await page.getByRole('tab', {name: 'OpenNava TV'}).click();
     await checkProfile(page, 'full');
     const tv = page.frameLocator('#demo-tv');
-    const home = tv.locator('#nava-home');
-    const library = home.getByRole('button', {name:/^Media library\b/i});
-    await expect(library).toBeVisible();
-    await expect(home.locator('[data-luna-play]')).toHaveCount(0);
-    await library.press('Enter');
-    await expect(tv.getByRole('heading', {name:'Media library', exact:true})).toBeVisible();
+    const navigation = tv.getByRole('navigation', {name: 'Main navigation'});
+    const forYou = navigation.getByRole('button', {name: 'For you'});
+    await forYou.click();
+    await forYou.press('ArrowRight');
+    const library = navigation.getByRole('button', {name: 'Media library'});
+    await expect(library).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(library).toHaveAttribute('aria-current', 'page');
 
     const sample = tv.getByRole('button', {name: 'Play Above the clouds', exact: true});
     await sample.press('Enter');
@@ -42,13 +43,12 @@ test.describe('Full launcher on desktop', () => {
     await expect(player).toHaveCount(0);
     await expect(sample).toBeVisible();
 
-    await tv.getByRole('button', {name: 'Settings', exact: true}).click();
     await tv.getByRole('button', {name: 'Senior view', exact: true}).click();
     await checkProfile(page, 'senior');
     await expect(tv.getByRole('button', {name: 'Open ZDF library'})).toBeVisible();
-    await page.getByRole('group', {name: 'TV-Profil wählen'}).getByText('Vollmodus').click();
+    await page.getByRole('group', {name: 'Choose the live demo profile'}).getByText('Full launcher').click();
     await checkProfile(page, 'full');
-    await expect(home.getByRole('button', {name:/^Live TV\b/i})).toBeVisible();
+    await expect(navigation.getByRole('button', {name: 'For you'})).toBeVisible();
   });
 });
 
@@ -58,7 +58,6 @@ test.describe('Senior view on a touch screen', () => {
   test('tap the TV in portrait and landscape and return to the full launcher', async ({page}) => {
     await page.goto('./', {waitUntil: 'domcontentloaded'});
     await page.evaluate(() => document.fonts.ready);
-    await page.getByRole('tab', {name: 'OpenNava TV'}).tap();
     const toggle = page.locator('label').filter({has: page.locator('input[name="preview"][value="senior"]')});
     await toggle.tap();
     await checkProfile(page, 'senior');
@@ -95,6 +94,6 @@ test.describe('Senior view on a touch screen', () => {
     await tv.getByRole('button', {name: 'Switch view', exact: true}).tap();
     await tv.getByRole('button', {name: 'Open full launcher'}).tap();
     await checkProfile(page, 'full');
-    await expect(tv.locator('#nava-home').getByRole('button', {name:/^Live TV\b/i})).toBeVisible();
+    await expect(tv.getByRole('button', {name: 'For you'})).toBeVisible();
   });
 });

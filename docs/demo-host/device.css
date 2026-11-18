@@ -993,4 +993,3 @@ dialog.live-stage[open] {
   :is(.live-pill, .live-tool, .live-star, .live-brand):hover:not(:focus) {
   outline: none;
 }
-.demo-entries a{display:inline-block;color:#ded2fa;text-decoration:underline;text-underline-offset:.2em;margin:12px 0}

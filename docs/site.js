@@ -1,11 +1,11 @@
 const guide = "https://github.com/fcore247/opennava/blob/main/AGENTS.md";
 const profiles = {
   full: {
-    name: "Vollmodus",
+    name: "Full launcher",
     section: "full-launcher",
   },
   senior: {
-    name: "Seniorenmodus",
+    name: "Senior view",
     section: "senior-view",
   },
 };
@@ -21,21 +21,25 @@ function showProfile(id, changeURL = true) {
   const selected = profile === profiles.senior ? "senior" : "full";
   document.body.dataset.profile = selected;
   for (const radio of profileRadios) radio.checked = radio.value === selected;
+  document.querySelector("#profile-name").textContent = profile.name;
   document.dispatchEvent(
     new CustomEvent("navatv:profile", { detail: selected }),
   );
   const link = guide + "#" + profile.section;
   document.querySelector("#agent-guide").href = link;
   promptText.textContent =
-    "Hilf mir, OpenNava auf meinem Fernseher im " +
+    "Help me install OpenNava on my TV using the " +
     profile.name +
-    " einzurichten. Folge der Anleitung unter " +
-    link +
-    " und verwende das Setup-Werkzeug mit --profile " +
+    " profile (" +
     selected +
-    ". Hilf mir, das Gerät zu verbinden. Falls ich die Android-Begleitapp möchte, richte auch diese ein.";
+    "). Follow " +
+    link +
+    ". Guide me through connecting the device, " +
+    "then use the project’s setup tool with --profile " +
+    selected +
+    ". If I also want the Android companion, help me install and pair it.";
   clearTimeout(resetTimer);
-  copyButton.querySelector("span").textContent = "Einrichtungshilfe kopieren";
+  copyButton.querySelector("span").textContent = "Copy setup prompt";
   copyStatus.textContent = "";
   if (changeURL) {
     const url = new URL(location.href);
@@ -61,7 +65,7 @@ copyButton.addEventListener("click", async () => {
   } catch {
     const field = document.createElement("textarea");
     field.value = text;
-    field.setAttribute("aria-label", "Einrichtungshilfe");
+    field.setAttribute("aria-label", "Setup prompt");
     field.className = "clipboard-field";
     document.body.append(field);
     field.select();
@@ -74,13 +78,11 @@ copyButton.addEventListener("click", async () => {
     copyButton.focus();
   }
   if (copied) {
-    copyButton.querySelector("span").textContent = "Kopiert";
-    copyStatus.textContent =
-      "Du kannst die Einrichtungshilfe jetzt in deinen KI-Agenten einfügen.";
+    copyButton.querySelector("span").textContent = "Prompt copied";
+    copyStatus.textContent = "Ready to paste into your agent.";
     clearTimeout(resetTimer);
     resetTimer = setTimeout(() => {
-      copyButton.querySelector("span").textContent =
-        "Einrichtungshilfe kopieren";
+      copyButton.querySelector("span").textContent = "Copy setup prompt";
       copyStatus.textContent = "";
     }, 3200);
   } else {
@@ -91,7 +93,6 @@ copyButton.addEventListener("click", async () => {
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
-    copyStatus.textContent =
-      "Kopiere den markierten Text mit der Kopierfunktion deines Browsers.";
+    copyStatus.textContent = "Select Copy to copy the highlighted prompt.";
   }
 });

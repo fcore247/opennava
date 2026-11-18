@@ -171,7 +171,7 @@
         ? channelItems(provider)
         : programmes.filter((p) => p.provider !== "youtube");
     if (query.method === "home" && provider === "all") {
-      // The default library selection contains sample films. Search also includes news listings.
+      // The home hero uses one of the original sample films. News listings remain searchable.
       items = items.filter(
         (p) => !["tagesschau", "heute", "stadt"].includes(p.id),
       );
@@ -537,29 +537,7 @@
     "Enter",
     "Escape",
   ];
-  function websiteWatchlist() {
-    if (profile !== "full" || parent === window) return null;
-    try { return parent.openNavaLunaDemo; } catch { return null; }
-  }
   window.NavaTV = Object.freeze({
-    getLunaWatchlist: () => JSON.stringify(websiteWatchlist()?.list() || []),
-    removeLunaProgramme: (id) => websiteWatchlist()?.remove(id) || false,
-    openLunaProgramme: (id) => {
-      const item = websiteWatchlist()?.list().find((entry) => entry.id === id);
-      if (!item) return false;
-      if (id === "netflix") {
-        note(item.title, "Auf dem Fernseher übernimmt die installierte Netflix-App. Je nach Gerät öffnet sie den Titel oder ihre Startseite.");
-        const link = document.createElement("a");
-        link.href = "https://www.netflix.com/de/title/80049832";
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        link.textContent = "Titelseite bei Netflix öffnen";
-        layer.querySelector(".demo-entries").prepend(link);
-        return true;
-      }
-      const programme = find(id);
-      return programme ? play({ ...programme, title: item.title }) : false;
-    },
     getApps: () =>
       JSON.stringify([
         { packageName: "de.swr.avp.ard.tv", name: "ARD" },
