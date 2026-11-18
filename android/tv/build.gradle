@@ -13,7 +13,7 @@ android {
         targetSdk 34
         versionCode 101
         versionName '1.0.1'
-        if (project.hasProperty('lunaPreview')) versionNameSuffix '-luna-preview.2'
+        if (project.hasProperty('lunaPreview')) versionNameSuffix '-luna-preview.3'
         buildConfigField 'boolean', 'RTL_ENABLED', 'false'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }

@@ -10,8 +10,13 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="tube.css">
   <link rel="stylesheet" href="home.css">
+  <link rel="stylesheet" href="liquid-nav.css">
+  <script src="full-ui-locales.js" defer></script>
+  <script src="full-i18n.js" defer></script>
+  <script src="liquid-nav.js" defer></script>
   <script src="app.js" defer></script>
   <script src="tube.js" defer></script>
+  <script src="full-search.js" defer></script>
   <script src="home.js" defer></script>
   <script src="native.js" defer></script>
 </head>
@@ -32,6 +37,7 @@
     </div>
   </header>
   <main id="main"></main>
+  <nav id="bottom-navigation" aria-label="Main navigation" data-liquid-nav></nav>
   <footer>
     <div class="keyboard-hints"><span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Navigate</span><span><kbd>↵</kbd> Select</span><span><kbd>esc</kbd> Back</span></div>
     <span class="prototype-label"><span></span> LAUNCHER PREVIEW <i>·</i> DEMO CONTENT</span>

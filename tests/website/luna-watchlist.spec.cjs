@@ -27,6 +27,8 @@ async function startLauncher(page, saved = [], profile = 'full') {
     }).observe(document, {subtree:true, childList:true});
     const rows = () => JSON.parse(sessionStorage.getItem('fixture-luna'));
     const device = {
+      getLunaSettings: () => sessionStorage.getItem('fixture-settings') || '{}',
+      requestLunaSettings: () => { window.requestedSettings = (window.requestedSettings || 0) + 1; return true; },
       getLunaWatchlist: () => JSON.stringify(rows()),
       openLunaProgramme: id => { window.openedLunaTitles.push(id); },
       removeLunaProgramme: id => {
@@ -68,15 +70,20 @@ async function checkHome(page, saved) {
 test('the empty watchlist is usable and Home does not recommend a programme', async ({page}) => {
   await startLauncher(page);
   await checkHome(page, []);
-  const doors = page.locator('#nava-home').getByRole('button');
-  await expect(doors).toHaveCount(5);
+  const doors = page.locator('#nava-home [data-dock]');
+  await expect(doors).toHaveCount(3);
   await expect(page.getByRole('button', {name:'Live TV', exact:true})).toBeFocused();
   await remote(page, 'ArrowLeft');
   await expect(doors.first()).toBeFocused();
-  for (let i = 1; i < 5; i++) {
+  for (let i = 1; i < 3; i++) {
     await remote(page, 'ArrowRight');
     await expect(doors.nth(i)).toBeFocused();
   }
+  await remote(page,'ArrowDown');
+  await expect(page.locator('.nava-home-search')).toBeFocused();
+  await remote(page,'ArrowDown');
+  await expect(page.locator('#bottom-navigation :focus')).toHaveCount(1);
+  await expect(page.locator('#bottom-navigation [data-bottom]')).toHaveCount(4);
   const list = page.locator(listButton);
   await list.focus();
   await remote(page, 'Enter');
@@ -175,4 +182,36 @@ test('saved titles never appear on the senior home', async ({page}) => {
   await expect(page.getByText('Dark', {exact:true})).toHaveCount(0);
   await expect(page.locator('[data-luna-play], ' + listButton)).toHaveCount(0);
   expect(await playbackCalls(page)).toEqual([]);
+});
+
+test('personalisation changes the three destinations and keeps a removed watchlist accessible on wake', async ({page}) => {
+  await startLauncher(page,[dark]);
+  await page.evaluate(() => {
+    sessionStorage.setItem('fixture-settings',JSON.stringify({
+      tiles:['arte','apps','search'], libraries:['arte'], language:'de', appearance:'rose',
+      showClock:false,showWatchlistCount:false,defaultSearchService:'arte'
+    }));
+    window.NavaHome.settingsChanged();
+  });
+  await expect(page.locator('[data-dock]')).toHaveText(['ARTE','Apps','Suche']);
+  await expect(page.locator('#clock')).toBeHidden();
+  await expect(page.locator('body')).toHaveAttribute('data-tv-appearance','rose');
+  await page.locator('[data-bottom="settings"]').click();
+  const chooser=page.locator('#panel[open]');
+  await expect(chooser).toContainText('Einstellungen bitte über den PC regeln oder Quick Settings nutzen.');
+  await expect(chooser.getByRole('button')).toHaveText(['Quick Settings','Einstellungen im Luna Browser öffnen']);
+  await chooser.locator('[data-tv-settings="luna"]').click();
+  expect(await page.evaluate(()=>window.requestedSettings)).toBe(1);
+  await remote(page,'Escape');
+  await page.locator('[data-dock="search"]').click();
+  await expect(page.getByRole('tab')).toHaveText(['Alle','ARTE','YouTube','Netflix']);
+  await expect(page.getByRole('tab',{name:'ARTE'})).toHaveAttribute('aria-selected','true');
+  await page.locator('[data-bottom="apps"]').click();
+  await page.locator(listButton).click();
+  await expect(chooser.locator('[data-luna-play="2"]')).toBeFocused();
+  await remote(page,'Escape');
+  await page.evaluate(()=>window.NavaHome.wake());
+  await expect(chooser.locator('[data-luna-play="2"]')).toBeFocused();
+  await remote(page,'Enter');
+  expect(await playbackCalls(page)).toEqual(['2']);
 });

@@ -2,7 +2,7 @@ const {test, expect} = require('@playwright/test');
 const {broadcasters} = require('./fixtures/live/broadcasters.cjs');
 
 async function openLive(page, profile, touch = false) {
-  await page.goto('./', {waitUntil: 'domcontentloaded'});
+  await page.goto('./?lang=de', {waitUntil: 'domcontentloaded'});
   if (touch) await page.evaluate(() => document.fonts.ready);
   await page.getByRole('tab', {name: 'OpenNava TV'}).click();
   if (profile === 'senior') {

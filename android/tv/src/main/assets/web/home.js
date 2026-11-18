@@ -14,11 +14,58 @@
     }])).values()].slice(0, 30);
   }
 
-  const dockIcons = {luna: 'bookmark', live: 'live', library: 'motion', apps: 'grid', youtube: 'video'};
-  function dockItem(kind, label, attributes, count = 0, description = label) {
-    return `<button class="nava-dock-item" data-dock="${kind}" ${attributes} aria-label="${esc(description)}">
-      <span class="nava-dock-icon" aria-hidden="true">${icon(dockIcons[kind])}${count ? `<b class="nava-dock-count">${count > 99 ? '99+' : count}</b>` : ''}</span>
-      <span class="nava-dock-label">${esc(label)}</span></button>`;
+  const defaults = {tiles:['luna','live','library'], libraries:['ard','zdf','arte'], language:'auto', appearance:'graphite', showClock:true, showWatchlistCount:true, defaultSearchService:'auto'};
+  const labels = {luna:['watchlist','Luna watchlist'],live:['live','Live TV'],library:['library','Media library'],apps:['apps','Apps'],youtube:['','YouTube'],netflix:['','Netflix'],search:['search','Search'],settings:['settings','Settings'],ard:['','ARD'],zdf:['','ZDF'],arte:['','ARTE'],home:['home','Home']};
+  const dockIcons = {luna:'bookmark', live:'live', library:'motion', apps:'grid', youtube:'video', netflix:'monitor', search:'search', settings:'settings', ard:'monitor', zdf:'monitor', arte:'monitor', home:'home'};
+  const t = (key,fallback,args) => window.NavaI18n.t(key,fallback,args);
+  const label = id => labels[id][0] ? t(...labels[id]) : labels[id][1];
+  let config = defaults, settingsKey = '';
+  function settingsChanged() {
+    let settings;
+    try { settings = {...defaults, ...JSON.parse(window.NavaTV?.getLunaSettings?.() || '{}')}; } catch { settings = defaults; }
+    const key = JSON.stringify(settings);
+    if (key === settingsKey) return;
+    settingsKey = key;
+    config = settings;
+    window.NavaI18n.setLanguage(settings.language);
+    document.body.dataset.tvAppearance = settings.appearance;
+    document.getElementById('clock').hidden = !settings.showClock;
+    updateClock();
+    updateNavigation();
+    if (state.view === 'home') render();
+    else if (state.view === 'search') window.FullSearch.render();
+    else if (state.view === 'apps') window.renderNativeApps?.();
+    if (panel.open && panel.classList.contains('tv-settings-dialog')) openSettingsMenu();
+  }
+  function dockItem(kind) {
+    const action = kind === 'luna' ? 'luna-list' : kind;
+    return `<button class="nava-dock-item" data-dock="${kind}" data-home-action="${action}">
+      <span class="nava-card-art" aria-hidden="true"></span><span class="nava-dock-icon" aria-hidden="true">${icon(dockIcons[kind])}</span>
+      <span class="nava-dock-label">${esc(label(kind))}</span></button>`;
+  }
+  function appsWatchlistShortcut() {
+    return config.tiles.includes('luna') ? '' : `<button class="app-card app-watchlist" data-home-action="luna-list">${icon('bookmark')}${esc(label('luna'))}</button>`;
+  }
+  function updateNavigation() {
+    const nav = document.getElementById('bottom-navigation');
+    const active = panel.open && panel.classList.contains('tv-settings-dialog') ? 'settings' : state.view;
+    const buttons = [...nav.querySelectorAll('[data-bottom]')];
+    if (!buttons.length) {
+      nav.innerHTML = ['home','search','apps','settings'].map(id => `<button data-bottom="${id}">${icon(dockIcons[id])}<span></span></button>`).join('');
+    }
+    nav.querySelectorAll('[data-bottom]').forEach(btn => {
+      const id = btn.dataset.bottom, caption = btn.querySelector('span');
+      if (caption.textContent !== label(id)) caption.textContent = label(id);
+      if (id === active) btn.setAttribute('aria-current','page'); else btn.removeAttribute('aria-current');
+    });
+  }
+  function openSettingsMenu() {
+    openPanel(`<div class="panel-body tv-settings-body"><h2 id="panel-title">${esc(label('settings'))}</h2>
+      <p>${esc(t('pcNotice','Manage settings on your computer or use Quick settings.'))}</p>
+      <div class="tv-settings-actions"><button data-tv-settings="quick">${icon('settings')}${esc(t('quick','Quick settings'))}</button>
+      <button data-tv-settings="luna">${icon('external')}${esc(t('openLuna','Open settings in Luna Browser'))}</button></div>
+      <p class="tv-settings-status" role="status"></p></div>`, '[data-tv-settings="quick"]', 'tv-settings-dialog');
+    updateNavigation();
   }
 
   function watchlist() {
@@ -36,20 +83,20 @@
       focusHome();
       return;
     }
+    const remove = t('remove','Remove');
     const rows = items.map(item => `<div class="luna-programme">
-      <button class="luna-title" data-luna-play="${esc(item.id)}"><small>${esc(item.provider)}</small><strong>${esc(item.title)}</strong></button>
-      <button class="luna-remove" data-luna-remove="${esc(item.id)}" aria-label="Remove ${esc(item.title)}">Remove</button></div>`).join('');
-    const body = items.length ? `<div class="luna-programmes">${rows}</div>`
-      : '<p class="luna-empty">Nothing saved yet. Mark a programme in Luna Browser and it appears here.</p>';
-    openPanel(`${closeButton()}<div class="panel-body"><h2 id="panel-title">Luna watchlist</h2>${body}</div>`,
+      <button class="luna-title" data-luna-play="${esc(item.id)}"><small translate="no">${esc(item.provider)}</small><strong translate="no">${esc(item.title)}</strong></button>
+      <button class="luna-remove" data-luna-remove="${esc(item.id)}" aria-label="${esc(remove+' '+item.title)}">${esc(remove)}</button></div>`).join('');
+    const body = items.length ? `<div class="luna-programmes">${rows}</div>` : `<p class="luna-empty">${esc(t('empty','Nothing saved yet. Mark a programme in Luna Browser and it appears here.'))}</p>`;
+    openPanel(`<button class="icon-button dialog-close" data-action="close" aria-label="${esc(t('close','Close'))}">${icon('close')}</button><div class="panel-body"><h2 id="panel-title">${esc(label('luna'))}</h2>${body}</div>`,
       selector || (focusId && items.some(item => item.id === focusId) ? `[data-luna-${removeFocus ? 'remove' : 'play'}="${focusId}"]` : items.length ? '[data-luna-play]' : '[data-action="close"]'), 'luna-watchlist');
   }
 
-  // Start and wake: the watchlist is preselected when it holds titles, otherwise Live TV.
-  function focusHome() {
-    const luna = main.querySelector('[data-dock="luna"]');
-    const target = watchlist().length ? luna : main.querySelector('[data-dock="live"]');
+  function focusHome(onWake = false) {
+    const luna = main.querySelector('[data-dock="luna"]'), hasTitles = watchlist().length > 0;
+    const target = hasTitles ? luna : main.querySelector('[data-dock="live"]');
     (target || main.querySelector('button'))?.focus({preventScroll:true});
+    if (hasTitles && !luna && onWake && !panel.open) showWatchlist();
   }
 
   function wake() {
@@ -58,10 +105,10 @@
 
   // A delivery only updates the quiet counter; it never moves the focus.
   function watchlistChanged() {
-    if (state.view !== 'home') return;
     const items = watchlist();
     if (renderedWatchlist === JSON.stringify(items)) return;
-    render(items);
+    if (state.view === 'home') render(items);
+    else renderedWatchlist = JSON.stringify(items);
     if (panel.open && panel.classList.contains('luna-watchlist')) {
       const button = document.activeElement;
       const keep = button?.dataset.action === 'close' ? '[data-action="close"]' : '';
@@ -69,48 +116,37 @@
     }
   }
 
-  // Update the existing dock in place: only the counter, its label and the Live TV target change,
-  // so focus and the opener remembered by an open panel stay on the very same elements.
-  function updateDock(saved, lunaLabel) {
-    const dock = main.querySelector('.nava-dock');
-    const luna = dock?.querySelector('[data-dock="luna"]');
-    const live = dock?.querySelector('[data-dock="live"]');
-    if (!luna || !live) return false;
-    luna.setAttribute('aria-label', lunaLabel);
-    const icon = luna.querySelector('.nava-dock-icon');
-    let badge = icon.querySelector('.nava-dock-count');
-    if (!saved.length) badge?.remove();
-    else {
-      if (!badge) { badge = document.createElement('b'); badge.className = 'nava-dock-count'; icon.append(badge); }
-      badge.textContent = saved.length > 99 ? '99+' : String(saved.length);
-    }
-    const target = cache.live[0];
-    if (target) { live.dataset.homePlay = target.id; delete live.dataset.homeAction; }
-    else { live.dataset.homeAction = 'live'; delete live.dataset.homePlay; }
-    if (!cache.loading && Date.now() - cache.loadedAt > 5 * 60 * 1000) refresh();
-    return true;
-  }
-
   function render(saved = watchlist()) {
     if (!window.NavaTV || state.view !== 'home') return;
-    const focused = document.activeElement;
-    const focusKey = main.contains(focused) ? focused.dataset?.dock : '';
+    const layout = JSON.stringify([config.tiles, window.NavaI18n.language]);
+    const current = main.querySelector('.nava-dock');
     renderedWatchlist = JSON.stringify(saved);
-    const live = cache.live.length ? `data-home-play="${esc(cache.live[0].id)}"` : 'data-home-action="live"';
-    const lunaLabel = saved.length ? `Luna watchlist, ${saved.length} saved` : 'Luna watchlist, empty';
-    if (updateDock(saved, lunaLabel)) return;
-    main.innerHTML = `<div id="nava-home" class="nava-home nava-dock-home"><nav class="nava-dock" aria-label="Home">
-      ${dockItem('luna', 'Luna watchlist', 'data-home-action="luna-list"', saved.length, lunaLabel)}
-      ${dockItem('live', 'Live TV', live)}
-      ${dockItem('library', 'Media library', 'data-home-action="mediathek"')}
-      ${dockItem('apps', 'Apps', 'data-home-action="apps"')}
-      ${dockItem('youtube', 'YouTube', 'data-home-action="youtube"')}
-    </nav></div>`;
-    // The opener of an open panel was just replaced: point its focus return at the new twin.
-    if (typeof returnFocus !== 'undefined' && returnFocus && !returnFocus.isConnected && returnFocus.dataset?.dock)
-      returnFocus = main.querySelector(`[data-dock="${returnFocus.dataset.dock}"]`);
-    if (focusKey) main.querySelector(`[data-dock="${focusKey}"]`)?.focus({preventScroll:true});
-    if (!cache.loading && Date.now() - cache.loadedAt > 5 * 60 * 1000) refresh();
+    if (!current || current.dataset.layout !== layout) {
+      const inMain = main.contains(document.activeElement);
+      const previous = inMain && document.activeElement.dataset.dock;
+      main.innerHTML = `<section id="nava-home" class="nava-home" aria-label="${esc(label('home'))}">
+        <div class="nava-dock">${config.tiles.map(dockItem).join('')}</div>
+        <button class="nava-home-search" data-home-action="search">${icon('search')}<span>${esc(t('searchPrompt','What would you like to watch?'))}</span>${icon('chevron')}</button></section>`;
+      main.querySelector('.nava-dock').dataset.layout = layout;
+      if (returnFocus && !returnFocus.isConnected && returnFocus.dataset.dock)
+        returnFocus = main.querySelector(`[data-dock="${returnFocus.dataset.dock}"]`) || main.querySelector('button');
+      if (inMain) (previous && main.querySelector(`[data-dock="${previous}"]`) || main.querySelector('button')).focus({preventScroll:true});
+    }
+    const luna = main.querySelector('[data-dock="luna"]');
+    if (luna) {
+      const count = config.showWatchlistCount ? saved.length : 0;
+      const caption = label('luna') + (count ? ', '+t('savedCount','{count} saved',{count}) : '');
+      luna.setAttribute('aria-label',caption);
+      let badge = luna.querySelector('.nava-dock-count');
+      if (!count) badge?.remove();
+      else {
+        if (!badge) { badge = document.createElement('b'); badge.className='nava-dock-count'; badge.setAttribute('aria-hidden','true'); luna.append(badge); }
+        badge.textContent=count>99?'99+':String(count);
+      }
+    }
+    const live = main.querySelector('[data-dock="live"]');
+    if (live && cache.live[0]) live.dataset.homePlay = cache.live[0].id;
+    if (live && !cache.loading && Date.now()-cache.loadedAt>300000) refresh();
   }
   async function refresh() {
     if (cache.loading || !window.NavaTube?.requestMediathek) return;
@@ -133,20 +169,28 @@
       else toast('Could not remove this title.');
       return;
     }
-    const button = event.target.closest('#nava-home button');
+    const button = event.target.closest('[data-home-action],[data-bottom],[data-tv-settings]');
     if (!button) return;
-    if (button.dataset.homePlay) {
-      event.preventDefault();
-      window.NavaTube?.playMediathek(button.dataset.homePlay);
+    if (button.dataset.tvSettings === 'quick') { openSettings(); updateNavigation(); return; }
+    if (button.dataset.tvSettings === 'luna') {
+      const success = window.NavaTV.requestLunaSettings?.();
+      panel.querySelector('.tv-settings-status').textContent = success ? t('openRequested','Request sent to Luna Browser on your computer.') : t('pairHint','Connect Luna Browser to this TV first.');
       return;
     }
-    switch (button.dataset.homeAction) {
-      case 'luna-list': showWatchlist(undefined, false, true); break;
-      case 'mediathek': navigate('mediathek'); break;
+    if (button.dataset.homePlay) { window.NavaTube?.playMediathek(button.dataset.homePlay); return; }
+    const target = button.dataset.homeAction || button.dataset.bottom;
+    switch (target) {
+      case 'home': navigate('home'); focusHome(); break;
+      case 'luna-list': showWatchlist(undefined,false,true); break;
       case 'live': window.NavaTube?.showLive?.(); break;
-      case 'apps': navigate('apps'); break;
-      case 'youtube': navigate('youtube'); break;
+      case 'apps': navigate('apps'); main.querySelector('button')?.focus(); break;
+      case 'settings': openSettingsMenu(); break;
+      case 'search': window.FullSearch.open(); break;
+      case 'netflix': if (!window.NavaTV.launchApp('com.netflix.ninja')) toast(t('unavailable','This app is unavailable')); break;
+      default: window.FullSearch.open(target);
     }
   });
-  window.NavaHome = Object.freeze({render, refresh, focusHome, watchlistChanged, wake});
+  panel.addEventListener('close', updateNavigation);
+  window.NavaHome = Object.freeze({render,refresh,focusHome,watchlistChanged,wake,preferences:()=>config,settingsChanged,openSettingsMenu,updateNavigation,appsWatchlistShortcut});
+  if (window.NavaTV) settingsChanged();
 })();

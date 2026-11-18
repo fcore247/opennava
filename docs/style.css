@@ -338,17 +338,6 @@ fieldset legend {
   border-radius: 999px;
   background: #191a20;
 }
-.device-tabs::before {
-  content: "";
-  position: absolute;
-  inset: 0.28rem auto 0.28rem 0.28rem;
-  width: calc(50% - 0.28rem);
-  border-radius: 999px;
-  background: #e4dcf0;
-  transform: translateX(var(--tab-x, 0));
-  transition: transform 0.23s ease;
-  z-index: -1;
-}
 .device-tabs button {
   width: 9.1rem;
   min-height: 2.55rem;
@@ -614,7 +603,7 @@ fieldset legend {
   margin: 0;
   cursor: pointer;
 }
-.profile-switch span {
+.profile-switch label > span[data-i18n] {
   display: block;
   border: 1px solid #54525e;
   border-radius: 0.55rem;
@@ -622,12 +611,12 @@ fieldset legend {
   color: #c0bdc7;
   font-size: 0.9rem;
 }
-.profile-switch input:checked + span {
+.profile-switch input:checked + span[data-i18n] {
   border-color: #ae9fc3;
   background: #383140;
   color: #f2eafa;
 }
-.profile-switch input:focus-visible + span {
+.profile-switch input:focus-visible + span[data-i18n] {
   outline: 3px solid #c9b1ff;
   outline-offset: 3px;
 }
@@ -1092,4 +1081,124 @@ footer div {
 }
 .button.ghost:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Waterline decorates the existing radio groups and device tabs. */
+.device-tabs,
+.profile-tabs {
+  background: linear-gradient(135deg, #272a34, #1b1b23);
+  border: 1px solid #555461;
+  border-radius: 999px;
+  padding: 0.34rem;
+  gap: 0.12rem;
+}
+.device-tabs button[aria-selected="true"] {
+  color: #fff;
+}
+.device-tabs:not(.liquid-nav) button[aria-selected="true"],
+.profile-tabs:not(.liquid-nav) label:has(input:checked) {
+  background: #494451;
+}
+.profile-tabs {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: stretch;
+  position: relative;
+  isolation: isolate;
+}
+.profile-tabs label {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  min-height: 2.45rem;
+  padding: 0.38rem 0.75rem;
+}
+.profile-tabs label > span[data-i18n] {
+  border: 0;
+  background: transparent;
+  color: #c6c4cf;
+  padding: 0;
+  font-size: 0.87rem;
+  text-align: center;
+}
+.profile-tabs label input:checked + span[data-i18n] {
+  color: white;
+  font-weight: 700;
+  border: 0;
+  background: transparent;
+}
+.profile-tabs label input:focus-visible + span[data-i18n] {
+  outline: 0;
+}
+.profile-tabs label:has(input:focus-visible) {
+  outline: 2px solid #dbcbf6;
+  outline-offset: 1px;
+}
+.profile-tabs label.liquid-nav-item {
+  z-index: 1;
+}
+.site-language {
+  display: inline-flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.site-language select,
+.prefs-main select {
+  appearance: none;
+  background-color: #24242c;
+  color: var(--ink);
+  font: inherit;
+  border: 1px solid #45454f;
+  border-radius: 0.6rem;
+  padding: 0.5rem 2.3rem 0.5rem 0.7rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23c9c7d4' stroke-width='1.5'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-position: right 0.7rem center;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.site-language select {
+  max-width: 12rem;
+}
+.settings-link {
+  display: block;
+  width: fit-content;
+  margin-top: 1rem;
+}
+@media (max-width: 800px) {
+  footer {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 680px) {
+  .settings-link {
+    order: 5;
+    margin: 0;
+  }
+  .profile-tabs {
+    padding: 0.25rem;
+  }
+  .profile-tabs label {
+    padding: 0.33rem 0.6rem;
+  }
+}
+@media (max-width: 480px) {
+  .mast nav a[href="#demo"] {
+    display: none;
+  }
+  .mast nav {
+    min-width: 0;
+    justify-content: flex-end;
+  }
+  .mast .nav-button {
+    min-width: 0;
+    white-space: normal;
+    text-align: center;
+    overflow-wrap: anywhere;
+  }
+}
+.device-tabs button {
+  padding: 0.38rem 0.55rem;
+  white-space: nowrap;
 }

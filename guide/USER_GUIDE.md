@@ -6,15 +6,21 @@ Choose the home screen that suits the person holding the remote. Both profiles s
 
 ## Full launcher
 
-The preview opens on **Home** with five destinations. Use the directional pad to choose **Luna watchlist**, **Live TV**, **Media library**, **Apps** or **YouTube**, then press **OK**. The number on the watchlist shows how many titles you have saved. When it is empty, Home initially highlights **Live TV**.
+The preview opens on **Home** with three large tiles. By default they open **Luna watchlist**, **Live TV** and **Media library**. Use the directional pad to select a tile and press **OK**. Below the tiles, open the search field and choose the service to search. The bottom bar opens **Home**, **Search**, **Apps** or **Settings**.
 
-**Media library** opens the broadcaster catalogues, where **Filters** narrows the selection. **Apps** shows the apps installed on your TV. The top bar provides search and **Settings**, including **Pair phone** and **Senior view**.
+### Personalise the TV from your computer
+
+1. Open the matching Luna Browser preview and enter `tvsettings` in the address bar.
+2. Connect your television using the pairing instructions below. Choose the target for each of the three tiles, the broadcaster libraries, the default search service, the language and the appearance. You can also show or hide the clock and watchlist count.
+3. Save your changes. The connected TV applies them in the full launcher. To revisit the page from the TV, open **Settings** and choose **Open settings in Luna Browser** while Luna is running on your paired computer. **Quick settings** opens the controls on the TV, including **Pair phone** and **Senior view**.
+
+An AI assistant connected to Luna’s enabled MCP server can read the current choices with `opennava_settings_get` and change them with `opennava_settings_set`. For example, ask it to put Live TV first and use ARTE in the search. The tools act on the television paired in Luna.
 
 In the stable release, the same areas are reached through **For you**, **All apps**, the search icon and the **YouTube** section.
 
-![OpenNava Home with the Luna watchlist selected, a count of two saved titles and four other destinations](images/full-launcher.webp)
+![Three large shortcuts above the search field and the Home, Search, Apps and Settings bar](images/full-launcher.webp)
 
-*The screenshots show the interactive demo with sample programmes. Your installed launcher loads its own channels, listings and installed apps.*
+*The full-launcher image was captured on a Fire TV Stick. Your TV shows its own watchlist, available channels and installed apps.*
 
 ### Save a programme from Luna Browser
 
@@ -35,7 +41,7 @@ The top row has five destinations. Select **ARD**, **ZDF** or **ARTE** to browse
 
 ![Senior view with large buttons for ARD, ZDF, ARTE, Live TV and Recordings](images/senior-view.webp)
 
-To visit the full launcher, select **Switch view → Open full launcher**. To come back from the preview, choose **Settings → Senior view**. In the stable release, **Senior view** is in the top bar or quick settings, depending on the device. To set the profile that opens by default, run the setup tool with your preferred profile. [Choose the startup profile](../README.md#install-from-the-terminal)
+To visit the full launcher, select **Switch view → Open full launcher**. To come back from the preview, choose **Settings → Quick settings → Senior view**. In the stable release, **Senior view** is in the top bar or quick settings, depending on the device. To set the profile that opens by default, run the setup tool with your preferred profile. [Choose the startup profile](../README.md#install-from-the-terminal)
 
 ### Find a programme
 

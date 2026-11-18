@@ -34,6 +34,8 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 import site.navatv.launcher.LunaWatchlist;
+import site.navatv.launcher.LunaTvSettings;
+import site.navatv.launcher.FullArte;
 import site.navatv.launcher.StartupSignals;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -67,6 +69,7 @@ public final class MainActivity extends Activity {
     private volatile boolean editingText;
     private NavaYouTube youtube;
     private MediathekService mediathek;
+    private FullArte arte;
     private final ThumbnailProxy thumbnails = new ThumbnailProxy();
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
@@ -103,6 +106,7 @@ public final class MainActivity extends Activity {
         webView.addJavascriptInterface(new NativeBridge(), "NavaTV");
         youtube = new NavaYouTube(this::deliverYouTubeResult);
         mediathek = new MediathekService(this::deliverMediathekResult);
+        arte = new FullArte(this, (id,json) -> deliverMediaResult("navaArteResult", id,json));
         webView.setWebViewClient(new LocalClient());
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onConsoleMessage(ConsoleMessage message) {
@@ -163,6 +167,11 @@ public final class MainActivity extends Activity {
         if (pageReady && webView != null && getApplication() instanceof StartupSignals
                 && ((StartupSignals) getApplication()).takeFullWake())
             webView.evaluateJavascript("if(window.NavaHome)window.NavaHome.wake()", null);
+    }
+
+    public void lunaSettingsChanged() {
+        if (pageReady && webView != null && webView.getUrl() != null && trusted(Uri.parse(webView.getUrl())))
+            webView.evaluateJavascript("if(window.NavaHome)window.NavaHome.settingsChanged()",null);
     }
 
     public void lunaWatchlistChanged() {
@@ -244,6 +253,7 @@ public final class MainActivity extends Activity {
     @Override protected void onDestroy() {
         if (youtube != null) youtube.close();
         if (mediathek != null) mediathek.close();
+        if (arte != null) arte.close();
         if (webView != null) { webView.removeJavascriptInterface("NavaTV"); webView.destroy(); webView = null; }
         super.onDestroy();
     }
@@ -269,7 +279,7 @@ public final class MainActivity extends Activity {
                 String id = path.substring("/mediathek/image/".length());
                 if (mediathek == null || !"GET".equals(request.getMethod()) || !id.matches("[A-Za-z0-9_-]{1,128}"))
                     return emptyResponse(404, "Image unavailable");
-                return mediathek.image(id);
+                return arte != null && arte.has(id) ? arte.image(id) : mediathek.image(id);
             }
             return assetResponse(request);
         }
@@ -524,6 +534,39 @@ public final class MainActivity extends Activity {
     }
 
     private final class NativeBridge {
+        @JavascriptInterface public boolean searchNetflix(String query) {
+            if (query == null || query.trim().isEmpty() || query.length() > 160) return false;
+            final String pkg = "com.netflix.ninja";
+            Uri uri = new Uri.Builder().scheme("https").authority("www.netflix.com").path("/search").appendQueryParameter("q",query.trim()).build();
+            runOnUiThread(() -> {
+                if (!hasWindowFocus() || !pageReady) return;
+                try { startActivity(new Intent(Intent.ACTION_VIEW,uri).setPackage(pkg)); return; }
+                catch (ActivityNotFoundException | SecurityException ignored) { }
+                try { startActivity(new Intent(Intent.ACTION_SEARCH).setPackage(pkg).putExtra(android.app.SearchManager.QUERY,query.trim())); return; }
+                catch (ActivityNotFoundException | SecurityException ignored) { }
+                Intent app = getPackageManager().getLeanbackLaunchIntentForPackage(pkg);
+                try {
+                    if (app == null) throw new ActivityNotFoundException();
+                    startActivity(app);
+                    message("Search Netflix for “" + query.trim() + "”.");
+                } catch (ActivityNotFoundException | SecurityException unavailable) { message("Netflix is unavailable on this TV."); }
+            });
+            return true;
+        }
+        @JavascriptInterface public String getLunaSettings() { return LunaTvSettings.read(MainActivity.this); }
+        @JavascriptInterface public boolean requestLunaSettings() { return LunaTvSettings.requestOpen(MainActivity.this); }
+        @JavascriptInterface public boolean arteSearch(String id, String query) {
+            return arte != null && NavaYouTube.validRequestId(id) && arte.search(id, query);
+        }
+        @JavascriptInterface public boolean playArte(String id) {
+            if (arte == null || !arte.has(id)) return false;
+            runOnUiThread(() -> {
+                if (hasWindowFocus() && pageReady && webView != null && webView.getUrl() != null && trusted(Uri.parse(webView.getUrl())))
+                    arte.open(MainActivity.this, id);
+            });
+            return true;
+        }
+
         @JavascriptInterface public String getLunaWatchlist() {
             return LunaWatchlist.get(MainActivity.this).list(MainActivity.this);
         }

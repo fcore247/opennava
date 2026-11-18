@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#211d24" />
+    <title data-i18n="tvPreferences">TV-Einstellungen</title>
+    <link rel="icon" href="../assets/luna-icon.svg" />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="./settings.css" />
+    <script src="../site-i18n.js" defer></script>
+    <script src="../demo-settings.js" defer></script>
+    <script src="./settings-page.js" defer></script>
+  </head>
+  <body class="settings-page" data-luna-theme="rose">
+    <header class="mast frame">
+      <a class="brand" href="../#demo"
+        ><img alt="" src="../assets/luna-icon.svg" width="28" height="28" />Luna
+        Browser</a
+      >
+      <nav>
+        <a class="nav-button" href="../#demo" data-i18n="returnLuna"
+          >Zurück zu Luna</a
+        >
+      </nav>
+    </header>
+    <main class="prefs-main">
+      <aside class="prefs-sidebar">
+        <div class="prefs-address">
+          <img
+            src="../assets/opennava-mark.svg"
+            width="26"
+            height="26"
+            alt=""
+          />tvsettings
+        </div>
+        <h1 data-i18n="tvPreferences">TV-Einstellungen</h1>
+        <nav
+          class="prefs-menu"
+          aria-label="Einstellungsbereiche"
+          data-i18n-aria-label="tvPreferences"
+        >
+          <button
+            type="button"
+            data-section="home"
+            aria-current="page"
+            aria-controls="prefs-home"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z" /></svg
+            ><span data-i18n="homeNav">Start</span>
+          </button>
+          <button
+            type="button"
+            data-section="libraries"
+            aria-controls="prefs-libraries"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M3 5v15m5-15v15m4-15 5-1 4 15-5 1z" /></svg
+            ><span data-i18n="libraries">Mediatheken</span>
+          </button>
+          <button
+            type="button"
+            data-section="appearance"
+            aria-controls="prefs-appearance"
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="8" />
+              <path d="M12 4a8 8 0 0 1 0 16z" /></svg
+            ><span data-i18n="appearanceNav">Darstellung</span>
+          </button>
+        </nav>
+      </aside>
+      <form id="demo-tv-settings">
+        <section
+          id="prefs-home"
+          data-pane="home"
+          aria-labelledby="prefs-home-title"
+        >
+          <h2 id="prefs-home-title" data-i18n="homeTiles">Startkacheln</h2>
+          <div class="prefs-tiles" id="tile-selects"></div>
+          <div class="library-options prefs-flags">
+            <label
+              ><span data-i18n="clock">Uhr anzeigen</span
+              ><input type="checkbox" id="show-clock" /></label
+            ><label
+              ><span data-i18n="count"
+                >Anzahl der vorgemerkten Titel anzeigen</span
+              ><input type="checkbox" id="show-count"
+            /></label>
+          </div>
+        </section>
+        <section
+          id="prefs-libraries"
+          data-pane="libraries"
+          aria-labelledby="prefs-libraries-title"
+          hidden
+        >
+          <h2 id="prefs-libraries-title" data-i18n="libraries">Mediatheken</h2>
+          <div class="library-options">
+            <label
+              >ARD <input type="checkbox" name="library" value="ard" /></label
+            ><label
+              >ZDF <input type="checkbox" name="library" value="zdf" /></label
+            ><label
+              >ARTE <input type="checkbox" name="library" value="arte"
+            /></label>
+          </div>
+          <div class="prefs-pair">
+            <label
+              ><span data-i18n="defaultProvider">Standard-Suchdienst</span
+              ><select id="search-provider"></select
+            ></label>
+          </div>
+        </section>
+        <section
+          id="prefs-appearance"
+          data-pane="appearance"
+          aria-labelledby="prefs-appearance-title"
+          hidden
+        >
+          <h2 id="prefs-appearance-title" data-i18n="appearanceNav">
+            Darstellung
+          </h2>
+          <div class="prefs-pair">
+            <label
+              ><span data-i18n="appearance">Farbschema</span
+              ><select id="tv-appearance">
+                <option value="graphite" data-i18n="graphite">Graphit</option>
+                <option value="rose" data-i18n="rose">Rosé</option>
+              </select></label
+            ><label
+              ><span data-i18n="language">Sprache</span
+              ><select id="tv-language"></select
+            ></label>
+          </div>
+        </section>
+        <div class="prefs-actions">
+          <button
+            class="button outline"
+            id="reload-tv"
+            type="button"
+            data-i18n="reload"
+          >
+            Neu laden</button
+          ><button class="button light" type="submit" data-i18n="applyTV">
+            Auf dem Demo-TV ansehen
+          </button>
+        </div>
+      </form>
+    </main>
+  </body>
+</html>

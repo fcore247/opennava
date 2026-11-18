@@ -1,0 +1,193 @@
+/*
+ * Liquid Navbar "Waterline" – CSS for liquid-nav.js
+ *
+ * Port of Nimbus UI · Liquid Navbar "Waterline" (21st.dev) to dependency-free HTML.
+ * Original design, water shader, physics and icon scenes by guglielmogiannattasio.it.
+ * The glass, droplet fallback, colours and icon scenes below are taken from the original
+ * stylesheet; only the class names changed (nimbus-* -> liquid-nav-* / lq-*) and the layout
+ * rules are wrapped in :where() so that the host product keeps full control of its own markup.
+ *
+ * Opt in with <div data-liquid-nav> around real buttons/links. Options as data attributes:
+ *   data-liquid-tone="dark|light"      water colours (default dark)
+ *   data-liquid-refract="on|off"       SVG refraction of the backdrop (default: desktop Chrome only)
+ *   data-liquid-quality="low|high"     low = 30 fps, smaller canvas (default: low on TV WebViews)
+ *   data-liquid-motion="reduce"        force reduced motion
+ *   data-liquid-fx="plane|drop|spin|glow|wave|pop|none"   on a button: the scene its icon plays
+ * Custom properties: --lq-focus (focus ring, default var(--accent, #00A2FF)), --lq-fg, --lq-fg-soft.
+ */
+
+/* ---------- group ---------- */
+.liquid-nav {
+  --lq-tint: rgba(10, 18, 40, .26);
+  --lq-fg: #F1F7FF;
+  --lq-fg-soft: rgba(241, 247, 255, .66);
+  --lq-rim: rgba(255, 255, 255, .34);
+  --lq-focus: var(--accent, #00A2FF);
+  isolation: isolate;
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.liquid-nav[data-liquid-tone="light"] {
+  --lq-tint: rgba(255, 255, 255, .14);
+  --lq-fg: #0B132B;
+  --lq-fg-soft: rgba(11, 19, 43, .6);
+  --lq-rim: rgba(255, 255, 255, .7);
+}
+:where(.liquid-nav) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 999px;
+}
+
+/* ---------- glass + water layers (inserted by liquid-nav.js, aria-hidden) ---------- */
+.lq-glass {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--lq-tint);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2) brightness(1.08);
+  backdrop-filter: blur(10px) saturate(1.2) brightness(1.08);
+  box-shadow: inset 0 1px 1px var(--lq-rim), inset 0 0 0 1px rgba(255, 255, 255, .2), 0 12px 32px -14px rgba(0, 40, 90, .5), 0 2px 6px rgba(0, 40, 90, .1);
+}
+.liquid-nav[data-lq-refract="on"] .lq-glass {
+  -webkit-backdrop-filter: url(#liquid-nav-refract) blur(2px) saturate(1.2) brightness(1.08);
+  backdrop-filter: url(#liquid-nav-refract) blur(2px) saturate(1.2) brightness(1.08);
+}
+.lq-water {
+  position: absolute;
+  left: -14px; /* = PAD in liquid-nav.js */
+  top: -14px;
+  z-index: -1;
+  pointer-events: none;
+}
+.liquid-nav[data-lq-gl="off"] .lq-water { display: none; }
+.lq-drop {
+  display: none;
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  border-radius: 999px;
+  z-index: -1;
+  pointer-events: none;
+  will-change: transform, width;
+  background: radial-gradient(120% 140% at 30% 0%, rgba(255, 255, 255, .75), rgba(255, 255, 255, 0) 55%), rgba(255, 255, 255, .38);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, .95), inset 0 -2px 6px rgba(0, 162, 255, .22), inset 0 0 0 1px rgba(255, 255, 255, .55), 0 6px 16px -6px rgba(0, 70, 140, .45);
+}
+.liquid-nav[data-lq-gl="off"][data-lq-has-active="true"] .lq-drop { display: block; }
+
+/* ---------- items ---------- */
+.liquid-nav-item {
+  position: relative;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+:where(.liquid-nav-item) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--lq-fg-soft);
+  font-family: inherit;
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: -.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .25s;
+}
+:where(.liquid-nav-item:hover),
+:where(.liquid-nav-item[data-lq-active="true"]) { color: var(--lq-fg); }
+
+/* Focus is separate from the stored active tab: the drop stays on the active item,
+   the focus ring follows D-pad / keyboard focus. Hidden only while a pointer is in use. */
+.liquid-nav[data-lq-input="key"] .liquid-nav-item[data-lq-focus],
+.liquid-nav .liquid-nav-item:focus-visible {
+  outline: 3px solid var(--lq-focus);
+  outline-offset: 3px;
+  background-color: rgba(255, 255, 255, .16);
+  box-shadow: 0 0 0 7px rgba(8, 12, 24, .42);
+  color: var(--lq-fg);
+}
+.liquid-nav[data-liquid-tone="light"][data-lq-input="key"] .liquid-nav-item[data-lq-focus],
+.liquid-nav[data-liquid-tone="light"] .liquid-nav-item:focus-visible {
+  background-color: rgba(11, 19, 43, .1);
+  box-shadow: 0 0 0 7px rgba(255, 255, 255, .5);
+}
+
+/* ---------- icon scenes (from the original) ---------- */
+.liquid-nav-item svg { transition: transform .45s cubic-bezier(.3, 1.6, .5, 1); }
+.liquid-nav-item[data-lq-active="true"] svg { transform: translateY(-1px) scale(1.08); }
+.liquid-nav-item .nv-door { fill: transparent; }
+
+.liquid-nav-item[data-lq-fx="pop"] svg { animation: lqPop .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+@keyframes lqPop { 0% { transform: scale(.72) } 60% { transform: scale(1.2) } 100% { transform: translateY(-1px) scale(1.08) } }
+
+.liquid-nav-item[data-lq-fx="plane"] svg { animation: lqPlane 1.15s cubic-bezier(.55, 0, .3, 1) both; }
+@keyframes lqPlane { 0% { transform: none } 12% { transform: translate(-3px, 2px) rotate(7deg) } 42% { transform: translate(64px, -26px) rotate(-24deg) scale(.9); opacity: 0 } 43% { transform: translate(-60px, 16px) rotate(-12deg) scale(.9); opacity: 0 } 58% { opacity: 1 } 80% { transform: translate(3px, -1px) rotate(2deg) } 100% { transform: translateY(-1px) scale(1.08) } }
+.lq-fx { position: absolute; pointer-events: none; }
+.lq-trail {
+  left: var(--lq-ix, 50%);
+  top: var(--lq-iy, 50%);
+  height: 2px;
+  width: 46px;
+  border-radius: 2px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .95));
+  animation: lqTrail 1.15s ease-out both;
+}
+@keyframes lqTrail { 0%, 8% { opacity: 0; transform: rotate(-22deg) scaleX(0) } 30% { opacity: .9; transform: rotate(-22deg) scaleX(1) } 55%, 100% { opacity: 0; transform: rotate(-22deg) translateX(30px) scaleX(.2) } }
+
+.liquid-nav-item[data-lq-fx="drop"] svg { animation: lqDrop .95s cubic-bezier(.4, 0, .3, 1) both; transform-origin: 50% 100%; }
+@keyframes lqDrop { 0% { transform: translateY(-1px) } 26% { transform: translateY(-13px) scale(.88, 1.12) } 46% { transform: translateY(3px) scale(1.3, .68) } 62% { transform: translateY(-3px) scale(.92, 1.08) } 80% { transform: translateY(0) scale(1.04, .97) } 100% { transform: translateY(-1px) scale(1.08) } }
+.lq-splash {
+  left: calc(var(--lq-ix, 50%) - 2px);
+  top: calc(var(--lq-iy, 50%) + var(--lq-ih, 18px) / 2 - 4px);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+}
+.lq-splash.l { animation: lqSplashL .95s ease-out both; }
+.lq-splash.r { animation: lqSplashR .95s ease-out both; }
+@keyframes lqSplashL { 0%, 44% { opacity: 0; transform: none } 50% { opacity: .9; transform: translate(-5px, -6px) } 75%, 100% { opacity: 0; transform: translate(-11px, 1px) scale(.4) } }
+@keyframes lqSplashR { 0%, 44% { opacity: 0; transform: none } 50% { opacity: .9; transform: translate(5px, -7px) } 75%, 100% { opacity: 0; transform: translate(12px, 1px) scale(.4) } }
+
+.liquid-nav-item[data-lq-fx="spin"] svg { animation: lqSpin 1s cubic-bezier(.2, .75, .25, 1) both; }
+@keyframes lqSpin { 0% { transform: perspective(80px) rotateY(0) } 100% { transform: perspective(80px) rotateY(360deg) translateY(-1px) scale(1.08) } }
+
+.liquid-nav-item[data-lq-fx="glow"] svg { animation: lqHop .8s cubic-bezier(.3, 1.4, .5, 1) both; transform-origin: 50% 100%; }
+@keyframes lqHop { 0% { transform: none } 30% { transform: translateY(-5px) scale(1.04, .96) } 55% { transform: translateY(0) scale(1.12, .88) } 75% { transform: translateY(-2px) scale(.98, 1.04) } 100% { transform: translateY(-1px) scale(1.08) } }
+.liquid-nav-item[data-lq-fx="glow"] .nv-door { animation: lqDoor 1.3s ease both; }
+@keyframes lqDoor { 0% { fill: transparent } 30% { fill: #FFF3A8 } 100% { fill: rgba(126, 232, 255, .6) } }
+
+.liquid-nav-item[data-lq-fx="wave"] svg { animation: lqWave .9s ease-in-out both; transform-origin: 50% 92%; }
+@keyframes lqWave { 0% { transform: none } 20% { transform: rotate(-15deg) } 40% { transform: rotate(12deg) } 60% { transform: rotate(-8deg) } 80% { transform: rotate(4deg) } 100% { transform: translateY(-1px) scale(1.08) } }
+
+/* ---------- compact (icons only), as in the original ---------- */
+.liquid-nav[data-liquid-compact="true"] .liquid-nav-item { padding: 0 13px; }
+.liquid-nav[data-liquid-compact="true"] .liquid-nav-label {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---------- reduced motion: no scenes, no transitions ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .liquid-nav-item svg, .lq-fx, .nv-door { animation: none !important; transition: none; }
+}
+.liquid-nav[data-lq-motion="reduce"] .liquid-nav-item svg,
+.liquid-nav[data-lq-motion="reduce"] .lq-fx,
+.liquid-nav[data-lq-motion="reduce"] .nv-door { animation: none !important; transition: none; }

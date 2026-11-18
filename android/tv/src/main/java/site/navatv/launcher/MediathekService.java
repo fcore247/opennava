@@ -509,6 +509,12 @@ final class MediathekService {
     }
 
     static boolean contains(String id) { synchronized(ENTRIES) { return id!=null && ENTRIES.containsKey(id); } }
+    static boolean belongsTo(String id, String provider) {
+        synchronized (ENTRIES) {
+            Entry entry = ENTRIES.get(id);
+            return entry != null && provider.equals(entry.provider);
+        }
+    }
     static Playback resolve(String id) throws Exception {
         Entry entry; synchronized(ENTRIES) { entry=ENTRIES.get(id); }
         if(entry==null)throw new IOException("This programme is no longer cached. Please reopen the list.");

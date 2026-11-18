@@ -26,6 +26,15 @@ public final class CompanionProvider extends ContentProvider {
     @Override public Bundle call(String method, String arg, Bundle extras) {
         // call() has no implicit read/write operation. Check the caller before switching threads.
         getContext().enforceCallingOrSelfPermission(Manifest.permission.DUMP, "Companion access requires DUMP");
+        if (method != null && method.startsWith("luna_settings_")) {
+            Bundle out = LunaTvSettings.call(getContext(), method, arg);
+            if ("luna_settings_set".equals(method) && out.getBoolean("saved")) main.post(() -> {
+                Activity current = ProgrammeReminders.foreground();
+                if (current instanceof site.navatv.full.MainActivity)
+                    ((site.navatv.full.MainActivity) current).lunaSettingsChanged();
+            });
+            return out;
+        }
         if ("luna_status".equals(method) || "luna_save".equals(method)) {
             Bundle result = new Bundle();
             if ("luna_status".equals(method)) {

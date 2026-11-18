@@ -2,31 +2,40 @@
   "use strict";
   const films = {
     alpine: {
-      title: "Über den Wolken",
       provider: "ARD",
-      kind: "ARD · Demofilm",
       address: "ardmediathek.de",
       art: "./demo/full/assets/mountains.jpg",
-      description: "Eine Reise an die stillen Seen und Gipfel der Alpen.",
     },
     ocean: {
-      title: "Die blaue Stunde",
       provider: "ARTE",
-      kind: "ARTE · Demofilm",
       address: "arte.tv",
       art: "./demo/full/assets/ocean.jpg",
-      description: "Ein Abend an der Atlantikküste, kurz vor Sonnenuntergang.",
     },
     netflix: {
-      title: "Unser Planet",
       provider: "Netflix",
-      kind: "Netflix · Titellink",
       address: "netflix.com/de/title/80049832",
       art: "./demo/full/assets/earth.jpg",
-      description:
-        "Öffne die offizielle Netflix-Titelseite über deine Merkliste.",
     },
   };
+  const site = window.OpenNavaSite;
+  const titles = {
+    alpine: "alpine",
+    ocean: "oceanFilm",
+    netflix: "netflixFilm",
+  };
+  const kinds = {
+    alpine: "ardFilm",
+    ocean: "arteFilm",
+    netflix: "netflixLink",
+  };
+  function settingsURL() {
+    const url = new URL("./tvsettings/", location.href);
+    const lang = site.supported(
+      new URL(location.href).searchParams.get("lang"),
+    );
+    if (lang) url.searchParams.set("lang", lang);
+    return url.href;
+  }
   const storageKey = "openNavaLunaDemo.v1";
   const $ = (selector) => document.querySelector(selector);
   let selected = "alpine";
@@ -63,15 +72,16 @@
   function renderBrowser() {
     const film = films[selected];
     $("#address").textContent = film.address;
-    $("#film-kind").textContent = film.kind;
-    $("#film-title").textContent = film.title;
-    $("#film-description").textContent = film.description;
+    $("#edit-tv").href = settingsURL();
+    $("#film-kind").textContent = site.t(kinds[selected]);
+    $("#film-title").textContent = site.t(titles[selected]);
+    $("#film-description").textContent = site.t(selected + "Desc");
     $("#film-art").src = film.art;
     const marked = saved.includes(selected);
     saveButton.setAttribute("aria-pressed", String(marked));
     saveButton.querySelector("span").textContent = marked
-      ? "Vorgemerkt"
-      : "Für OpenNava vormerken";
+      ? site.t("saved")
+      : site.t("bookmark");
     saveButton
       .querySelector("use")
       .setAttribute("href", marked ? "#i-check" : "#i-bookmark");
@@ -101,10 +111,16 @@
     list: () =>
       saved.map((id) => ({
         id,
-        title: films[id].title,
+        title: site.t(titles[id]),
         provider: films[id].provider,
       })),
     remove,
+    getSettings: window.OpenNavaDemoSettings.read,
+    openSettings: () => {
+      location.assign(settingsURL());
+      return true;
+    },
+    t: site.t,
   });
   $("#film-list").addEventListener("click", (event) => {
     const button = event.target.closest("[data-film]");
@@ -118,9 +134,9 @@
       saved.unshift(selected);
       persist();
     }
-    $("#demo-status").textContent = removed
-      ? films[selected].title + " wurde von der Demo-Merkliste entfernt."
-      : films[selected].title + " ist auf dem Demo-TV vorgemerkt.";
+    $("#demo-status").textContent = site.t(removed ? "removed" : "added", {
+      title: site.t(titles[selected]),
+    });
   });
   function selectDevice(tab, focus = false) {
     const useTV = tab === deviceTabs[1];
@@ -131,7 +147,7 @@
       document.getElementById(button.getAttribute("aria-controls")).hidden =
         !active;
     }
-    $(".device-tabs").style.setProperty("--tab-x", useTV ? "100%" : "0");
+    window.LiquidNav?.refresh($(".device-tabs"));
     if (useTV) loadTelevision(document.body.dataset.profile);
     else if (tv.getAttribute("src") !== "about:blank") tv.src = "about:blank";
     if (focus) tab.focus();
@@ -163,6 +179,14 @@
   openLinkedDevice();
   window.addEventListener("hashchange", openLinkedDevice);
   renderBrowser();
+  document.addEventListener("opennava:site-language", () => {
+    renderBrowser();
+    if (tv.getAttribute("src") !== "about:blank") {
+      try {
+        tv.contentWindow?.NavaHome?.watchlistChanged();
+      } catch {}
+    }
+  });
 
   const clip = $("#clip-dialog");
   const video = clip.querySelector("video");

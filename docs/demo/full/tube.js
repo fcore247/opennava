@@ -238,8 +238,8 @@
         entry.reject(new Error(clean(typeof response?.error === 'string' ? response.error : response?.error?.message, 240) || 'Could not load the media library.'));
         return;
       }
-      const groups = Array.isArray(response.groups) ? response.groups.slice(0, 12).flatMap(group => group && Array.isArray(group.items) ? [{title: clean(group.title, 180), items: normalizeItems(group.items, 'mediathek'), pageToken: pageToken(group.pageToken)}] : []) : [];
-      const items = Array.isArray(response.items) ? normalizeItems(response.items, 'mediathek') : [...new Map(groups.flatMap(group => group.items).map(item => [item.id, item])).values()];
+      const groups = Array.isArray(response.groups) ? response.groups.slice(0, 12).flatMap(group => group && Array.isArray(group.items) ? [{title: clean(group.title, 180), items: normalizeItems(group.items, entry.provider), pageToken: pageToken(group.pageToken)}] : []) : [];
+      const items = Array.isArray(response.items) ? normalizeItems(response.items, entry.provider) : [...new Map(groups.flatMap(group => group.items).map(item => [item.id, item])).values()];
       entry.resolve({items, groups, pageToken: pageToken(response.pageToken)});
       return;
     }
@@ -308,6 +308,19 @@
       try {
         if (sendNative(bridge, 'mediathek', requestId, requestPayload) === false) finish(requestId, {error: 'Could not connect to the media library.'});
       } catch { finish(requestId, {error: 'The media library is currently unavailable.'}); }
+    });
+  }
+  function requestYouTube(query) {
+    return new Promise((resolve, reject) => {
+      const bridge = nativeBridge('youtube');
+      if (!bridge) { reject(new Error('YouTube unavailable')); return; }
+      const requestId = `nava-tube-${Date.now()}-${++sequence}`;
+      const timeout = setTimeout(() => finish(requestId, {error:'Search timed out'}), 30000);
+      pending.set(requestId, {kind:'external', provider:'youtube', timeout, resolve, reject});
+      try {
+        if (sendNative(bridge,'youtube',requestId,query ? {method:'search',query} : {method:'home'}) === false)
+          finish(requestId,{error:'YouTube unavailable'});
+      } catch { finish(requestId,{error:'YouTube unavailable'}); }
     });
   }
   function announce(message) {
@@ -553,5 +566,5 @@
   }, true);
 
   function getSearchContext() { return Object.freeze({provider: view.provider, channel: view.broadcaster, channelId: view.channelId, channelName: view.provider === 'mediathek' ? (view.broadcaster === 'all' ? '' : view.broadcaster.toUpperCase()) : view.channelName, query: view.query}); }
-  window.NavaTube = Object.freeze({open, close, isOpen, handleKey, search, openChannel, focusSearch, getSearchContext, requestMediathek, playMediathek, showLive, showBroadcaster});
+  window.NavaTube = Object.freeze({open, close, isOpen, handleKey, search, openChannel, focusSearch, getSearchContext, requestYouTube, requestMediathek, playMediathek, showLive, showBroadcaster});
 })();

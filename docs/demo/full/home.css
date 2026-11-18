@@ -66,51 +66,115 @@
 .native-tv .header .icon-button svg { width: 52%; height: 52%; stroke-width: 1.9; }
 .native-tv #clock { margin-left: .7em; color: var(--muted); font-size: clamp(14px, 1.45vw, 30px); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* Home: one small, connected group of equal destinations. No recommendation, cover or banner. */
-.native-tv:not(.other-view) .header nav { display: none; }
+/* The three destinations mirror the large controls of the senior launcher. */
+.native-tv[data-tv-appearance="rose"] { --bg: #261c27; --surface: #392c38; --muted: #d7bcca; }
+.native-tv .header { height: 15vh; }
+.native-tv .header nav, .native-tv .header-tools button { display: none; }
 .native-tv .header-tools { grid-column: 3; }
-.nava-home {
+.native-tv #clock[hidden] { display: none; }
+.nava-home { width: 87%; max-width: 1800px; margin: 9vh auto 0; }
+.nava-dock { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1.35vw; }
+.nava-dock-item { position: relative; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between;
+  min-height: 30vh; padding: 1.9vw; border-radius: 1.8vw; overflow: hidden; isolation: isolate; text-align: left;
+  border: 1px solid #ffffff27; color: #fff; background: #2b394e; }
+.native-tv.compact .nava-dock-item { min-height: 25vh; }
+.nava-card-art { position: absolute; z-index: -1; inset: 0; background: linear-gradient(115deg,#21283bdd,#14203155),url('assets/mountains.jpg') center 55% / cover; }
+[data-dock="luna"] .nava-card-art { background: linear-gradient(105deg,#362736eb,#4a354175),url('assets/ocean.jpg') center 52% / cover; }
+[data-dock="live"] .nava-card-art { background: linear-gradient(105deg,#192d3ce0,#16253855),url('assets/earth.jpg') center 56% / cover; }
+[data-dock="library"] .nava-card-art { background: linear-gradient(105deg,#1d302de3,#273d2755),url('assets/hills.jpg') center 58% / cover; }
+.nava-dock-icon { position: relative; display: grid; place-items: center; height: 3.1vw; width: 3.1vw; border-radius: .8vw; background: #ffffff1c; }
+.nava-dock-icon svg { width: 64%; height: 64%; }
+.nava-dock-label { font-size: clamp(16px,2.1vw,43px); font-weight: 650; line-height: 1.18; letter-spacing: -.035em; overflow-wrap: anywhere; }
+.nava-dock-count { position: absolute; top: 1.7vw; right: 1.7vw; min-width: 1.8em; padding: .2em .5em; border-radius: 2em; background: #10141dbd; color: #fff; font-size: clamp(12px,1.2vw,24px); text-align: center; }
+.nava-home-search { display: flex; align-items: center; gap: 1.2vw; margin-top: 2.1vh; padding: 1.15vw 1.65vw; width: 100%; border-radius: 1.2vw; background: var(--surface); border: 1px solid #ffffff21; color: var(--muted); text-align: left; font-size: clamp(14px,1.52vw,31px); }
+.nava-home-search svg, .full-search svg, .tv-settings-actions svg, #bottom-navigation svg { flex: none; width: 1.22em; height: 1.22em; }
+.nava-home-search svg:last-child { margin-left: auto; width: .9em; }
+#bottom-navigation { display: none; }
+.native-tv #bottom-navigation { position: fixed; bottom: 5.25vh; left: 50%; transform: translateX(-50%); z-index: 4; display: inline-flex; align-items: center; padding: .38vw; border-radius: 10vw; white-space: nowrap; background: var(--bg); }
+.native-tv #bottom-navigation button, .full-service-tabs button { display: inline-flex; justify-content: center; align-items: center; gap: .55em; height: auto; padding: .7em 1.25em; border-radius: 5em; color: var(--text); font-weight: 600; font-size: clamp(13px,1.4vw,29px); }
+.native-tv .page, .native-tv .tube-page, .native-tv .full-search { padding-bottom: 19vh; }
+.full-search { width: 87%; max-width: 1800px; margin: 0 auto; padding-top: 1vh; }
+.full-search h1 { margin: 0 0 1.8vh; font-size: clamp(27px,3.7vw,74px); font-weight: 650; line-height: 1.1; letter-spacing: -.055em; }
+.full-service-tabs { display: inline-flex; flex-wrap: wrap; border-radius: 3em; padding: .35vw; margin: 0 0 2.5vh; gap: .1vw; }
+.full-service-tabs button { padding: .66em 1.25em; font-size: clamp(12px,1.32vw,27px); }
+#full-search-query { display: flex; align-items: center; gap: .85em; width: 100%; padding: 1.05vw 1.4vw; background: var(--surface); border: 1px solid var(--line); border-radius: 1.1vw; color: var(--text); font-size: clamp(14px,1.5vw,30px); text-align: left; }
+#full-search-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.full-search.typing { --search-ink: var(--text); --search-accent: var(--accent); --search-line: var(--line); --search-focus: #f8e5f0; }
+.full-search.typing #full-search-query { margin-bottom: 1.3vh; }
+.full-search #tv-keyboard[hidden], .full-search #full-results[hidden] { display: none; }
+.search-submit, [data-netflix-search], .tv-settings-actions button { padding: .8em 1.25em; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: 1vw; font-size: clamp(14px,1.4vw,27px); }
+#full-results { margin: 2.5vh 0; }
+.full-results-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: .9vw; }
+.full-result { scroll-margin-bottom: 18vh; display: flex; align-items: center; gap: .9vw; padding: .7vw; background: var(--surface); color: var(--text); border-radius: .9vw; text-align: left; min-height: 5.8vw; }
+.full-result img, .full-result .result-mark { width: 5.5vw; height: 4.2vw; border-radius: .5vw; object-fit: cover; flex: none; }
+.full-result .result-mark { display: grid; place-items: center; background: #ffffff12; }
+.full-result small,.full-result strong { display: block; }
+.full-result small { color: var(--muted); font-size: clamp(10px,.98vw,20px); }
+.full-result strong { font-size: clamp(13px,1.3vw,26px); font-weight: 600; overflow-wrap: anywhere; }
+.search-message,.tv-settings-body p { color: var(--muted); font-size: clamp(14px,1.55vw,30px); line-height: 1.5; }
+.tv-settings-body { max-width: 44em; padding: 3vw; }
+.tv-settings-body h2 { font-size: clamp(25px,3vw,60px); margin: 0; }
+.tv-settings-actions { display: flex; gap: .7vw; flex-wrap: wrap; margin-top: 2vw; }
+.tv-settings-actions button, [data-netflix-search] { display: inline-flex; align-items: center; gap: .7em; }
+.tv-settings-body .tv-settings-status:empty { display: none; }
+.native-tv .app-watchlist { display: flex; align-items: center; justify-content: center; gap: .6em; }
+.app-watchlist svg { width: 1.5em; height: 1.5em; }
+
+/* Individual glyphs share an even baseline. The pale key follows the remote focus. */
+#tv-keyboard {
+  --key-width: min(7.12vw, 145px);
+  --key-height: clamp(28px, 7.75vh, 91px);
+  position: relative;
   display: grid;
-  place-items: center;
-  min-height: calc(100vh - clamp(70px, 15vh, 150px));
-  padding: 0 var(--pad) clamp(40px, 14vh, 160px);
-  background: radial-gradient(ellipse 50% 40% at 50% 46%, #ebb9d50d, transparent 70%);
+  border-top: 1px solid var(--search-line);
+  padding: clamp(9px, 2.15vh, 26px) 0 clamp(13px, 3.4vh, 40px);
 }
-.nava-dock {
-  display: flex;
-  gap: .5vw;
-  padding: .8vw;
-  border: 1px solid #ffffff12;
-  border-radius: 2.6vw;
-  background: #ffffff08;
+.key-row { display: flex; justify-content: center; align-items: center; }
+#tv-keyboard [data-letter] {
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 var(--key-width);
+  height: var(--key-height);
+  color: var(--search-ink);
+  padding: 0;
+  font: 540 clamp(19px, min(2.6vw, 5.5vh), 54px)/1 Manrope, sans-serif;
 }
-.nava-dock-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.1vw;
-  width: 12.4vw;
-  padding: 1.9vw .5vw 1.6vw;
-  border-radius: 1.9vw;
-  color: var(--text);
-}
-.nava-dock-icon { position: relative; display: grid; place-items: center; width: 5.2vw; height: 5.2vw; }
-.nava-dock-icon svg { width: 100%; height: 100%; stroke-width: 1.5; }
-.nava-dock-count {
+#tv-keyboard [data-letter]:focus { outline: 0; color: #142224; font-weight: 780; }
+#tv-keyboard [data-letter]:focus::before {
+  content: '';
   position: absolute;
-  top: -.5vw;
-  right: -.9vw;
-  min-width: 1.9vw;
-  padding: .1vw .5vw;
-  border-radius: 2vw;
-  background: #ffffff1f;
-  color: var(--text);
-  font-size: clamp(11px, 1.2vw, 24px);
-  font-weight: 700;
-  line-height: 1.5;
-  text-align: center;
+  z-index: -1;
+  inset: 3% 8%;
+  border-radius: 100px;
+  background: var(--search-focus);
+  box-shadow: 0 3px 13px #0004;
 }
-.nava-dock-label { display: flex; align-items: flex-start; justify-content: center; min-height: 1.3em; font-size: clamp(14px, 1.55vw, 31px); font-weight: 650; line-height: 1.25; letter-spacing: -.02em; text-align: center; }
+.keyboard-actions {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: clamp(5px, .84vw, 21px);
+  width: min(100%, calc(var(--key-width) * 11));
+  margin: clamp(9px, 2.3vh, 29px) auto 0;
+}
+.keyboard-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55em;
+  height: clamp(31px, 7vh, 80px);
+  padding: 0 1.05em;
+  color: var(--search-ink);
+  background: #ffffff09;
+  border: 1px solid var(--search-line);
+  border-radius: .63em;
+  font-size: clamp(14px, 1.6vw, 31px);
+  font-weight: 590;
+  line-height: 1;
+}
+.keyboard-actions [data-command=mode] { min-width: 4em; font-variant-numeric: tabular-nums; }
+.keyboard-actions [data-command=submit] { color: #152323; background: var(--search-accent); border-color: transparent; }
+.keyboard-actions button:focus { background: var(--search-focus); color: #152323; }
+.space-symbol { width: 1.2em; height: .4em; border: solid currentColor; border-width: 0 .1em .1em; border-radius: 2px; }
 
 /* Focus: a clear fill plus a rosé ring that is visible from the sofa. */
 .native-tv button:focus, .native-tv .quick-settings button:focus, .native-tv .app-card:focus-visible, .native-tv .tube-video-open:focus {
@@ -119,12 +183,11 @@
   transform: none;
 }
 .native-tv .header .icon-button:focus, .native-tv .header .nav-button:focus { background: #ffffff24; color: #fff; }
-.native-tv .nava-dock-item:focus { background: var(--accent); color: var(--accent-ink); outline-offset: .35vw; }
-.native-tv .nava-dock-item:focus .nava-dock-count { background: var(--accent-ink); color: var(--accent); }
-.native-tv .nava-dock-item:hover, .native-tv .app-card:focus, .native-tv .app-card:hover { background: #ffffff12; }
-.native-tv .nava-dock-item:focus:hover { background: var(--accent); }
+.native-tv .nava-dock-item:focus { outline-color: var(--accent); outline-offset: .38vw; }
+.native-tv .nava-dock-item:focus .nava-card-art { filter: brightness(1.18); }
+.native-tv .app-card:focus, .native-tv .app-card:hover { background: #ffffff12; }
 .luna-empty { max-width: 24em; color: var(--muted); font-size: clamp(14px, 1.5vw, 29px); line-height: 1.55; }
-.native-tv .page, .native-tv .tube-page { padding: 2vh var(--pad) 5vh; }
+.native-tv .page, .native-tv .tube-page { padding: 2vh var(--pad) 19vh; }
 .native-tv .page h1, .native-tv .tube-intro h1 { color: var(--text); font-size: clamp(30px, 4vw, 76px); font-weight: 600; line-height: 1.12; letter-spacing: -.06em; margin: 0; }
 .native-tv .native-all-apps { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1.45vw; margin-top: 4vh; }
 .native-tv .native-app-icon { width: clamp(44px, 4.4vw, 84px); height: clamp(44px, 4.4vw, 84px); border-radius: 18%; }
@@ -181,10 +244,12 @@
   .native-tv .header nav { justify-self: center; }
   .native-tv .header .brand span, .native-tv .header #clock { display: none; }
   .native-tv .header .nav-button { padding: .5em .7em; }
-  .nava-dock { flex-wrap: wrap; justify-content: center; max-width: 92vw; border-radius: 28px; }
-  .nava-dock-item { width: 26vw; padding: 3vw 1vw; border-radius: 20px; gap: 8px; }
-  .nava-dock-icon { width: 11vw; height: 11vw; }
-  .nava-dock-label { font-size: 13px; }
+  .nava-home { width: 92%; }
+  .nava-dock-item { padding: 2vw; }
+  .nava-dock-icon { width: 4.8vw; height: 4.8vw; }
+  .nava-dock-label { font-size: clamp(13px,2.55vw,18px); }
+  .full-results-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .native-tv #bottom-navigation button { padding: .62em .85em; }
   .native-tv .tube-top { align-items: flex-start; flex-direction: column; gap: 12px; }
   .native-tv .tube-search-region { min-width: 0; }
   .native-tv .tube-grid, .native-tv .native-all-apps { grid-template-columns: repeat(2,minmax(0,1fr)); }

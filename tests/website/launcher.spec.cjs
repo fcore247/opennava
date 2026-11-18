@@ -22,7 +22,7 @@ test.describe('Full launcher on desktop', () => {
   test.use({ viewport: { width: 1440, height: 960 } });
 
   test('navigate with a keyboard, play a sample and switch profiles inside the TV', async ({page}) => {
-    await page.goto('./', {waitUntil: 'load'});
+    await page.goto('./?lang=de', {waitUntil: 'load'});
     await page.getByRole('tab', {name: 'OpenNava TV'}).click();
     await checkProfile(page, 'full');
     const tv = page.frameLocator('#demo-tv');
@@ -33,7 +33,7 @@ test.describe('Full launcher on desktop', () => {
     await library.press('Enter');
     await expect(tv.getByRole('heading', {name:'Media library', exact:true})).toBeVisible();
 
-    const sample = tv.getByRole('button', {name: 'Play Above the clouds', exact: true});
+    const sample = tv.getByRole('button', {name: 'Above the clouds', exact: true});
     await sample.press('Enter');
     const player = tv.getByRole('dialog');
     await checkPlaying(player);
@@ -43,6 +43,7 @@ test.describe('Full launcher on desktop', () => {
     await expect(sample).toBeVisible();
 
     await tv.getByRole('button', {name: 'Settings', exact: true}).click();
+    await tv.getByRole('button', {name: 'Quick settings', exact: true}).click();
     await tv.getByRole('button', {name: 'Senior view', exact: true}).click();
     await checkProfile(page, 'senior');
     await expect(tv.getByRole('button', {name: 'Open ZDF library'})).toBeVisible();
@@ -56,7 +57,7 @@ test.describe('Senior view on a touch screen', () => {
   test.use({ viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true });
 
   test('tap the TV in portrait and landscape and return to the full launcher', async ({page}) => {
-    await page.goto('./', {waitUntil: 'domcontentloaded'});
+    await page.goto('./?lang=de', {waitUntil: 'domcontentloaded'});
     await page.evaluate(() => document.fonts.ready);
     await page.getByRole('tab', {name: 'OpenNava TV'}).tap();
     const toggle = page.locator('label').filter({has: page.locator('input[name="preview"][value="senior"]')});
@@ -97,4 +98,42 @@ test.describe('Senior view on a touch screen', () => {
     await checkProfile(page, 'full');
     await expect(tv.locator('#nava-home').getByRole('button', {name:/^Live TV\b/i})).toBeVisible();
   });
+});
+
+test('the full search uses the senior remote keyboard and keeps the submitted query across service tabs', async ({page}) => {
+  await page.goto('demo/full/index.html');
+  const key=value=>page.evaluate(button=>window.navaRemote(button),value);
+  await page.locator('.nava-home-search').click();
+  await expect(page.locator('.full-search input,.full-search textarea,.full-search [contenteditable=true]')).toHaveCount(0);
+  const keyboard=page.locator('#tv-keyboard');
+  await expect(keyboard.locator('[data-letter="Q"]')).toBeFocused();
+  await expect(keyboard.locator('.key-row')).toHaveText(['QWERTYUIOP','ASDFGHJKL','ZXCVBNMÄÖÜß']);
+  await key('ArrowDown'); await key('Enter');
+  await expect(page.locator('#full-search-text')).toHaveText('A');
+  await key('ArrowRight'); await key('Enter');
+  await expect(page.locator('#full-search-text')).toHaveText('AS');
+  await key('Delete');
+  await expect(page.locator('#full-search-text')).toHaveText('A');
+  await keyboard.locator('[data-command=mode]').click();
+  await expect(keyboard.locator('.key-row').first()).toHaveText('1234567890');
+  await keyboard.locator('[data-letter="1"]').click();
+  await keyboard.locator('[data-command=space]').click();
+  await keyboard.locator('[data-command=delete]').click();
+  await expect(page.locator('#full-search-text')).toHaveText('A1');
+  await key('Escape');
+  await expect(keyboard).toBeHidden();
+  await expect(page.locator('#full-search-query')).toBeFocused();
+  await key('Enter');
+  await expect(keyboard.locator('[data-letter="Q"]')).toBeFocused();
+  await page.keyboard.type('forest');
+  await keyboard.locator('[data-command=submit]').click();
+  await expect(keyboard).toBeHidden();
+  await expect(page.getByRole('button',{name:'Inside the forest',exact:true})).toBeVisible();
+  await page.getByRole('tab',{name:'ZDF'}).click();
+  await expect(page.locator('#full-search-text')).toHaveText('forest');
+  await expect(page.locator('#full-results [data-tv-result] small')).toHaveText(['ZDF']);
+  await page.getByRole('tab',{name:'Netflix'}).click();
+  await expect(page.locator('[data-netflix-search]')).toHaveText(/Netflix.*forest/);
+  await page.locator('[data-netflix-search]').click();
+  await expect(page.getByRole('link',{name:'Search on Netflix'})).toHaveAttribute('href','https://www.netflix.com/search?q=forest');
 });

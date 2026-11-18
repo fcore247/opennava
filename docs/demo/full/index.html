@@ -6,7 +6,7 @@
   <script src="../channels.js?v=be1c66c0d2e9"></script>
   <script src="../../demo-host/live-streams.js?v=2b5f9aa8f81d"></script>
   <script src="../../demo-host/live-tv.js?v=113fc1747319"></script>
-  <script src="../../demo-host/bridge.js?v=f8a4f5a5806e"></script>
+  <script src="../../demo-host/bridge.js?v=5f54fa94ff8d"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#161a22">
   <meta name="description" content="OpenNava – your home screen for Android TV.">
@@ -14,11 +14,16 @@
   <link rel="icon" href="brand.svg">
   <link rel="stylesheet" href="styles.css?v=1ff03364486b">
   <link rel="stylesheet" href="tube.css?v=3e4eff4da0d7">
-  <link rel="stylesheet" href="home.css?v=10de64b6ca02">
-  <script src="app.js?v=9a56ed68add0" defer></script>
-  <script src="tube.js?v=65b362ff3f40" defer></script>
-  <script src="home.js?v=5083030b980f" defer></script>
-  <script src="native.js?v=6a24c2e71f10" defer></script>
+  <link rel="stylesheet" href="home.css?v=cc75741f7a27">
+  <link rel="stylesheet" href="liquid-nav.css?v=53da3bb91b57">
+  <script src="full-ui-locales.js?v=77628c98493e" defer></script>
+  <script src="full-i18n.js?v=6010c42d5873" defer></script>
+  <script src="liquid-nav.js?v=2fb3db637622" defer></script>
+  <script src="app.js?v=decd2798bb5b" defer></script>
+  <script src="tube.js?v=e1f47ced83c9" defer></script>
+  <script src="full-search.js?v=80a333c0f87f" defer></script>
+  <script src="home.js?v=2c3e8530ef79" defer></script>
+  <script src="native.js?v=a9614424f9aa" defer></script>
 </head>
 <body>
   <div class="backdrop" id="backdrop"></div>
@@ -37,6 +42,7 @@
     </div>
   </header>
   <main id="main"></main>
+  <nav id="bottom-navigation" aria-label="Main navigation" data-liquid-nav></nav>
   <footer>
     <div class="keyboard-hints"><span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Navigate</span><span><kbd>↵</kbd> Select</span><span><kbd>esc</kbd> Back</span></div>
     <span class="prototype-label"><span></span> LAUNCHER PREVIEW <i>·</i> DEMO CONTENT</span>
