@@ -1,191 +1,33 @@
-/* Shared by the Fire TV and Google TV editions of the full launcher.
-   Calm graphite home in the spirit of Luna Browser: Manrope, one rosé accent, few elements. */
-.native-tv {
-  --bg: #14171d;
-  --surface: #1d222b;
-  --text: #f4f1f3;
-  --muted: #a9b0bd;
-  --line: #343a47;
-  --pad: 6vw;
-  background: var(--bg);
-  color: var(--text);
-  font-family: Manrope, system-ui, sans-serif;
-}
-.native-tv .backdrop, .native-tv > footer, .native-tv .header .avatar, .native-tv .header-divider { display: none; }
-.native-tv .header {
-  position: relative;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 2vw;
-  height: clamp(70px, 15vh, 150px);
-  padding: 0 var(--pad);
-}
-.native-tv .header .brand {
-  font: 700 clamp(19px, 2vw, 42px)/1 Manrope, sans-serif;
-  letter-spacing: -.055em;
-  justify-self: start;
-  gap: .53em;
-  padding: .35em .5em;
-  margin-left: -.5em;
-  border-radius: 14px;
-}
-.native-tv .brand svg { width: 1.4em; height: 1.15em; }
-.native-tv .header nav { display: flex; gap: clamp(2px, .5vw, 12px); }
-.native-tv .header .nav-button {
-  position: relative;
-  padding: .6em 1.15em;
-  border-radius: 100px;
-  font-size: clamp(13px, 1.36vw, 26px);
-  line-height: 1.3;
-  font-weight: 600;
-  color: var(--muted);
-  background: none;
-  box-shadow: none;
-}
-.native-tv .header .nav-button.active { color: var(--text); background: none; box-shadow: none; }
-.native-tv .header .nav-button.active::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: .1em;
-  width: .36em;
-  height: .36em;
-  margin-left: -.18em;
-  border-radius: 50%;
-  background: var(--accent);
-}
-.native-tv .header-tools { justify-self: end; margin: 0; gap: clamp(6px, .8vw, 18px); }
-.native-tv .header .icon-button {
-  width: clamp(40px, 3.9vw, 76px);
-  height: clamp(40px, 3.9vw, 76px);
-  color: var(--text);
-  background: #ffffff0d;
-}
-.native-tv .header .icon-button svg { width: 52%; height: 52%; stroke-width: 1.9; }
-.native-tv #clock { margin-left: .7em; color: var(--muted); font-size: clamp(14px, 1.45vw, 30px); font-weight: 600; font-variant-numeric: tabular-nums; }
-
-/* Home: one small, connected group of equal destinations. No recommendation, cover or banner. */
-.native-tv:not(.other-view) .header nav { display: none; }
-.native-tv .header-tools { grid-column: 3; }
-.nava-home {
-  display: grid;
-  place-items: center;
-  min-height: calc(100vh - clamp(70px, 15vh, 150px));
-  padding: 0 var(--pad) clamp(40px, 14vh, 160px);
-  background: radial-gradient(ellipse 50% 40% at 50% 46%, #ebb9d50d, transparent 70%);
-}
-.nava-dock {
-  display: flex;
-  gap: .5vw;
-  padding: .8vw;
-  border: 1px solid #ffffff12;
-  border-radius: 2.6vw;
-  background: #ffffff08;
-}
-.nava-dock-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.1vw;
-  width: 12.4vw;
-  padding: 1.9vw .5vw 1.6vw;
-  border-radius: 1.9vw;
-  color: var(--text);
-}
-.nava-dock-icon { position: relative; display: grid; place-items: center; width: 5.2vw; height: 5.2vw; }
-.nava-dock-icon svg { width: 100%; height: 100%; stroke-width: 1.5; }
-.nava-dock-count {
-  position: absolute;
-  top: -.5vw;
-  right: -.9vw;
-  min-width: 1.9vw;
-  padding: .1vw .5vw;
-  border-radius: 2vw;
-  background: #ffffff1f;
-  color: var(--text);
-  font-size: clamp(11px, 1.2vw, 24px);
-  font-weight: 700;
-  line-height: 1.5;
-  text-align: center;
-}
-.nava-dock-label { display: flex; align-items: flex-start; justify-content: center; min-height: 1.3em; font-size: clamp(14px, 1.55vw, 31px); font-weight: 650; line-height: 1.25; letter-spacing: -.02em; text-align: center; }
-
-/* Focus: a clear fill plus a rosé ring that is visible from the sofa. */
-.native-tv button:focus, .native-tv .quick-settings button:focus, .native-tv .app-card:focus-visible, .native-tv .tube-video-open:focus {
-  outline: clamp(3px, .3vw, 6px) solid var(--accent);
-  outline-offset: clamp(3px, .28vw, 6px);
-  transform: none;
-}
-.native-tv .header .icon-button:focus, .native-tv .header .nav-button:focus { background: #ffffff24; color: #fff; }
-.native-tv .nava-dock-item:focus { background: var(--accent); color: var(--accent-ink); outline-offset: .35vw; }
-.native-tv .nava-dock-item:focus .nava-dock-count { background: var(--accent-ink); color: var(--accent); }
-.native-tv .nava-dock-item:hover, .native-tv .app-card:focus, .native-tv .app-card:hover { background: #ffffff12; }
-.native-tv .nava-dock-item:focus:hover { background: var(--accent); }
-.luna-empty { max-width: 24em; color: var(--muted); font-size: clamp(14px, 1.5vw, 29px); line-height: 1.55; }
-.native-tv .page, .native-tv .tube-page { padding: 2vh var(--pad) 5vh; }
-.native-tv .page h1, .native-tv .tube-intro h1 { color: var(--text); font-size: clamp(30px, 4vw, 76px); font-weight: 600; line-height: 1.12; letter-spacing: -.06em; margin: 0; }
-.native-tv .native-all-apps { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 1.45vw; margin-top: 4vh; }
-.native-tv .native-app-icon { width: clamp(44px, 4.4vw, 84px); height: clamp(44px, 4.4vw, 84px); border-radius: 18%; }
-.native-tv .native-app-identity { gap: 1vw; font-size: clamp(14px, 1.5vw, 30px); }
-.native-tv .native-app-identity > span { max-width: 12em; }
-.native-tv .native-all-apps .app-card { height: clamp(80px, 14vh, 178px); border-radius: 1.4vw; background-color: var(--surface); border: 1px solid #ffffff16; }
-.native-tv .tube-page { --tube-subtle: var(--muted); background: none; }
-.native-tv .tube-top { align-items: center; gap: 4vw; margin-bottom: 2vh; }
-.native-tv .tube-search-region { display: flex; align-items: center; width: auto; max-width: none; gap: 1.1vw; }
-.native-tv .tube-providers { margin: 0; border-color: #ffffff15; border-radius: 50px; background: #12151c; }
-.native-tv .tube-providers button { color: var(--muted); border-radius: 50px; }
-.native-tv .tube-providers button[aria-pressed=true] { background: #323744; color: var(--text); }
-.native-tv .tube-search { height: auto; min-height: 34px; width: auto; padding: .55em 1em; border-radius: 40px; background: var(--surface); color: var(--text); }
-.native-tv .tube-search-copy, .native-tv .tube-search-key { display: none; }
-.native-tv .tube-search::after { content: 'Search'; font-size: clamp(12px,1.25vw,23px); }
-.native-tv .tube-editing .tube-search-region { width: 100%; }
-.native-tv .tube-editing .tube-search { flex: 1; }
-.native-tv .tube-editing .tube-search-copy { display: flex; }
-.native-tv .tube-editing .tube-search::after { content: none; }
-.native-tv .tube-toolbar[hidden] { display: none; }
-.native-tv .tube-filter-toggle { border: 1px solid var(--line); border-radius: 20px; padding: .4em 1em; margin: 1vh 0; color: var(--muted); font-size: clamp(12px,1.2vw,22px); }
-.native-tv .tube-filter-toggle[aria-expanded=true], .native-tv .tube-broadcasters button[aria-pressed=true] { background: #403041; color: #f4d4e5; }
-.native-tv .tube-topics, .native-tv .tube-toolbar { margin-top: 1vh; }
-.native-tv .tube-broadcasters button, .native-tv .tube-topic, .native-tv .tube-video-meta, .native-tv .tube-search-key { color: var(--muted); }
-.native-tv .tube-topic[aria-pressed=true] { color: var(--accent-ink); }
-.native-tv .tube-thumbnail, .native-tv .tube-state, .native-tv .tube-keyboard, .native-tv .tube-editing .tube-search { background: var(--surface); }
-.native-tv .tube-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 3vh 1.7vw; }
-.native-tv .tube-video-title { color: var(--text); font-weight: 600; font-size: clamp(13px,1.45vw,28px); }
-.native-tv .tube-video-meta { font-size: clamp(10px,1.12vw,22px); }
-.native-tv dialog, .native-tv #panel.quick-settings { background: #1d212b; color: var(--text); border: 1px solid #ffffff20; }
-.native-tv #panel.quick-settings { background-image: none; }
-.native-tv .quick-cinema::before { background: linear-gradient(90deg,#2c2131ed,#2c213177); }
-.native-tv .quick-topbar .quick-wordmark, .native-tv .quick-footer, .native-tv .quick-tile-status { color: var(--muted); }
-.native-tv .quick-tile:not([aria-checked=true]), .native-tv .quick-color, .native-tv .luna-title:hover, .native-tv .luna-remove:hover { background: #2a303c; }
-.native-tv .quick-tile-top { color: var(--muted); }
-.native-tv .quick-colors { grid-template-columns: repeat(4,minmax(0,1fr)); }
-.native-tv .quick-look-preview { display: none; }
-.native-tv .quick-color { padding: .65em; text-align: center; }
-.native-tv .quick-color::before { content: ''; display: block; height: .8em; width: .8em; background: var(--sample); border-radius: 50%; margin: .25em auto .65em; }
-.native-tv .quick-color-label { justify-content: center; gap: .35em; }
-.native-tv .visitor-return-panel, .native-tv .native-home-toggle { background: #292c37; color: var(--text); border: 1px solid #ffffff16; }
-.native-tv .luna-watchlist .panel-body { max-height: 78vh; overflow: auto; }
-.native-tv .luna-watchlist #panel-title { margin-bottom: .7em; font-size: clamp(23px,2.6vw,48px); }
-.luna-programme { display: flex; gap: .8em; align-items: center; padding: .4em .2em; border-bottom: 1px solid #ffffff17; }
-.luna-programme:last-child { border: 0; }
-.luna-title, .luna-remove { border-radius: 9px; padding: .65em .8em; font-size: clamp(13px,1.5vw,29px); }
-.luna-title { flex: 1; min-width: 0; text-align: left; }
-.luna-title small, .luna-title strong { display: block; }
-.luna-title small { margin-bottom: .2em; color: var(--muted); }
-.luna-title strong { font-weight: 600; overflow-wrap: anywhere; }
-.luna-remove { color: var(--muted); font-size: clamp(12px,1.15vw,23px); }
-@media (max-width: 700px) {
-  .native-tv .header { gap: .5em; grid-template-columns: auto 1fr auto; }
-  .native-tv .header nav { justify-self: center; }
-  .native-tv .header .brand span, .native-tv .header #clock { display: none; }
-  .native-tv .header .nav-button { padding: .5em .7em; }
-  .nava-dock { flex-wrap: wrap; justify-content: center; max-width: 92vw; border-radius: 28px; }
-  .nava-dock-item { width: 26vw; padding: 3vw 1vw; border-radius: 20px; gap: 8px; }
-  .nava-dock-icon { width: 11vw; height: 11vw; }
-  .nava-dock-label { font-size: 13px; }
-  .native-tv .tube-top { align-items: flex-start; flex-direction: column; gap: 12px; }
-  .native-tv .tube-search-region { min-width: 0; }
-  .native-tv .tube-grid, .native-tv .native-all-apps { grid-template-columns: repeat(2,minmax(0,1fr)); }
-}
+.nava-home-hero{height:300px;padding:30px var(--pad) 25px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;max-width:75%}
+.nava-home-eyebrow{display:flex;align-items:center;gap:9px;color:#cad6c9;font-size:9px;font-weight:650;letter-spacing:2px}
+.nava-home-eyebrow>span,.nava-live-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0}
+.nava-home-hero h1{font-size:clamp(30px,4vw,62px);font-weight:550;line-height:1.1;letter-spacing:-1.8px;margin:15px 0 12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nava-home-hero>p{color:#b9c5bb;font-size:12px;line-height:1.6}
+.nava-home-actions{display:flex;gap:12px;margin-top:22px}
+.nava-home-shelves{padding:0 var(--pad)}
+.nava-home-live{margin-bottom:24px}
+.nava-text-link{display:flex;align-items:center;gap:3px;font-size:11px;color:#b5c4b7;border-radius:6px;padding:4px}
+.nava-text-link svg{height:15px;width:15px}
+.nava-live-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.nava-live-card{border:1px solid #b9d0b51b;background:linear-gradient(125deg,#34453b99,#202924a8);border-radius:13px;display:flex;align-items:center;gap:12px;min-width:0;text-align:left;padding:17px 13px}
+.nava-live-monogram{width:42px;height:34px;border-radius:8px;display:grid;place-items:center;background:#d2edbe0c;color:var(--accent);font-size:12px;font-weight:800;flex-shrink:0}
+.nava-live-copy{display:flex;flex-direction:column;gap:5px;min-width:0}
+.nava-live-copy strong{font-size:12px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nava-live-copy small{font-size:9px;color:#91a895}
+.nava-live-dot{margin-left:auto}
+.nava-live-card:focus,.nava-live-card:hover{background:#34483a}
+.nava-home-note{color:#95aa9a;font-size:12px;padding:18px;background:#ffffff04;border:1px solid #ffffff09;border-radius:12px;line-height:1.6}
+.nava-home-note button{color:var(--accent);text-decoration:underline;margin-left:8px}
+.nava-broadcast-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 14px}
+.nava-broadcast-card{display:block;text-align:left;padding:0;border-radius:10px;min-width:0}
+.nava-broadcast-art{position:relative;aspect-ratio:16/9;display:grid;place-items:center;overflow:hidden;border-radius:10px;background:#25362d;color:#7f9a87}
+.nava-broadcast-art>img{width:100%;height:100%;object-fit:cover;transition:transform .2s}
+.nava-broadcast-source{position:absolute;left:9px;top:9px;background:#101713c9;padding:3px 6px;border-radius:5px;font-size:9px;font-weight:650;color:#edf3ea}
+.nava-broadcast-play{position:absolute;inset:0;display:grid;place-items:center;opacity:0;background:#07100935;transition:opacity .15s;color:var(--accent)}
+.nava-broadcast-play svg{width:32px;height:32px}
+.nava-broadcast-card:focus .nava-broadcast-play,.nava-broadcast-card:hover .nava-broadcast-play{opacity:1}
+.nava-broadcast-card>strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;line-height:1.4;font-weight:600;margin-top:9px}
+.nava-broadcast-card>small{display:block;font-size:10px;color:#91a895;margin-top:6px}
+.nava-home-latest{margin-bottom:30px}
+@media(max-height:650px) and (min-width:801px){.native-tv .nava-home-hero{height:216px;padding-top:10px;padding-bottom:19px;max-width:76%}.native-tv .nava-home-hero h1{font-size:34px;margin:12px 0 9px}.native-tv .nava-home-hero>p{font-size:11px}.native-tv .nava-home-actions{margin-top:17px}.native-tv .nava-home-actions button{height:36px;font-size:12px}.native-tv .nava-home-live{margin-bottom:20px}.native-tv .nava-live-card{padding:12px 11px;gap:8px}.native-tv .nava-live-monogram{width:31px;font-size:10px}.native-tv .nava-live-copy strong{font-size:11px}.native-tv .nava-home .app-section{margin-bottom:23px}.native-tv .nava-home .section-heading{margin-bottom:10px}}
+@media(max-width:800px){.nava-home-hero{max-width:100%;height:280px}.nava-live-grid,.nava-broadcast-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.nava-home-actions{gap:8px}}

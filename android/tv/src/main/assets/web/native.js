@@ -29,7 +29,7 @@ if (window.NavaTV) {
   }
 
   window.renderNativeApps = function() {
-    main.innerHTML = `<section class="page"><h1>Apps</h1><div class="app-grid native-all-apps">${apps.map(a => `<button class="app-card" data-app="${a.id}" aria-label="Open ${escapeHTML(a.name)}">${a.logo}</button>`).join('')}</div></section>`;
+    main.innerHTML = `<section class="page"><p class="page-topline">YOUR FIRE TV APPS</p><h1>Your TV apps.</h1><p class="page-intro">${apps.length} installed apps. Select one to open it.</p><div class="app-grid native-all-apps">${apps.map(a => `<button class="app-card" data-app="${a.id}" aria-label="Open ${escapeHTML(a.name)}">${a.logo}</button>`).join('')}</div></section>`;
   };
 
   window.navaCustomizeSettings = function() {
@@ -54,13 +54,6 @@ if (window.NavaTV) {
     updates.textContent = 'Software updates';
     updates.addEventListener('click', () => window.NavaTV.openUpdates());
     section.after(updates);
-    if (NavaTV.hasPersonalView?.() && typeof NavaTV.showPhoneLink === 'function') {
-      const pair = document.createElement('button');
-      pair.className = 'native-home-toggle';
-      pair.textContent = 'Pair phone';
-      pair.addEventListener('click', () => NavaTV.showPhoneLink());
-      updates.after(pair);
-    }
     const launcher = document.createElement('button');
     launcher.className = 'native-home-toggle';
     launcher.dataset.action = 'native-home-toggle';
@@ -130,7 +123,7 @@ if (window.NavaTV) {
     if (key === 'Escape') {
       if (player.open) closePlayer();
       else if (panel.open) closePanel();
-      else { navigate('home'); window.NavaHome.focusHome(); }
+      else { navigate('home'); main.querySelector('[data-app]')?.focus(); }
       return;
     }
     if (key === 'Menu') {
@@ -141,7 +134,7 @@ if (window.NavaTV) {
     if (key === 'Enter') {
       const focused = document.activeElement;
       if (focused?.matches('button,a,input')) focused.click();
-      else window.NavaHome.focusHome();
+      else main.querySelector('[data-app]')?.focus();
       return;
     }
     if (key.startsWith('Media')) {
@@ -167,11 +160,10 @@ if (window.NavaTV) {
     if (panel.open) closePanel();
     refreshInstalledApps();
     navigate('home');
-    requestAnimationFrame(() => window.NavaHome.focusHome());
+    requestAnimationFrame(() => main.querySelector('[data-app]')?.focus());
   };
 
   window.navaNativeResume = function() {
-    window.NavaHome.watchlistChanged();
     updateLauncherToggle();
     if (Date.now() - nativeRefreshAt > 10000) {
       const appId = document.activeElement?.dataset?.app;
@@ -192,9 +184,12 @@ if (window.NavaTV) {
     window.NavaTube?.focusSearch({provider:target});
   };
   document.querySelector('.header [data-action="search"]').dataset.action = 'global-search';
-  const mediathekNav = document.querySelector('.header [data-view="discover"]');
-  mediathekNav.dataset.view = 'mediathek';
-  mediathekNav.textContent = 'Media library';
+  const youtubeNav = document.querySelector('.header [data-view="discover"]');
+  youtubeNav.dataset.view = 'youtube'; youtubeNav.textContent = 'YouTube';
+
+  const mediathekNav = document.createElement('button');
+  mediathekNav.className = 'nav-button'; mediathekNav.dataset.view = 'mediathek'; mediathekNav.textContent = 'Media library';
+  document.querySelector('.header nav').insertBefore(mediathekNav, youtubeNav);
   const appsNav = document.querySelector('.header [data-view="library"]');
   appsNav.dataset.view = 'apps'; appsNav.textContent = 'Apps';
   document.querySelector('.prototype-label').innerHTML = '<span></span> OpenNava <i>·</i> YOUR TELEVISION';
@@ -203,6 +198,6 @@ if (window.NavaTV) {
   footerButton.dataset.action = 'native-settings'; footerButton.dataset.kind = 'general';
   footerButton.innerHTML = `Fire TV ${icon('settings')}`;
   refreshInstalledApps(); render();
-  if (window.parent === window) requestAnimationFrame(() => window.NavaHome.focusHome());
+  requestAnimationFrame(() => main.querySelector('[data-app]')?.focus());
   console.log('OpenNava native ready', JSON.stringify({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,apps:apps.length}));
 }

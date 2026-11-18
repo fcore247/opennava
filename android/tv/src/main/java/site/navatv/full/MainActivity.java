@@ -33,8 +33,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-import site.navatv.launcher.LunaWatchlist;
-import site.navatv.launcher.StartupSignals;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import java.io.ByteArrayInputStream;
@@ -77,7 +75,7 @@ public final class MainActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         immersive();
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(22, 26, 34));
+        webView.setBackgroundColor(Color.rgb(16, 19, 18));
         webView.setFocusable(true);
         webView.setFocusableInTouchMode(true);
         WebSettings settings = webView.getSettings();
@@ -129,7 +127,7 @@ public final class MainActivity extends Activity {
         openingYouTube = false;
         LauncherState.clearBypass(this);
         immersive();
-        if (webView != null) { webView.onResume(); notifyResume(); handleScreenWake(); }
+        if (webView != null) { webView.onResume(); notifyResume(); }
     }
 
     @Override protected void onPause() {
@@ -157,17 +155,6 @@ public final class MainActivity extends Activity {
     private void notifyResume() {
         if (pageReady && webView != null) webView.evaluateJavascript(
                 "if(typeof window.navaNativeResume==='function'){window.navaNativeResume();}", null);
-    }
-
-    public void handleScreenWake() {
-        if (pageReady && webView != null && getApplication() instanceof StartupSignals
-                && ((StartupSignals) getApplication()).takeFullWake())
-            webView.evaluateJavascript("if(window.NavaHome)window.NavaHome.wake()", null);
-    }
-
-    public void lunaWatchlistChanged() {
-        if (pageReady && webView != null && !isDestroyed() && webView.getUrl() != null && trusted(Uri.parse(webView.getUrl())))
-            webView.evaluateJavascript("if(window.NavaHome)window.NavaHome.watchlistChanged()", null);
     }
 
     private void notifyHome() {
@@ -284,7 +271,6 @@ public final class MainActivity extends Activity {
                         + "document.addEventListener('focusin',sync);document.addEventListener('focusout',function(){setTimeout(sync,0)});sync();})();", null);
                 notifyResume();
                 notifyHome();
-                handleScreenWake();
             }
         }
     }
@@ -524,21 +510,6 @@ public final class MainActivity extends Activity {
     }
 
     private final class NativeBridge {
-        @JavascriptInterface public String getLunaWatchlist() {
-            return LunaWatchlist.get(MainActivity.this).list(MainActivity.this);
-        }
-
-        @JavascriptInterface public void openLunaProgramme(String id) {
-            runOnUiThread(() -> {
-                if (hasWindowFocus() && pageReady && webView != null && webView.getUrl() != null
-                        && trusted(Uri.parse(webView.getUrl()))) LunaWatchlist.get(MainActivity.this).open(MainActivity.this, id);
-            });
-        }
-
-        @JavascriptInterface public boolean removeLunaProgramme(String id) {
-            return LunaWatchlist.get(MainActivity.this).remove(MainActivity.this, id);
-        }
-
         @android.webkit.JavascriptInterface public void openUpdates() {
             runOnUiThread(() -> site.navatv.updates.Updates.open(MainActivity.this));
         }

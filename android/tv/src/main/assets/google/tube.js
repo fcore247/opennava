@@ -38,7 +38,6 @@
   let sequence = 0;
   let keyboard = null;
   let keyboardVisible = false;
-  let filtersOpen = false;
   let keyboardReturn = null;
   let noticeTimer = null;
   let active = false;
@@ -169,16 +168,15 @@
     else if (/^\d+$/.test(focused?.dataset?.ytTopic || '')) focusSelector = `[data-yt-topic="${focused.dataset.ytTopic}"]`;
     else if (/^g\d+$/.test(focused?.dataset?.ytMore || '')) focusSelector = `[data-yt-more="${focused.dataset.ytMore}"]`;
     else if (/^[A-ZÄÖÜß0-9_.-]$/.test(focused?.dataset?.ytLetter || '')) focusSelector = `[data-yt-letter="${focused.dataset.ytLetter}"]`;
-    else if (['filters','keyboard','retry','back','space','delete','submit','clear-channel'].includes(focused?.dataset?.ytAction)) focusSelector = `[data-yt-action="${focused.dataset.ytAction}"]`;
+    else if (['keyboard','retry','back','space','delete','submit','clear-channel'].includes(focused?.dataset?.ytAction)) focusSelector = `[data-yt-action="${focused.dataset.ytAction}"]`;
     host.innerHTML = `<section id="nava-tube" class="tube-page ${keyboardVisible ? 'tube-editing' : ''} tube-provider-${view.provider}" aria-label="OpenNava ${providerLabel()}">
       <div class="tube-top">
-        <div class="tube-intro"><h1>${providerLabel()}</h1></div>
+        <div class="tube-intro"><div class="tube-brand"><span class="tube-brand-mark">${svg(view.provider === 'mediathek' ? 'tv' : 'play')}</span><span>${view.provider === 'mediathek' ? 'ARD + ZDF' : 'YOUTUBE'} <i>IN OpenNava</i></span></div><h1>${view.provider === 'mediathek' ? 'Your TV home.' : 'Find a video.'}</h1></div>
         <div class="tube-search-region"><div class="tube-providers" aria-label="Search area"><button data-yt-provider="mediathek" aria-pressed="${view.provider === 'mediathek'}">${svg('tv')}Media library</button><button data-yt-provider="youtube" aria-pressed="${view.provider === 'youtube'}">${svg('play')}YouTube</button></div>
         <button class="tube-search" data-yt-action="keyboard" aria-label="Search ${providerLabel()}" aria-expanded="${keyboardVisible}" aria-controls="tube-keyboard-slot">${svg('search')}<span class="tube-search-copy"><span id="tube-query" class="${keyboardValue ? '' : 'tube-placeholder'}">${esc(keyboardValue || 'What would you like to watch?')}</span><span class="tube-query-cursor" aria-hidden="true"></span></span><span class="tube-search-key">${svg('keyboard')}</span></button></div>
       </div>
       <div id="tube-keyboard-slot">${keyboardVisible ? keyboardMarkup() : ''}</div>
-      <button class="tube-filter-toggle" data-yt-action="filters" aria-expanded="${filtersOpen}" aria-controls="tube-filter-options">Filters</button>
-      <div class="tube-toolbar" id="tube-filter-options" ${filtersOpen ? '' : 'hidden'}><div class="tube-topics" aria-label="${providerLabel()} topics">${providerTopics().map((topic, index) => `<button class="tube-topic" data-yt-topic="${index}" aria-pressed="${view.activeTopic === topic.label}">${topic.label}</button>`).join('')}</div>${view.provider === 'mediathek' ? `<div class="tube-broadcasters" aria-label="Channel filter">${[['all','All'],['ard','ARD'],['zdf','ZDF']].map(([id,label]) => `<button data-yt-broadcaster="${id}" aria-pressed="${view.broadcaster === id}">${label}</button>`).join('')}</div>` : ''}<button class="tube-refresh" data-yt-action="retry" aria-label="Refresh videos">${svg('refresh')}</button></div>
+      <div class="tube-toolbar"><div class="tube-topics" aria-label="${providerLabel()} topics">${providerTopics().map((topic, index) => `<button class="tube-topic" data-yt-topic="${index}" aria-pressed="${view.activeTopic === topic.label}">${topic.label}</button>`).join('')}</div>${view.provider === 'mediathek' ? `<div class="tube-broadcasters" aria-label="Channel filter">${[['all','All'],['ard','ARD'],['zdf','ZDF']].map(([id,label]) => `<button data-yt-broadcaster="${id}" aria-pressed="${view.broadcaster === id}">${label}</button>`).join('')}</div>` : ''}<button class="tube-refresh" data-yt-action="retry" aria-label="Refresh videos">${svg('refresh')}</button></div>
       ${view.channelId ? `<div class="tube-context"><span>CHANNEL</span><button data-yt-action="clear-channel" aria-label="Clear channel filter">${esc(view.channelName || 'Selected channel')}${svg('close')}</button></div>` : ''}
       <div class="tube-results-heading"><h2>${esc(heading())}</h2><span>${view.status === 'ready' ? `${view.items.length} ${view.provider === 'mediathek' ? (view.items.length === 1 ? 'show' : 'shows') : (view.items.length === 1 ? 'video' : 'videos')}` : providerLabel().toUpperCase()}</span></div>
       <div id="tube-results" aria-busy="${view.status === 'loading'}">${view.status === 'loading' || view.status === 'idle' ? skeletons() : view.status === 'ready' ? catalog() : statusView()}</div>
@@ -360,7 +358,6 @@
     return true;
   }
   function open(options = {}) {
-    filtersOpen = false;
     const provider = ['youtube','mediathek'].includes(options.provider) ? options.provider : view.provider;
     const changedProvider = provider !== view.provider;
     const previousQuery = view.query;
@@ -527,7 +524,6 @@
     }
     if (button.dataset.ytLetter !== undefined) { typeCharacter(button.dataset.ytLetter); return; }
     const actions = {
-      filters: () => { filtersOpen = !filtersOpen; render(); },
       keyboard: () => keyboardVisible ? closeKeyboard() : openKeyboard(),
       'keyboard-close': closeKeyboard,
       retry: () => request(currentPayload(), view.activeTopic, {keepDraft: keyboardVisible}),
