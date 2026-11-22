@@ -359,13 +359,13 @@ final class HomeEditorPage {
         name.setMaxLines(2);
         name.setEllipsize(android.text.TextUtils.TruncateAt.END);
         card.addView(name);
-        if (item.isFolder()) card.addView(u.text(a.getString(R.string.home_folder_apps, item.children.size()), 12, MUTED, 500));
+        if (item.isFolder()) card.addView(u.text(a.getResources().getQuantityString(R.plurals.home_folder_apps, item.children.size(), item.children.size()), 12, MUTED, 500));
         else if (!layout.apps.containsKey(item.id)) card.addView(u.text(text(R.string.home_unknown_app), 12, MUTED, 500));
         u.action(card, color, 16, 0, () -> {
             if (item.isFolder()) { openFolder = item.id; refresh(); }
             else menu(item, parent);
         });
-        card.setContentDescription(item.isFolder() ? label + ", " + a.getString(R.string.home_folder_apps, item.children.size()) : label);
+        card.setContentDescription(item.isFolder() ? label + ", " + a.getResources().getQuantityString(R.plurals.home_folder_apps, item.children.size(), item.children.size()) : label);
         card.setOnLongClickListener(v -> editable() && v.startDragAndDrop(
                 ClipData.newPlainText("", ""), new View.DragShadowBuilder(v), item, 0));
         card.setOnDragListener((v, e) -> {

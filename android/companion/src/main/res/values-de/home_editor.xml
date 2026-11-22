@@ -39,7 +39,10 @@
     <string name="home_discard">Lokale Änderungen verwerfen und die aktuelle TV-Anordnung laden?</string>
     <string name="home_full">Hier ist kein Platz mehr. Entferne oder verschiebe zuerst eine Kachel.</string>
     <string name="home_no_matches">Keine passenden Apps auf diesem TV</string>
-    <string name="home_folder_apps">%1$d Apps</string>
+    <plurals name="home_folder_apps">
+        <item quantity="one">%1$d App</item>
+        <item quantity="other">%1$d Apps</item>
+    </plurals>
     <string name="home_folder_full">Ein Ordner bietet Platz für bis zu 16 Apps.</string>
     <string name="home_unknown_app">Zurzeit nicht installiert</string>
     <string name="home_done">Fertig</string>

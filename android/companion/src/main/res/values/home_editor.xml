@@ -39,7 +39,10 @@
     <string name="home_discard">Discard your local changes and reload the TV layout?</string>
     <string name="home_full">This destination is full. Remove or move an item first.</string>
     <string name="home_no_matches">No matching apps on this TV</string>
-    <string name="home_folder_apps">%1$d apps</string>
+    <plurals name="home_folder_apps">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
     <string name="home_folder_full">A folder can hold up to 16 apps.</string>
     <string name="home_unknown_app">Currently uninstalled</string>
     <string name="home_done">Done</string>
