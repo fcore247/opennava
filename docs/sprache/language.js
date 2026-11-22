@@ -187,6 +187,7 @@
       rows.append(option);
     }
     wheel.append(rows);
+    wheel.hidden = false;
     rowSize = options[0].offsetHeight || rowSize;
     const index = Math.max(0, codes.indexOf(site.preference));
     wheel.scrollTo({ top: index * rowSize, behavior: 'instant' });

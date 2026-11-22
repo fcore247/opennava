@@ -175,6 +175,8 @@
   "ytScan": "Scanner avec votre téléphone",
   "ytScanHelp": "Scannez le code QR avec votre appareil photo, puis saisissez le code de confirmation sur la page de connexion Google.",
   "ytQrLabel": "Code QR vers la page de connexion Google",
+  "downloadRust": "Télécharger OpenNava Rust",
+  "upgradeFromClassic": "Dans l’interface classique, ouvrez « Software updates ». Si une mise à jour est disponible, sélectionnez « Install update », puis « Try the Rust preview ».",
   "download": "Télécharger",
   "installTitle": "Installer OpenNava.",
   "installIntro": "Choisissez comment démarrer.",
@@ -252,7 +254,7 @@
   "phoneRow": "Ligne",
   "phoneGrid": "Grille",
   "phoneTvTitle": "Configurer votre téléviseur",
-  "phoneTvHelp": "Installez l’une de ces versions de test sur le téléviseur, puis connectez-le depuis l’appli mobile.",
+  "phoneTvHelp": "Installez OpenNava sur votre téléviseur, puis connectez-vous à celui-ci depuis l’appli mobile.",
   "phoneClassic": "Lanceur classique",
   "tryRust": "Essayer le prototype Rust",
   "phoneRustExit": "Pour retrouver le lanceur classique, appuyez sur Retour depuis l’accueil Rust."

@@ -175,6 +175,8 @@
   "ytScan": "Escanear com o celular",
   "ytScanHelp": "Escaneie o QR code com a câmera e digite o código de confirmação na página de login do Google.",
   "ytQrLabel": "QR code para a página de login do Google",
+  "downloadRust": "Baixar OpenNava Rust",
+  "upgradeFromClassic": "No launcher clássico, abra “Software updates”. Se houver uma atualização, escolha “Install update”. Depois selecione “Try the Rust preview”.",
   "download": "Baixar",
   "installTitle": "Instale o OpenNava.",
   "installIntro": "Escolha como começar.",
@@ -252,7 +254,7 @@
   "phoneRow": "Linha",
   "phoneGrid": "Grelha",
   "phoneTvTitle": "Configurar a TV",
-  "phoneTvHelp": "Instala uma destas versões de teste na TV e liga-te a ela através da app para telemóvel.",
+  "phoneTvHelp": "Instala o OpenNava no televisor e liga-te a ele através da app para telemóvel.",
   "phoneClassic": "Launcher clássico",
   "tryRust": "Experimentar o protótipo Rust",
   "phoneRustExit": "Para voltar ao launcher clássico, prime Voltar no ecrã inicial de Rust."

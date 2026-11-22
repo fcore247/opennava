@@ -175,6 +175,8 @@
   "ytScan": "Telefonunuzla tarayın",
   "ytScanHelp": "QR kodunu kameranızla tarayın ve onay kodunu Google’ın oturum açma sayfasına girin.",
   "ytQrLabel": "Google oturum açma sayfası için QR kodu",
+  "downloadRust": "OpenNava Rust’ı indir",
+  "upgradeFromClassic": "Klasik başlatıcıda “Software updates” bölümünü açın. Güncelleme varsa “Install update” seçeneğini seçin. Ardından “Try the Rust preview” seçeneğini açın.",
   "download": "İndir",
   "installTitle": "OpenNava’yı yükleyin.",
   "installIntro": "Nasıl başlamak istediğinizi seçin.",
@@ -252,7 +254,7 @@
   "phoneRow": "Sıra",
   "phoneGrid": "Izgara",
   "phoneTvTitle": "TV’ni ayarla",
-  "phoneTvHelp": "Bu önizleme sürümlerinden birini TV’ye yükle ve telefon uygulamasından TV’ye bağlan.",
+  "phoneTvHelp": "OpenNava’yı televizyonuna yükle, ardından telefon uygulamasından televizyona bağlan.",
   "phoneClassic": "Klasik başlatıcı",
   "tryRust": "Rust prototipini dene",
   "phoneRustExit": "Klasik başlatıcıya dönmek için Rust ana ekranında Geri tuşuna bas."

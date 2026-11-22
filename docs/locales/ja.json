@@ -175,6 +175,8 @@
   "ytScan": "スマートフォンでスキャン",
   "ytScanHelp": "カメラで QR コードを読み取り、Google のログインページに確認コードを入力してください。",
   "ytQrLabel": "Google ログインページの QR コード",
+  "downloadRust": "OpenNava Rust をダウンロード",
+  "upgradeFromClassic": "従来のランチャーで「Software updates」を開きます。アップデートがある場合は「Install update」を選びます。その後「Try the Rust preview」を選んでください。",
   "download": "ダウンロード",
   "installTitle": "OpenNava をインストール。",
   "installIntro": "始め方を選んでください。",
@@ -252,7 +254,7 @@
   "phoneRow": "1 列",
   "phoneGrid": "グリッド",
   "phoneTvTitle": "テレビの設定",
-  "phoneTvHelp": "どちらかのプレビュー版をテレビにインストールし、スマートフォンアプリから接続してください。",
+  "phoneTvHelp": "テレビにOpenNavaをインストールし、スマートフォンのアプリからテレビに接続してください。",
   "phoneClassic": "従来のランチャー",
   "tryRust": "Rust の試作版を試す",
   "phoneRustExit": "従来のランチャーに戻るには、Rust のホーム画面で戻るボタンを押してください。"

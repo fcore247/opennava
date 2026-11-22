@@ -175,6 +175,8 @@
   "ytScan": "Olvassa be telefonjával",
   "ytScanHelp": "Olvassa be a QR-kódot a telefonja kamerájával, majd adja meg a megerősítő kódot a Google bejelentkezési oldalán.",
   "ytQrLabel": "QR-kód a Google bejelentkezési oldalához",
+  "downloadRust": "OpenNava Rust letöltése",
+  "upgradeFromClassic": "A klasszikus indítóban nyisd meg a „Software updates” menüt. Ha van frissítés, válaszd az „Install update”, majd a „Try the Rust preview” lehetőséget.",
   "download": "Letöltés",
   "installTitle": "Az OpenNava telepítése.",
   "installIntro": "Válassza ki, hogyan szeretné elkezdeni.",
@@ -252,7 +254,7 @@
   "phoneRow": "Sor",
   "phoneGrid": "Rács",
   "phoneTvTitle": "A tévé beállítása",
-  "phoneTvHelp": "Telepítsd az egyik előzetes verziót a tévére, majd csatlakozz hozzá a telefonos alkalmazásból.",
+  "phoneTvHelp": "Telepítsd az OpenNavát a tévédre, majd csatlakozz hozzá a mobilalkalmazásból.",
   "phoneClassic": "Klasszikus kezdőképernyő",
   "tryRust": "A Rust-prototípus kipróbálása",
   "phoneRustExit": "A klasszikus kezdőképernyőhöz a Rust kezdőképernyőjén nyomd meg a Vissza gombot."

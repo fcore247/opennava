@@ -175,6 +175,8 @@
   "ytScan": "Skannaa puhelimella",
   "ytScanHelp": "Skannaa QR-koodi kameralla ja anna vahvistuskoodi Googlen kirjautumissivulla.",
   "ytQrLabel": "QR-koodi Googlen kirjautumissivulle",
+  "downloadRust": "Lataa OpenNava Rust",
+  "upgradeFromClassic": "Avaa perinteisessä käynnistysohjelmassa ”Software updates”. Jos päivitys on saatavilla, valitse ”Install update”. Valitse sitten ”Try the Rust preview”.",
   "download": "Lataa",
   "installTitle": "Asenna OpenNava.",
   "installIntro": "Valitse, miten haluat aloittaa.",
@@ -252,7 +254,7 @@
   "phoneRow": "Rivi",
   "phoneGrid": "Ruudukko",
   "phoneTvTitle": "Television asetukset",
-  "phoneTvHelp": "Asenna televisioon jompikumpi kokeiluversioista ja yhdistä televisioon puhelinsovelluksella.",
+  "phoneTvHelp": "Asenna OpenNava televisioon ja muodosta siihen sitten yhteys puhelinsovelluksella.",
   "phoneClassic": "Perinteinen aloitusnäyttö",
   "tryRust": "Kokeile Rust-prototyyppiä",
   "phoneRustExit": "Palaa perinteiseen aloitusnäyttöön painamalla Rustin aloitusnäytössä Takaisin."

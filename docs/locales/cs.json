@@ -175,6 +175,8 @@
   "ytScan": "Naskenujte telefonem",
   "ytScanHelp": "Naskenujte QR kód fotoaparátem a na přihlašovací stránce Googlu zadejte potvrzovací kód.",
   "ytQrLabel": "QR kód pro přihlášení ke Googlu",
+  "downloadRust": "Stáhnout OpenNava Rust",
+  "upgradeFromClassic": "V klasickém launcheru otevřete „Software updates“. Pokud je k dispozici aktualizace, vyberte „Install update“. Poté zvolte „Try the Rust preview“.",
   "download": "Stáhnout",
   "installTitle": "Nainstalujte OpenNava.",
   "installIntro": "Vyberte si, jak chcete začít.",
@@ -252,7 +254,7 @@
   "phoneRow": "Řádek",
   "phoneGrid": "Mřížka",
   "phoneTvTitle": "Nastavení televize",
-  "phoneTvHelp": "Nainstalujte na televizi jednu z těchto zkušebních verzí a připojte se k ní z mobilní aplikace.",
+  "phoneTvHelp": "Nainstalujte si OpenNava na televizor a pak se k němu připojte z mobilní aplikace.",
   "phoneClassic": "Klasická domovská obrazovka",
   "tryRust": "Vyzkoušet prototyp Rust",
   "phoneRustExit": "Na klasickou domovskou obrazovku se vrátíte stisknutím tlačítka Zpět na domovské obrazovce Rust."

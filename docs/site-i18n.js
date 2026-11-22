@@ -131,6 +131,9 @@
     const id = ++revision;
     const explicit = supported(new URL(location.href).searchParams.get("lang"));
     if (explicit) storePreference(explicit);
+    // A visitor can follow a link before the translation download completes.
+    syncPageLinks(preference());
+    syncLanguageLinks();
     const target = detect();
     let data,
       code = target;

@@ -81,6 +81,26 @@
   gap: 12px 24px;
   flex-wrap: wrap;
 }
+.home-download-links a {
+  max-width: 100%;
+  min-width: 0;
+  padding-inline: clamp(16px, 3vw, 32px);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.old-version-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: 1px solid #d2c3df70;
+  border-radius: 999px;
+  color: #efe9f6;
+  font-size: .94rem;
+  font-weight: 550;
+}
+.old-version-button:hover { background: #e8ddf419; border-color: #e8ddf4; }
+.home-download-links a:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 .prototype-link {
   display: inline-flex;
   align-items: center;

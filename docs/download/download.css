@@ -67,6 +67,8 @@
   color: #f5f3fa;
 }
 .install-choice:last-child { border-bottom: 1px solid #e4dced30; }
+.install-tv .home-download-links { gap: 9px; }
+.install-tv .home-download-links a { min-height: 44px; padding: 10px 18px; font-size: 14px; }
 .install-choice:focus-visible { outline-color: #f0dfff; outline-offset: 6px; border-radius: 4px; }
 .install-symbols { display: flex; justify-content: center; color: #ddd6e7; }
 .install-symbols svg,
@@ -110,6 +112,7 @@
   line-height: 1.2;
 }
 @media (max-width: 900px) {
+  .install-tv .home-download-links { grid-column: 2; justify-content: flex-start; }
   .install-choice { grid-template-columns: 26px minmax(0, 1fr); gap: 8px 16px; }
   .install-symbols { align-self: start; padding-top: 2px; }
   .install-action { grid-column: 2; justify-self: start; padding-left: 0; }

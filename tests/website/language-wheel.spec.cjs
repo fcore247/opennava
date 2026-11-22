@@ -116,8 +116,8 @@ test('changing language keeps the setup profile chosen after opening the page', 
   await wheel.press('ArrowUp');
   await expectCentered(page, 'de');
   await page.locator('#language-done').click();
+  await expect(page).toHaveURL(url => url.pathname.endsWith('/einrichten/'));
   const url = new URL(page.url());
-  expect(url.pathname).toMatch(/\/einrichten\/$/);
   expect(url.searchParams.get('profile')).toBe('senior');
   expect(url.searchParams.get('lang')).toBe('de');
   await expect(page.locator('[name=profile][value=senior]')).toBeChecked();
@@ -195,5 +195,43 @@ test('the wheel accepts its first key while the initial dictionary is in flight'
     await expect(page.locator('html')).toHaveAttribute('lang', 'de');
   } finally {
     release();
+  }
+});
+
+test('keyboard focus reaches the wheel only once its script can handle the first key', async ({page}) => {
+  let releaseScript;
+  let scriptRequested;
+  const waitForScript = new Promise(resolve => { scriptRequested = resolve; });
+  const waitForRelease = new Promise(resolve => { releaseScript = resolve; });
+  await page.route('**/sprache/language.js*', async route => {
+    scriptRequested();
+    await waitForRelease;
+    await route.continue();
+  });
+  try {
+    await page.goto('sprache/?lang=en', {waitUntil: 'commit'});
+    await waitForScript;
+    await page.locator('#language-wheel').waitFor({state: 'attached'});
+    await expect(page.getByRole('listbox')).toHaveCount(0);
+  } finally {
+    releaseScript();
+  }
+  await page.getByRole('listbox').press('ArrowUp');
+  await expectCentered(page, 'de');
+});
+
+test('the Luna download link keeps the chosen language before translations arrive', async ({page, baseURL}) => {
+  let releaseDictionary;
+  const wait = new Promise(resolve => { releaseDictionary = resolve; });
+  await page.route('**/locales/fr.json', async route => {
+    await wait;
+    await route.continue().catch(() => {});
+  }, {times: 1});
+  try {
+    await page.goto('produkte/?lang=fr');
+    await page.locator('#luna .download').click();
+    await expect(page).toHaveURL(new URL('luna/download/?lang=fr', baseURL).href);
+  } finally {
+    releaseDictionary();
   }
 });
