@@ -5,10 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageInstaller;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
@@ -25,7 +23,7 @@ public final class PreviewActivity extends Activity {
     private static final int INSTALL_PERMISSION = 52;
     private static WeakReference<PreviewActivity> owner = new WeakReference<>(null);
     private TextView status;
-    private Button primary, update;
+    private Button primary, useHome, update;
     private boolean busy, installed, visible;
 
     @Override public void onCreate(Bundle state) {
@@ -44,13 +42,16 @@ public final class PreviewActivity extends Activity {
         title.setText("Rust preview"); title.setTextSize(30); title.setTextColor(Color.WHITE);
         panel.addView(title);
         TextView summary = new TextView(this);
-        summary.setText("Try the new TV interface as a separate app. Back returns to your usual OpenNava view.");
+        summary.setText(getIntent().getBooleanExtra(RustHome.FULL_SETTINGS, false)
+                ? "Try Rust once or use it each time you open OpenNava. Choose “Zur klassischen Ansicht” in Rust to switch back."
+                : "Try the new TV interface as a separate app. Back returns to your usual OpenNava view.");
         summary.setTextSize(17); summary.setTextColor(0xffe3ece0);
         summary.setPadding(0, dp(12), 0, dp(8)); panel.addView(summary);
         status = new TextView(this);
         status.setTextSize(16); status.setTextColor(0xffe3ece0);
         status.setPadding(0, dp(4), 0, dp(12)); panel.addView(status);
         primary = button(panel, "Install preview", v -> { if (installed) launch(); else requestInstall(); });
+        useHome = button(panel, "Use Rust as my launcher", v -> chooseHome());
         update = button(panel, "Check for preview update", v -> requestInstall());
         button(panel, "Back", v -> finish());
         setContentView(scroll);
@@ -81,40 +82,45 @@ public final class PreviewActivity extends Activity {
         super.onDestroy();
     }
 
-    private PackageInfo installedPackage() throws Exception {
-        try {
-            int flags = Build.VERSION.SDK_INT >= 28
-                    ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES;
-            PackageInfo info = getPackageManager().getPackageInfo(ReleaseFeed.PREVIEW, flags);
-            if (!ReleaseFeed.officialSigner(info))
-                throw new SecurityException("A preview with a different signing key is already installed.");
-            return info;
-        } catch (PackageManager.NameNotFoundException absent) { return null; }
-    }
-
     private void render(String message) {
         if (isFinishing() || isDestroyed()) return;
         try {
-            PackageInfo info = installedPackage();
+            PackageInfo info = RustHome.installed(this);
             installed = info != null;
             primary.setText(installed ? "Open Rust preview" : "Install Rust preview");
             primary.setEnabled(!busy); update.setEnabled(!busy);
             update.setVisibility(installed ? View.VISIBLE : View.GONE);
+            useHome.setVisibility(installed && getIntent().getBooleanExtra(RustHome.FULL_SETTINGS, false) ? View.VISIBLE : View.GONE);
+            useHome.setText(RustHome.preferred(this) ? "Use classic launcher" : "Use Rust as my launcher");
+            useHome.setEnabled(!busy);
             status.setText(message != null ? message : installed ? "Installed version " + info.versionName : "Optional download from OpenNava Releases");
         } catch (Exception problem) {
-            installed = false; primary.setEnabled(false); update.setVisibility(View.GONE);
+            installed = false; primary.setEnabled(false); update.setVisibility(View.GONE); useHome.setVisibility(View.GONE);
             status.setText("Cannot use this preview. " + reason(problem));
         }
     }
 
     private void launch() {
         try {
-            if (installedPackage() == null) { render(null); return; }
-            Intent intent = new Intent(Intent.ACTION_MAIN)
-                    .setClassName(ReleaseFeed.PREVIEW, "android.app.NativeActivity")
-                    .putExtra("opennava.fromClassic", true);
+            if (RustHome.installed(this) == null) { render(null); return; }
+            Intent intent = RustHome.intent().putExtra("opennava.fromClassic", !RustHome.preferred(this));
             startActivityForResult(intent, PREVIEW);
         } catch (Exception problem) { render("Could not open the preview. " + reason(problem)); }
+    }
+
+    private void chooseHome() {
+        if (busy || !getIntent().getBooleanExtra(RustHome.FULL_SETTINGS, false)) return;
+        try {
+            if (RustHome.preferred(this)) {
+                if (!RustHome.useClassic(this)) throw new IllegalStateException("Your TV could not save the launcher selection.");
+            } else {
+                RustHome.choose(this);
+            }
+            setResult(RESULT_OK);
+            finish();
+        } catch (Exception failure) {
+            render("Could not change the launcher. " + reason(failure));
+        }
     }
 
     private static String reason(Exception e) {
@@ -134,7 +140,7 @@ public final class PreviewActivity extends Activity {
         Updates.WORK.execute(() -> {
             try {
                 ReleaseFeed release = ReleaseFeed.latest(ReleaseFeed.PREVIEW);
-                PackageInfo existing = installedPackage();
+                PackageInfo existing = RustHome.installed(this);
                 if (existing != null && release.versionCode <= ReleaseFeed.code(existing)) {
                     runOnUiThread(() -> complete("The installed preview is up to date."));
                     return;

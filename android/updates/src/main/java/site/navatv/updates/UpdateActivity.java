@@ -53,7 +53,8 @@ public final class UpdateActivity extends Activity {
             Button preview = new Button(this);
             preview.setAllCaps(false);
             preview.setText("Try the Rust preview");
-            preview.setOnClickListener(v -> startActivityForResult(new Intent(this, PreviewActivity.class), PREVIEW));
+            preview.setOnClickListener(v -> startActivityForResult(new Intent(this, PreviewActivity.class)
+                    .putExtra(RustHome.FULL_SETTINGS, getIntent().getBooleanExtra(RustHome.FULL_SETTINGS, false)), PREVIEW));
             panel.addView(preview);
         }
         Button close = new Button(this); close.setAllCaps(false); close.setText("Back");

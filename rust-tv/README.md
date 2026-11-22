@@ -4,7 +4,7 @@ A separate native TV app for Android TV, Google TV and Fire TV with Fire OS, on 
 
 ## Try it and return
 
-In classic OpenNava, open **Software updates** and select the Rust preview. Android asks for confirmation when installing it for the first time. You can also open the installed preview from the TV's Apps screen.
+In classic OpenNava, open **Software updates** and select the Rust preview. Android asks for confirmation when installing it for the first time. In the classic full profile on OpenNava 1.1.1 or later, choose **Open Rust preview** for a single session or **Use Rust as my launcher** to remember the switch. You can also open the installed preview from the TV's Apps screen.
 
 Choose **Einstellungen → Zur klassischen Ansicht** to return. This action is also available from the exit screen when pressing Back on the preview home. A preview launched by classic OpenNava returns to the same TV session and profile. From a standalone launch it opens the official classic launcher, including older versions. **Vorschau schließen** closes the preview. Its watchlist and preferences are stored in its own application directory. Android's Home setting remains independent of both launch paths.
 

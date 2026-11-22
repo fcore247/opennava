@@ -79,7 +79,7 @@ public final class MainActivity extends Activity {
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override public void onCreate(Bundle savedState) {
         super.onCreate(savedState);
-        site.navatv.updates.Updates.home(this);
+        site.navatv.updates.Updates.home(this, () -> site.navatv.updates.Updates.openFullSettings(this), null);
         pendingHomeNavigation = homeNavigation(getIntent());
         pendingPreviewHint = savedState == null && normalFullHome(getIntent());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -532,7 +532,7 @@ public final class MainActivity extends Activity {
 
     private final class NativeBridge {
         @android.webkit.JavascriptInterface public void openUpdates() {
-            runOnUiThread(() -> site.navatv.updates.Updates.open(MainActivity.this));
+            runOnUiThread(() -> site.navatv.updates.Updates.openFullSettings(MainActivity.this));
         }
         @JavascriptInterface public void mediathekRequest(String requestId, String payloadJson) {
             if (mediathek != null && NavaYouTube.validRequestId(requestId)) mediathek.request(requestId, payloadJson);

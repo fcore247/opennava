@@ -68,6 +68,10 @@ public final class Updates {
         });
     }
 
+    public static void openFullSettings(Context c) {
+        c.startActivity(new Intent(c, UpdateActivity.class).putExtra(RustHome.FULL_SETTINGS, true));
+    }
+
     public static void open(Context c) { c.startActivity(new Intent(c, UpdateActivity.class)); }
 
     static synchronized void install(Context c, ReleaseFeed release, boolean interactive) throws Exception {

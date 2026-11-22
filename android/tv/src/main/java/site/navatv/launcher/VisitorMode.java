@@ -69,7 +69,8 @@ final class VisitorMode {
 
     /** Called on the main thread when a person explicitly chooses the visitor home. */
     static boolean enter(Context context) {
-        if (available(context) && setMode(context, VISITOR) && launch(context, false)) return true;
+        if (available(context) && setMode(context, VISITOR)
+                && (site.navatv.updates.RustHome.launchIfPreferred(context) || launchClassic(context, false))) return true;
         selectPersonal(context);
         return false;
     }
@@ -81,12 +82,13 @@ final class VisitorMode {
 
     static boolean launchIfSelected(Context context, boolean normalHome) {
         if (!isVisitor(context)) return false;
-        if (available(context) && launch(context, normalHome)) return true;
+        if (normalHome && site.navatv.updates.RustHome.launchIfPreferred(context)) return true;
+        if (available(context) && launchClassic(context, normalHome)) return true;
         selectPersonal(context);
         return false;
     }
 
-    private static boolean launch(Context context, boolean normalHome) {
+    private static boolean launchClassic(Context context, boolean normalHome) {
         try {
             context.startActivity(visitorIntent(context).putExtra("opennava.normalHome", normalHome));
             return true;

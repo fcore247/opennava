@@ -248,6 +248,7 @@ public class MainActivity extends Activity {
             return false;
         }
         if ("site.opennava.action.OPEN_CLASSIC".equals(intent.getAction())) {
+            site.navatv.updates.RustHome.useClassic(this);
             if (VisitorMode.launchIfSelected(this, false)) { finish(); return true; }
             pendingHome = true;
             return false;

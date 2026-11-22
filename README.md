@@ -2,7 +2,7 @@
 
 A home screen for Android TV, Google TV and Android-based Fire TV. Choose a full launcher for apps, YouTube and German broadcaster libraries, or a senior view that puts live channels, catch-up and recordings one press away.
 
-**[Try the TV in your browser](https://opennava.site/#preview)** · **[Download the TV app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk)** · **[Download the Android companion](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)**
+**[Try the TV in your browser](https://opennava.site/#preview)** · **[Download OpenNava Rust](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Rust-TV.apk)** · [Download the old version](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk) · **[Download the Android companion](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)**
 
 [![OpenNava’s full launcher displaying a sample mountain film, live channels, installed apps and media libraries](guide/images/full-launcher.webp)](https://opennava.site/?profile=full#preview)
 
@@ -83,7 +83,7 @@ Android handles updates in place using the existing OpenNava signing identity. T
 
 Open **Software updates** inside OpenNava or the companion to check for a release. Automatic checks are enabled by default. Android schedules them when the device is idle and connected. Each app verifies the release and asks Android to install it. Depending on the Android version and how the app was first installed, you may need to allow installs from this source or confirm the Android installation prompt. Turn off **Automatic updates** on that screen to opt out on that device.
 
-**Try the native Rust interface.** On the TV’s **Software updates** screen, choose **Try the Rust preview**. Android installs it as a separate app when you confirm. On its home screen, press Back and choose **Zur klassischen Ansicht** to return to your saved classic profile. The preview and installation guide are available on the [OpenNava website](https://opennava.site/#rust-prototype).
+**Switch to the native Rust launcher from your TV.** Open **Software updates** in the classic launcher. On an older release, select **Install update** and reopen OpenNava. Open **Try the Rust preview**, choose **Install Rust preview**, and confirm the Android installation prompt. You can open Rust once or choose **Use Rust as my launcher** to use it the next time you open OpenNava in the full profile. To switch back, press Back on the Rust home screen and choose **Zur klassischen Ansicht**. Classic stays installed and keeps your saved profile and recordings. Both TV downloads are available on the [OpenNava download page](https://opennava.site/download/).
 
 ### Update from your computer
 
