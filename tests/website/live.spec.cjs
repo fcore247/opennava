@@ -2,18 +2,20 @@ const {test, expect} = require('@playwright/test');
 const {broadcasters} = require('./fixtures/live/broadcasters.cjs');
 
 async function openLive(page, profile, touch = false) {
-  await page.goto('./', {waitUntil: 'domcontentloaded'});
+  await page.goto('./demo/?lang=de', {waitUntil: 'domcontentloaded'});
   if (touch) await page.evaluate(() => document.fonts.ready);
+  await page.getByRole('tab', {name: 'OpenNava TV'}).click();
   if (profile === 'senior') {
     const toggle = page.locator('label').filter({has: page.locator('input[name="preview"][value="senior"]')});
     if (touch) await toggle.tap(); else await toggle.click();
   }
   const screen = page.locator('#demo-tv');
-  await expect(screen).toHaveAttribute('src', './demo/' + profile + '/index.html');
+  await expect(screen).toHaveJSProperty('src', new URL(profile + '/index.html', page.url()).href);
   await screen.scrollIntoViewIfNeeded();
   const tv = page.frameLocator('#demo-tv');
   await expect(tv.locator('html')).toHaveAttribute('data-launcher-ready', 'true');
-  const opener = tv.getByRole('button', {name: profile === 'senior' ? 'Open live TV' : 'Das Erste live', exact: true});
+  const opener = profile === 'senior' ? tv.getByRole('button', {name: 'Open live TV', exact: true})
+    : tv.locator('#nava-home').getByRole('button', {name: /^Live TV/});
   await expect(opener).toBeVisible();
   if (touch) await opener.tap(); else await opener.press('Enter');
   const player = tv.getByRole('dialog', {name: 'Live TV'});
@@ -88,7 +90,7 @@ test.describe('Full launcher · live TV with the keyboard', () => {
     await frames(video);
     await page.keyboard.press('Escape');
     await expect(player).toHaveCount(0);
-    await expect(opener).toBeVisible();
+    await expect(opener).toBeFocused();
   });
 });
 

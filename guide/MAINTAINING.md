@@ -12,9 +12,10 @@ Use the [architecture guide](ARCHITECTURE.md) to find a component's source. Opti
 | Senior view | `android/tv/src/main/assets/index.html`, the adjacent scripts and styles, and the `assets/` media directory |
 | Android TV system functions, playback or channels | The [TV application](../android/tv), including its Java channel lineup |
 | Browser playback and TV controls | [Demo host](../docs/demo-host). It resolves live streams and programme schedules from the broadcasters, uses bundled samples for library previews and switches the embedded TV between profiles. |
-| Public page layout, setup links and downloads | [Website source](../docs) |
+| Public page layout, setup links and downloads | [Website source](../docs), including the [Android phone download](../docs/handy) |
+| Full browser demo interface and search | [Full demo](../docs/demo/full) |
 
-The stage command rebuilds the generated `docs/demo/` directory from both Android launchers. It applies the full launcher's Google TV overrides, generates demo channels from the Android lineup and includes the browser device bridge in both profiles. Keep household-specific weather, images and configuration out of the staged assets.
+The stage command copies the Android senior launcher and shared full-launcher media, styles and licenses. It regenerates the channel list, inserts the browser bridge in the senior page and refreshes the full demo’s cache keys. Edit the full browser interface in `docs/demo/full/` and the paired-demo landing page in `docs/demo/index.html`. Keep household-specific weather, images and configuration out of the staged assets.
 
 ```sh
 python3 tools/sync_web_demo.py

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101115" />
+    <title data-i18n="lunaInstallTitle">Luna installieren.</title>
+    <meta
+      name="description"
+      content="Luna Browser für macOS und Windows herunterladen."
+    />
+    <link rel="canonical" href="https://opennava.site/luna/download/" />
+    <link rel="icon" href="../../assets/luna-icon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="../../assets/fonts/Manrope.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="../../navigation.css" />
+    <link rel="stylesheet" href="../../brand.css" />
+    <link rel="stylesheet" href="../../download/download.css" />
+    <link rel="stylesheet" href="../luna.css" />
+    <script src="../../site-i18n.js" defer></script>
+    <script src="../../navigation.js" defer></script>
+  </head>
+  <body data-page="luna-download">
+    <a class="skip" href="#main" data-i18n="skip">Zum Inhalt</a>
+    <header class="mast frame">
+      <a
+        class="brand"
+        href="../"
+        aria-label="Luna Browser, zur Startseite"
+        data-i18n-aria-label="lunaHomeLink"
+      >
+        <img
+          class="luna-wordmark"
+          src="../../assets/luna-wordmark.svg"
+          width="210"
+          height="48"
+          alt=""
+        />
+      </a>
+    </header>
+    <main id="main">
+      <section
+        class="install-scene luna-install-scene frame"
+        aria-labelledby="install-title"
+      >
+        <header class="install-heading">
+          <div class="install-title-wrap">
+            <h1 id="install-title" data-i18n="lunaInstallTitle">
+              Luna installieren.
+            </h1>
+            <svg
+              class="install-scribble"
+              viewBox="0 0 270 20"
+              aria-hidden="true"
+            >
+              <path d="M4 12C62 5 174 2 264 7M18 17C90 9 186 9 233 12" />
+            </svg>
+          </div>
+          <p data-i18n="lunaInstallIntro">Wähle dein Betriebssystem.</p>
+        </header>
+        <div class="install-options">
+          <a
+            class="install-choice"
+            data-install="mac"
+            href="https://github.com/fcore247/luna-browser/releases/latest/download/Luna-Browser-macos-arm64.dmg"
+          >
+            <span class="install-symbols" aria-hidden="true"
+              ><svg viewBox="0 0 28 28">
+                <rect x="3" y="5" width="22" height="15" rx="2" />
+                <path d="M1.5 22h25l-2 2h-21z" /></svg
+            ></span>
+            <div class="install-copy">
+              <h2 data-i18n="lunaMac">Für deinen Mac</h2>
+              <p data-i18n="lunaMacHelp">Für Apple Silicon ab macOS 13.</p>
+            </div>
+            <span class="install-action"
+              ><span data-i18n="lunaMacAction">Für macOS laden</span
+              ><svg
+                aria-hidden="true"
+                class="install-arrow"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4" /></svg
+            ></span>
+          </a>
+          <a
+            class="install-choice"
+            data-install="windows"
+            href="https://github.com/fcore247/luna-browser/releases/download/v1.3.7/Luna-Browser-1.3.7-windows-amd64.zip"
+          >
+            <span class="install-symbols" aria-hidden="true"
+              ><svg viewBox="0 0 28 28">
+                <rect x="3" y="4" width="22" height="16" rx="2" />
+                <path d="M14 20v4m-5 0h10" /></svg
+            ></span>
+            <div class="install-copy">
+              <h2 data-i18n="lunaWindows">Für deinen Windows-PC</h2>
+              <p data-i18n="lunaWindowsHelp">
+                Windows 10/11 · 64 Bit. Experimentelle Version.
+              </p>
+            </div>
+            <span class="install-action"
+              ><span data-i18n="lunaWindowsAction">Für Windows laden</span
+              ><svg
+                aria-hidden="true"
+                class="install-arrow"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4" /></svg
+            ></span>
+          </a>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer frame">
+      <a href="https://github.com/fcore247/luna-browser">GitHub</a>
+      <nav
+        class="footer-products"
+        aria-label="Produkte"
+        data-i18n-aria-label="products"
+      >
+        <a href="../../luna/"
+          ><img
+            src="../../assets/luna-icon.svg"
+            alt=""
+            width="24"
+            height="24"
+          />Luna Browser <span aria-hidden="true">↗</span></a
+        >
+        <a href="../../"
+          ><img
+            src="../../assets/opennava-mark.svg"
+            alt=""
+            width="26"
+            height="24"
+          />OpenNava <span aria-hidden="true">↗</span></a
+        >
+      </nav>
+      <a class="site-language-button" data-language-link href="../../sprache/">
+        <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="12" cy="12" r="9"></circle>
+          <ellipse cx="12" cy="12" rx="4" ry="9"></ellipse>
+          <path d="M3 12h18"></path>
+        </svg>
+        <span data-i18n="language">Sprache</span>
+      </a>
+    </footer>
+  </body>
+</html>

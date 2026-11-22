@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101115" />
+    <title data-i18n="products">Produkte</title>
+    <meta
+      name="description"
+      content="Entdecke Luna Browser und OpenNava. Probiere aus, wie du Sendungen vormerkst und später auf dem Fernseher öffnest."
+      data-i18n-content="description"
+    />
+    <meta property="og:title" content="OpenNava × Luna Browser" />
+    <meta
+      property="og:description"
+      content="Im Web entdecken. Am TV ansehen. Eine interaktive Demo für Browser und Fernseher."
+      data-i18n-content="ogDesc"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://opennava.site/produkte/" />
+    <meta
+      property="og:image"
+      content="https://opennava.site/assets/alpine-lake.webp"
+    />
+    <link rel="canonical" href="https://opennava.site/produkte/" />
+    <link rel="icon" href="../assets/opennava-mark.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="../assets/fonts/Manrope.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin=""
+    />
+    <link
+      rel="preload"
+      href="../assets/fonts/InstrumentSerif-Regular.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../navigation.css" />
+    <script src="../site-i18n.js" defer></script>
+    <script src="../navigation.js" defer></script>
+  </head>
+  <body data-page="products">
+    <a class="skip" href="#main" data-i18n="skip">Zum Inhalt</a>
+    <header class="mast frame">
+      <a
+        class="brand"
+        aria-label="OpenNava und Luna Browser, zur Startseite"
+        href="../"
+        data-i18n-aria-label="homeLink"
+        ><img
+          src="../assets/opennava-mark.svg"
+          width="28"
+          height="24"
+          alt=""
+        />OpenNava <span class="cross" aria-hidden="true">×</span
+        ><img
+          src="../assets/luna-icon.svg"
+          width="24"
+          height="24"
+          alt=""
+        /><span>Luna<span class="brand-extra"> Browser</span></span></a
+      >
+    </header>
+    <main id="main">
+      <header class="page-heading frame">
+        <h1 data-i18n="products">Produkte</h1>
+        <p data-i18n="downloadsHelp">
+          Hier findest du die stabilen Versionen. Die TV-Integration von Luna
+          ist eine Vorschau.
+        </p>
+      </header>
+      <section
+        id="produkte"
+        class="products frame"
+        aria-label="Die Produkte"
+        data-i18n-aria-label="theProducts"
+      >
+        <article class="product" id="luna">
+          <img src="../assets/luna-icon.svg" width="40" height="40" alt="" />
+          <div>
+            <h2>Luna Browser</h2>
+            <p data-i18n="lunaDesc">
+              Luna ist dein Desktop-Browser mit persönlicher Startseite. Die
+              Vorschau sendet vorgemerkte Titel an deinen Fernseher.
+            </p>
+            <a class="text-link" href="../luna/" data-i18n="try"
+              >Demo ausprobieren</a
+            >
+            <div class="product-downloads">
+              <a class="download" href="../luna/download/">
+                <span data-i18n="downloads">Downloads</span
+                ><small>macOS · Windows</small>
+              </a>
+            </div>
+          </div>
+        </article>
+        <article class="product" id="opennava">
+          <img
+            src="../assets/opennava-mark.svg"
+            width="42"
+            height="40"
+            alt=""
+          />
+          <div>
+            <h2>OpenNava</h2>
+            <p data-i18n="navaDesc">
+              Live-TV, Apps und Mediatheken für Android TV und Fire TV mit Fire
+              OS. Im Seniorenmodus sind die Tasten größer.
+            </p>
+            <a class="text-link" href="../" data-i18n="try"
+              >Demo ausprobieren</a
+            >
+            <div class="product-downloads">
+              <a class="download" href="../download/">
+                <span data-i18n="downloads">Downloads</span
+                ><small>Android · Fire OS</small>
+              </a>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+    <footer class="site-footer frame">
+      <a href="https://github.com/fcore247/opennava">GitHub</a>
+      <nav
+        class="footer-products"
+        aria-label="Produkte"
+        data-i18n-aria-label="products"
+      >
+        <a href="../luna/"
+          ><img
+            src="../assets/luna-icon.svg"
+            alt=""
+            width="24"
+            height="24"
+          />Luna Browser <span aria-hidden="true">↗</span></a
+        >
+        <a href="../"
+          ><img
+            src="../assets/opennava-mark.svg"
+            alt=""
+            width="26"
+            height="24"
+          />OpenNava <span aria-hidden="true">↗</span></a
+        >
+      </nav>
+      <a class="site-language-button" data-language-link href="../sprache/">
+        <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="12" cy="12" r="9"></circle>
+          <ellipse cx="12" cy="12" rx="4" ry="9"></ellipse>
+          <path d="M3 12h18"></path>
+        </svg>
+        <span data-i18n="language">Sprache</span>
+      </a>
+    </footer>
+  </body>
+</html>

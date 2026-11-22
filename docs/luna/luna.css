@@ -1,0 +1,30 @@
+body[data-page="luna"] { --luna-mast-height: clamp(64px, 12dvh, 104px); }
+body[data-page="luna"] > .mast { height: var(--luna-mast-height); min-height: var(--luna-mast-height); flex: none; }
+.mast .brand img.luna-wordmark, .menu-brand img.luna-wordmark {
+  display: block;
+  width: clamp(165px, 18vw, 230px);
+  height: 56px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+.luna-scene {
+  height: calc(100dvh - var(--luna-mast-height) - 16px);
+  min-height: 380px;
+  max-height: 920px;
+  overflow: hidden;
+  border: 1px solid #f1deff24;
+  border-radius: 26px;
+  background: #201b29;
+  box-shadow: 0 20px 70px #0000001a;
+}
+#luna-demo-frame { display: block; width: 100%; height: 100%; border: 0; }
+.luna-demo-label { margin-top: 22px; color: var(--muted); font-size: 13px; line-height: 1.6; text-align: center; }
+body[data-page="luna"] .home-download { padding-top: 52px; }
+.luna-install-scene .install-options { width: min(100%, 850px); }
+.luna-install-scene .install-heading h1 { font-family: "OpenNava Scribble", "OpenNava Hand", cursive; font-weight: 400; }
+@media (max-width: 680px) {
+  .luna-scene { border-radius: 20px; }
+  .mast .brand img.luna-wordmark, .menu-brand img.luna-wordmark { width: 165px; height: 46px; }
+  .luna-demo-label { margin-top: 16px; }
+  body[data-page="luna"] .home-download { padding-top: 36px; }
+}

@@ -29,7 +29,7 @@ if (window.NavaTV) {
   }
 
   window.renderNativeApps = function() {
-    main.innerHTML = `<section class="page"><p class="page-topline">YOUR GOOGLE TV APPS</p><h1>Your TV apps.</h1><p class="page-intro">${apps.length} installed apps. Select one to open it.</p><div class="app-grid native-all-apps">${apps.map(a => `<button class="app-card" data-app="${a.id}" aria-label="Open ${escapeHTML(a.name)}">${a.logo}</button>`).join('')}</div></section>`;
+    main.innerHTML = `<section class="page"><h1>Apps</h1><div class="app-grid native-all-apps">${window.NavaHome?.appsWatchlistShortcut() || ''}${apps.map(a => `<button class="app-card" data-app="${a.id}" aria-label="Open ${escapeHTML(a.name)}">${a.logo}</button>`).join('')}</div></section>`;
   };
 
   window.navaCustomizeSettings = function() {
@@ -54,6 +54,13 @@ if (window.NavaTV) {
     updates.textContent = 'Software updates';
     updates.addEventListener('click', () => window.NavaTV.openUpdates());
     section.after(updates);
+    if (NavaTV.hasPersonalView?.() && typeof NavaTV.showPhoneLink === 'function') {
+      const pair = document.createElement('button');
+      pair.className = 'native-home-toggle';
+      pair.textContent = 'Pair phone';
+      pair.addEventListener('click', () => NavaTV.showPhoneLink());
+      updates.after(pair);
+    }
     const back = document.createElement('button');
     back.className = 'visitor-return-panel';
     back.dataset.action = 'return-senior';
@@ -90,22 +97,23 @@ if (window.NavaTV) {
   }, true);
 
   window.navaRemote = function(key) {
+    if (window.FullSearch.handleKey(key)) return;
     if (['youtube','mediathek'].includes(state.view) && !panel.open && !player.open && window.NavaTube?.handleKey(key)) return;
     if (key === 'Escape') {
       if (player.open) closePlayer();
       else if (panel.open) closePanel();
-      else { navigate('home'); main.querySelector('[data-app]')?.focus(); }
+      else { navigate('home'); window.NavaHome.focusHome(); }
       return;
     }
     if (key === 'Menu') {
       if (panel.open) closePanel();
-      else { if (player.open) closePlayer(); openSettings(); }
+      else { if (player.open) closePlayer(); window.NavaHome.openSettingsMenu(); }
       return;
     }
     if (key === 'Enter') {
       const focused = document.activeElement;
       if (focused?.matches('button,a,input')) focused.click();
-      else main.querySelector('[data-app]')?.focus();
+      else window.NavaHome.focusHome();
       return;
     }
     if (key.startsWith('Media')) {
@@ -131,14 +139,16 @@ if (window.NavaTV) {
     if (panel.open) closePanel();
     refreshInstalledApps();
     navigate('home');
-    requestAnimationFrame(() => main.querySelector('[data-app]')?.focus());
+    window.NavaHome.focusHome(true);
   };
 
   window.navaNativeResume = function() {
+    window.NavaHome.settingsChanged();
+    window.NavaHome.watchlistChanged();
     if (Date.now() - nativeRefreshAt > 10000) {
       const appId = document.activeElement?.dataset?.app;
       refreshInstalledApps();
-      if (!panel.open && !player.open && !['home','youtube','mediathek'].includes(state.view)) {
+      if (!panel.open && !player.open && !['home','youtube','mediathek','search'].includes(state.view)) {
         render();
         const restore = appId ? main.querySelector(`[data-app="${appId}"]`) : null;
         (restore || main.querySelector('[data-app]') || main.querySelector('button'))?.focus();
@@ -147,19 +157,13 @@ if (window.NavaTV) {
   };
 
   window.navaOpenGlobalSearch = function(provider) {
-    const target = provider === 'youtube' || provider === 'mediathek' ? provider
-      : (['youtube','mediathek'].includes(state.view) ? state.view : 'mediathek');
     if (panel.open) closePanel();
-    if (state.view !== target) navigate(target);
-    window.NavaTube?.focusSearch({provider:target});
+    window.FullSearch.open(provider === 'youtube' ? 'youtube' : undefined);
   };
   document.querySelector('.header [data-action="search"]').dataset.action = 'global-search';
-  const youtubeNav = document.querySelector('.header [data-view="discover"]');
-  youtubeNav.dataset.view = 'youtube'; youtubeNav.textContent = 'YouTube';
-
-  const mediathekNav = document.createElement('button');
-  mediathekNav.className = 'nav-button'; mediathekNav.dataset.view = 'mediathek'; mediathekNav.textContent = 'Media library';
-  document.querySelector('.header nav').insertBefore(mediathekNav, youtubeNav);
+  const mediathekNav = document.querySelector('.header [data-view="discover"]');
+  mediathekNav.dataset.view = 'mediathek';
+  mediathekNav.textContent = 'Media library';
   const appsNav = document.querySelector('.header [data-view="library"]');
   appsNav.dataset.view = 'apps'; appsNav.textContent = 'Apps';
   document.querySelector('.prototype-label').innerHTML = '<span></span> OpenNava <i>·</i> YOUR TELEVISION';
@@ -168,6 +172,6 @@ if (window.NavaTV) {
   footerButton.dataset.action = 'native-settings'; footerButton.dataset.kind = 'general';
   footerButton.innerHTML = `Google TV ${icon('settings')}`;
   refreshInstalledApps(); render();
-  requestAnimationFrame(() => main.querySelector('[data-app]')?.focus());
+  if (window.parent === window) window.NavaHome.focusHome(true);
   console.log('OpenNava native ready', JSON.stringify({width:innerWidth,height:innerHeight,dpr:devicePixelRatio,apps:apps.length}));
 }

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Luna Browser</title>
+  <link rel="stylesheet" href="./vendor/luna-base.css">
+  <link rel="stylesheet" href="./vendor/flipclock.css">
+  <link rel="stylesheet" href="./demo.css">
+  <script type="importmap">
+    {"imports":{
+      "./vendor/api.js":"./adapters/api.js",
+      "./vendor/i18n.js":"./adapters/i18n.js",
+      "./vendor/personalization.js":"./adapters/personalization.js",
+      "./vendor/assets/luna-icon.svg?raw":"./adapters/icon.js"
+    }}
+  </script>
+  <script src="../../site-i18n.js" defer></script>
+  <script src="./vendor/gesture-core.js" defer></script>
+  <script type="module" src="./demo.js"></script>
+</head>
+<body>
+  <div id="luna-demo">
+    <header id="luna-chrome">
+      <div class="demo-tabbar">
+        <div class="demo-traffic" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div id="demo-tabs" role="tablist" aria-label="Tabs"></div>
+        <button type="button" id="demo-tab-new" aria-label="Neuer Tab"></button>
+      </div>
+      <div id="demo-toolbar">
+        <button type="button" id="demo-home" aria-label="Startseite"></button>
+        <form id="demo-url-form">
+          <span class="demo-address-icon" aria-hidden="true"></span>
+          <input id="demo-address" aria-label="Adressleiste" autocapitalize="off" autocomplete="off" spellcheck="false">
+        </form>
+        <button type="button" id="demo-theme" aria-label="Farbwelten"></button>
+        <button type="button" id="demo-gesture" aria-label="Gesten"></button>
+        <button type="button" id="demo-note" aria-label="Seitennotiz"></button>
+      </div>
+    </header>
+    <main id="demo-page">
+      <div id="demo-background" aria-hidden="true"></div>
+      <div id="demo-view" role="tabpanel" tabindex="-1"></div>
+    </main>
+    <dialog id="demo-panel" aria-labelledby="demo-panel-title">
+      <header class="demo-panel-header"><h2 id="demo-panel-title"></h2><button type="button" id="demo-panel-close" aria-label="Schließen"></button></header>
+      <div id="demo-panel-body"></div>
+    </dialog>
+    <span id="demo-live" class="sr-only" role="status" aria-live="polite"></span>
+  </div>
+</body>
+</html>

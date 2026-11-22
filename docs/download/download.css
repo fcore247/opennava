@@ -1,0 +1,133 @@
+.install-scene {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: 710px;
+  padding: clamp(40px, 5.2vw, 80px);
+  border-radius: 26px;
+  overflow: hidden;
+  background: #18232f;
+}
+.install-landscape,
+.install-scene::before {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.install-landscape { z-index: -2; object-fit: cover; object-position: 58% 44%; }
+.install-scene::before {
+  content: "";
+  z-index: -1;
+  background:
+    linear-gradient(90deg, #101724d9, #111a2a9c 55%, #111a2a26),
+    linear-gradient(180deg, #1d20352b, #0c1423ba);
+}
+.install-heading { max-width: 100%; margin-bottom: 44px; }
+.install-title-wrap { position: relative; width: fit-content; max-width: 100%; padding-bottom: 18px; }
+.install-heading h1 {
+  max-width: 22ch;
+  font-family: "OpenNava Hand", cursive;
+  font-size: clamp(3.25rem, 5.8vw, 5.5rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  transform: rotate(-2deg);
+  transform-origin: left center;
+}
+.install-scribble {
+  position: absolute;
+  bottom: 0;
+  left: 8px;
+  width: min(48%, 260px);
+  height: 20px;
+  fill: none;
+  stroke: #e4cfee;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  opacity: .8;
+}
+.install-heading p { margin-top: 16px; color: #dedce7; font-size: 16px; font-weight: 400; }
+.install-options { display: flex; flex-direction: column; width: min(100%, 900px); }
+.install-choice {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) minmax(150px, auto);
+  align-items: center;
+  gap: 22px;
+  min-width: 0;
+  min-height: 112px;
+  padding: 22px 0;
+  border-top: 1px solid #e4dced30;
+  color: #f5f3fa;
+}
+.install-choice:last-child { border-bottom: 1px solid #e4dced30; }
+.install-choice:focus-visible { outline-color: #f0dfff; outline-offset: 6px; border-radius: 4px; }
+.install-symbols { display: flex; justify-content: center; color: #ddd6e7; }
+.install-symbols svg,
+.install-arrow {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.install-copy { min-width: 0; }
+.install-choice h2 { font-size: 22px; font-weight: 500; letter-spacing: -.035em; line-height: 1.25; overflow-wrap: anywhere; }
+.install-choice p { max-width: 43ch; margin-top: 5px; color: #c5c8d3; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.install-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: end;
+  gap: 12px;
+  min-height: 44px;
+  max-width: 240px;
+  padding: 10px 0 10px 14px;
+  border-radius: 999px;
+  color: #e7dced;
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  transition: color .2s, background .2s;
+}
+.install-guided .install-action { padding-inline: 22px; color: #292133; background: #e8dcf0; }
+.install-choice:hover .install-action { color: #fff; }
+.install-guided:hover .install-action { color: #292133; background: #f6ebff; }
+.install-arrow { width: 17px; height: 17px; flex: none; }
+.install-note { max-width: 60ch; margin-top: 24px; color: #bac0cf; font-size: 12px; line-height: 1.5; }
+:is(html:lang(ja), html:lang(ko)) .install-heading h1 {
+  font-family: Manrope, sans-serif;
+  font-size: clamp(2.5rem, 4.8vw, 4.5rem);
+  line-height: 1.2;
+}
+@media (max-width: 900px) {
+  .install-choice { grid-template-columns: 26px minmax(0, 1fr); gap: 8px 16px; }
+  .install-symbols { align-self: start; padding-top: 2px; }
+  .install-action { grid-column: 2; justify-self: start; padding-left: 0; }
+}
+@media (max-width: 680px) {
+  .install-scene { min-height: 0; padding: 36px 24px 26px; border-radius: 22px; }
+  .install-scene::before { background: linear-gradient(180deg, #151b2f99, #0c1729de 48%, #0b1423e8); }
+  .install-landscape { object-position: 62% center; }
+  .install-heading { margin-bottom: 30px; }
+  .install-heading h1 { font-size: clamp(3.25rem, 12vw, 4.5rem); line-height: .98; }
+  .install-title-wrap { padding-bottom: 22px; }
+  .install-scribble { width: 62%; }
+  .install-choice { padding: 20px 0; }
+  .install-choice h2 { font-size: 20px; }
+  .install-symbols svg { width: 25px; height: 25px; }
+  .install-guided .install-action { padding-inline: 18px; }
+  .install-note { margin-top: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .install-action { transition: none; }
+}

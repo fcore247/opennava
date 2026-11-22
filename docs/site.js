@@ -1,16 +1,15 @@
+const siteText = (key, values) => window.OpenNavaSite.t(key, values);
 const guide = "https://github.com/fcore247/opennava/blob/main/AGENTS.md";
 const profiles = {
   full: {
-    name: "Full launcher",
     section: "full-launcher",
   },
   senior: {
-    name: "Senior view",
     section: "senior-view",
   },
 };
 
-const profileRadios = document.querySelectorAll('input[type="radio"]');
+const profileRadios = document.querySelectorAll('input[name="profile"]');
 const promptText = document.querySelector("#prompt-text");
 const copyStatus = document.querySelector("#copy-status");
 const copyButton = document.querySelector("#copy-prompt");
@@ -21,25 +20,18 @@ function showProfile(id, changeURL = true) {
   const selected = profile === profiles.senior ? "senior" : "full";
   document.body.dataset.profile = selected;
   for (const radio of profileRadios) radio.checked = radio.value === selected;
-  document.querySelector("#profile-name").textContent = profile.name;
-  document.dispatchEvent(
-    new CustomEvent("navatv:profile", { detail: selected }),
-  );
+  document
+    .querySelectorAll(".profile-tabs")
+    .forEach((group) => window.LiquidNav?.refresh(group));
   const link = guide + "#" + profile.section;
   document.querySelector("#agent-guide").href = link;
-  promptText.textContent =
-    "Help me install OpenNava on my TV using the " +
-    profile.name +
-    " profile (" +
-    selected +
-    "). Follow " +
-    link +
-    ". Guide me through connecting the device, " +
-    "then use the project’s setup tool with --profile " +
-    selected +
-    ". If I also want the Android companion, help me install and pair it.";
+  promptText.textContent = siteText("setupInstructions", {
+    profile: siteText(selected),
+    guide: link,
+    id: selected,
+  });
   clearTimeout(resetTimer);
-  copyButton.querySelector("span").textContent = "Copy setup prompt";
+  copyButton.querySelector("span").textContent = siteText("copy");
   copyStatus.textContent = "";
   if (changeURL) {
     const url = new URL(location.href);
@@ -55,6 +47,9 @@ function readURL() {
 }
 window.addEventListener("popstate", readURL);
 readURL();
+document.addEventListener("opennava:site-language", () =>
+  showProfile(document.body.dataset.profile, false),
+);
 
 copyButton.addEventListener("click", async () => {
   const text = promptText.textContent;
@@ -65,7 +60,7 @@ copyButton.addEventListener("click", async () => {
   } catch {
     const field = document.createElement("textarea");
     field.value = text;
-    field.setAttribute("aria-label", "Setup prompt");
+    field.setAttribute("aria-label", siteText("read"));
     field.className = "clipboard-field";
     document.body.append(field);
     field.select();
@@ -78,11 +73,11 @@ copyButton.addEventListener("click", async () => {
     copyButton.focus();
   }
   if (copied) {
-    copyButton.querySelector("span").textContent = "Prompt copied";
-    copyStatus.textContent = "Ready to paste into your agent.";
+    copyButton.querySelector("span").textContent = siteText("copied");
+    copyStatus.textContent = siteText("copySuccess");
     clearTimeout(resetTimer);
     resetTimer = setTimeout(() => {
-      copyButton.querySelector("span").textContent = "Copy setup prompt";
+      copyButton.querySelector("span").textContent = siteText("copy");
       copyStatus.textContent = "";
     }, 3200);
   } else {
@@ -93,6 +88,6 @@ copyButton.addEventListener("click", async () => {
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
-    copyStatus.textContent = "Select Copy to copy the highlighted prompt.";
+    copyStatus.textContent = siteText("copyManual");
   }
 });

@@ -1,0 +1,78 @@
+.phone-scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 26px;
+  background: #202431;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: clamp(30px, 5vw, 80px);
+  align-items: center;
+  min-height: min(70svh, 690px);
+  padding: clamp(36px, 6vw, 96px);
+}
+.phone-landscape, .phone-scene::before {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.phone-landscape { z-index: -2; object-fit: cover; object-position: 55% 45%; }
+.phone-scene::before {
+  content: "";
+  z-index: -1;
+  background: linear-gradient(90deg, #101421da, #15182694 54%, #15182645), linear-gradient(0deg, #08122280, #19182e32);
+}
+.phone-copy h1, .phone-tv h2 {
+  font-family: "OpenNava Hand", cursive;
+  line-height: 1;
+  font-weight: 550;
+  letter-spacing: -.035em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+.phone-copy h1 { font-size: clamp(3.4rem, 6vw, 6.5rem); max-width: 14ch; transform: rotate(-2deg); transform-origin: left; }
+.phone-copy p, .phone-tv p { font-size: clamp(1rem, 1.25vw, 1.2rem); line-height: 1.6; }
+.phone-copy p { max-width: 34ch; color: #eceaf3; margin: 20px 0 28px; }
+.phone-button { max-width: 100%; text-align: center; padding-inline: 26px; }
+.phone-copy small { display: block; color: #d6d2df; font-size: .875rem; margin-top: 10px; }
+.layout-preview { width: 100%; max-width: 440px; justify-self: end; display: grid; justify-items: center; gap: 16px; }
+.layout-controls { display: inline-flex; border-radius: 28px; padding: 3px; background: #151722bb; border: 1px solid #ffffff38; }
+.layout-controls[hidden] { display: none; }
+.layout-controls button { min-height: 40px; padding: 6px 16px; border: 0; border-radius: inherit; font: inherit; font-size: .94rem; color: #eae7f1; background: transparent; }
+.layout-controls [aria-pressed="true"] { background: #ece4f5; color: #211b2c; }
+.sample-apps {
+  display: grid;
+  width: 100%;
+  align-content: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  min-height: 200px;
+}
+.sample-apps span {
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 13px; border: 1px solid #ffffff26;
+  min-height: 88px; color: white; font-weight: 720; font-size: clamp(1rem, 2vw, 1.8rem);
+  box-shadow: 0 6px 30px #10132325; letter-spacing: -.05em; text-align: center;
+}
+.sample-netflix { background: linear-gradient(135deg, #66252f, #27151b); }
+.sample-disney { background: linear-gradient(135deg, #31596d, #112b3b); }
+.sample-spotify { background: linear-gradient(135deg, #376653, #15362e); }
+.sample-apple { background: linear-gradient(135deg, #59596a, #272333); }
+.sample-apps[data-layout="row"] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sample-apps[data-layout="row"] span { font-size: clamp(.85rem, 1.2vw, 1.15rem); }
+.phone-tv { padding-block: clamp(42px, 6vw, 80px) 0; display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+.phone-tv h2 { font-size: clamp(2.35rem, 4vw, 3.5rem); }
+.phone-tv p { max-width: 45ch; margin: 13px 0 0; color: #c4becb; }
+.tv-links a { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 16px 0; border-top: 1px solid #ffffff2e; font-weight: 650; color: #f0ebf5; }
+.tv-links a:hover { color: #e9caef; }
+.tv-links small { font-size: .875rem; color: #cec1de; white-space: nowrap; }
+.tv-links p { font-size: .9rem; }
+@media (max-width: 760px) {
+  .phone-scene { grid-template-columns: 1fr; padding: clamp(24px, 6vw, 42px); gap: 36px; }
+  .phone-scene::before { background: linear-gradient(155deg, #151b2fdc, #101626a1 55%, #10162655); }
+  .layout-preview { justify-self: start; max-width: 420px; gap: 10px; }
+  .sample-apps { min-height: 136px; }
+  .sample-apps span { min-height: 62px; font-size: 1.15rem; }
+  .phone-tv { grid-template-columns: 1fr; gap: 22px; }
+}

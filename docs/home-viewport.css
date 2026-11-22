@@ -1,0 +1,172 @@
+/* Keep the demo and its navigation inside the browser's available height.
+   The middle area can scroll for large text, long feeds and short landscapes. */
+body[data-page="home"] { --home-mast-height: clamp(64px, 12dvh, 104px); }
+body[data-page="home"] > .mast {
+  height: var(--home-mast-height);
+  min-height: var(--home-mast-height);
+  flex: none;
+}
+body[data-page="home"] > .mast .wordmark { font-size: clamp(42px, 8dvh, 64px); }
+.hd-scene,
+.hd-scene[data-view="search"] {
+  height: calc(100dvh - var(--home-mast-height) - 16px);
+  min-height: 0;
+  max-height: 940px;
+  padding: clamp(12px, 2.5dvh, 24px) clamp(16px, 4.5vw, 72px);
+  container-type: size;
+}
+.hd-topline { flex: none; }
+.hd-views {
+  min-height: 0;
+  margin: 8px -4px 0;
+  padding: 4px;
+  width: calc(100% + 8px);
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e7d5ef55 transparent;
+}
+.hd-views > section { min-height: 0; }
+.hd-nav,
+.hd-scene[data-view="search"] .hd-nav { margin-top: clamp(8px, 1.5cqh, 18px); }
+.hd-nav > button { height: clamp(38px, 7cqh, 48px); }
+.hd-home { padding: 0; gap: clamp(16px, 4cqh, 40px); }
+.hd-tiles { width: min(100%, 152cqh); height: clamp(100px, 46cqh, 360px); }
+.hd-tile { height: 100%; aspect-ratio: auto; }
+.hd-search-prompt { padding-block: clamp(12px, 2.5cqh, 19px); }
+.hd-search { display: flex; flex-direction: column; gap: clamp(6px, 1.4cqh, 14px); }
+.hd-search-download { flex: none; margin: 0 auto; padding-block: 8px; }
+.hd-search-download > strong {
+  font-family: "OpenNava Scribble", "OpenNava Hand", cursive;
+  font-size: clamp(24px, 4.5cqh, 32px);
+  font-weight: 400;
+  letter-spacing: -.02em;
+  line-height: 1;
+}
+.hd-search-download-button { min-height: 40px; padding-block: 9px; }
+.hd-view-heading { flex: none; margin: 0; }
+.hd-view-heading h2 { font-size: clamp(20px, 4.5cqh, 30px); }
+.hd-results { min-height: 0; }
+.hd-search > .hd-results { flex: 1; min-height: 125px; }
+.hd-result { min-height: 0; }
+.hd-result-open { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.hd-result-open > img { height: clamp(36px, 13cqh, 126px); min-height: 0; flex: 1 1 auto; }
+.hd-result-info { flex: none; padding: 8px 12px; }
+.hd-result-info strong { font-size: clamp(13px, 2.7cqh, 17px); line-height: 1.2; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.hd-result-save { flex: none; margin-bottom: 6px; }
+.hd-search-tools { width: min(100%, 680px); flex: none; }
+.hd-services { margin: 0 0 8px; }
+.hd-services button { padding-block: clamp(5px, 1.1cqh, 8px); }
+.hd-query-wrap { padding-block: 4px; }
+#hd-query { height: clamp(28px, 5cqh, 35px); }
+#hd-clear { padding-block: 5px; }
+.hd-keyboard { margin-top: 8px; gap: 4px; }
+.hd-keyboard button { height: clamp(27px, 5.5cqh, 39px); }
+.hd-key-actions { margin-top: 0; }
+#hd-results[data-empty="true"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-auto-flow: row;
+  overflow: visible;
+  min-height: min-content;
+  padding: 0;
+}
+.hd-scene[data-view="search"]:has(#hd-results[data-empty="true"]) .hd-atmosphere::after {
+  opacity: calc(var(--hd-shade) + .18);
+}
+.hd-empty-download {
+  display: grid;
+  grid-template-columns: clamp(32px, 8cqh, 64px) minmax(0, 1fr);
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 1cqh, 12px) clamp(12px, 3cqh, 28px);
+  padding: 2px 8px;
+  text-align: center;
+}
+.hd-empty-download > img { width: clamp(32px, 8cqh, 64px); height: auto; }
+.hd-empty-download-title {
+  max-width: 23ch;
+  font-family: "OpenNava Scribble", "OpenNava Hand", cursive;
+  font-size: clamp(36px, 12cqh, 104px);
+  font-weight: 400;
+  line-height: .95;
+  letter-spacing: -.025em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  transform: rotate(-2deg);
+}
+.hd-empty-download-note {
+  grid-column: 1 / -1;
+  max-width: 48ch;
+  justify-self: center;
+  margin: 0 0 4px;
+  color: #ded8e4b8;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+.hd-empty-download-button {
+  grid-column: 1 / -1;
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 26px;
+  border: 1px solid #faefff40;
+  border-radius: 999px;
+  background: #e8dcf2;
+  color: #271e30;
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.3;
+  transition: background .2s;
+}
+.hd-empty-download-button:hover { background: #fff5ff; }
+:is(html:lang(ja), html:lang(ko)) :is(.hd-empty-download-title, .hd-search-download > strong) {
+  font-family: Manrope, sans-serif;
+  font-size: clamp(20px, 5cqh, 42px);
+  line-height: 1.15;
+}
+.hd-apps { overflow: auto; }
+.hd-app-grid { margin-block: 16px; }
+.hd-settings { padding-block: 12px; overflow: auto; }
+.hd-watchlist { padding-block: 8px; overflow: auto; }
+.hd-watchlist .hd-view-heading { margin-bottom: 14px; }
+.hd-youtube { min-height: min-content; }
+.hd-youtube .hd-view-heading { margin-block: 8px 16px; }
+@media (max-width: 600px) {
+  .hd-tiles { height: clamp(100px, 42vw, 210px); }
+  .hd-nav > button { height: clamp(44px, 8cqh, 53px); }
+  .hd-search-download { padding: 8px 10px; }
+  .hd-search-download > strong { font-size: 22px; }
+  .hd-search-download-button { padding-inline: 10px; }
+  .hd-result-info { padding: 6px 8px; }
+  .hd-result-save { margin: auto 8px 4px; }
+  .hd-results { padding-bottom: 4px; }
+  .hd-empty-download { column-gap: 10px; padding-inline: 2px; }
+  .hd-empty-download-title { font-size: clamp(30px, 6.6cqh, 46px); }
+  .hd-empty-download-note { font-size: 12px; margin-bottom: 0; }
+}
+@media (max-height: 650px) {
+  .hd-search-download { display: none; }
+  .hd-search > .hd-view-heading {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+@media (max-height: 520px) {
+  /* Keep controls readable at high zoom and in phone landscape. */
+  .hd-scene,
+  .hd-scene[data-view="search"] { min-height: 440px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hd-empty-download-button { transition: none; }
+}

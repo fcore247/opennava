@@ -1,0 +1,94 @@
+/* Caveat by Pablo Impallari, SIL Open Font License (assets/fonts/OFL-Caveat.txt).
+   Source: https://github.com/google/fonts/tree/main/ofl/caveat */
+@font-face {
+  font-family: "OpenNava Hand";
+  src: url("./assets/fonts/Caveat.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+/* Reenie Beanie, SIL Open Font License (assets/fonts/OFL-ReenieBeanie.txt).
+   Source: https://github.com/google/fonts/tree/main/ofl/reeniebeanie */
+@font-face {
+  font-family: "OpenNava Scribble";
+  src: url("./assets/fonts/ReenieBeanie.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+.wordmark {
+  display: inline-block;
+  padding: 2px 4px 8px 0;
+  color: #f4eff8;
+  font: 400 4rem/1 "OpenNava Scribble", "OpenNava Hand", cursive;
+  letter-spacing: -.035em;
+  transform: rotate(-4deg);
+}
+
+.home-download {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  padding-block: 88px 20px;
+  text-align: center;
+}
+
+.home-download h2 {
+  max-width: 24ch;
+  font-size: clamp(26px, 3vw, 42px);
+  font-weight: 450;
+  line-height: 1.2;
+  letter-spacing: -.045em;
+  text-wrap: balance;
+}
+
+.home-download-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 56px;
+  padding: 15px 42px;
+  border: 1px solid #f7edff70;
+  border-radius: 999px;
+  background: #e8ddf4;
+  color: #211a2a;
+  font-size: 16px;
+  font-weight: 650;
+  transition: background .2s, transform .2s;
+}
+
+.home-download-button:hover {
+  background: #f3eaff;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 680px) {
+  .wordmark { font-size: 3.4rem; }
+  .home-download { padding-block: 56px 12px; gap: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-download-button { transition: none; }
+}
+
+.home-download-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 24px;
+  flex-wrap: wrap;
+}
+.prototype-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #e8ddf4;
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: #bda8cf9e;
+  text-underline-offset: .3em;
+}
+.prototype-link:hover { text-decoration-color: currentColor; }

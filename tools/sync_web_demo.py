@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage the same launcher assets as the Android WebView, adding the browser device bridge."""
+"""Stage shared Android assets and the senior launcher for the independently authored website."""
 import argparse
 import base64
 import hashlib
@@ -12,7 +12,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "android/tv/src/main/assets"
 DEST = ROOT / "docs/demo"
-GOOGLE_OVERRIDES = ("index.html", "styles.css", "native.js", "tube.js")
+# The public full demo has its own search, navigation and home screen. Only these
+# resources come from the Android launcher; docs/demo/index.html is also site-owned.
+FULL_SHARED = ("assets", "licenses", "brand.svg", "tube.css", "styles.css")
 
 
 def stage_channels(target):
@@ -32,9 +34,13 @@ def stage_channels(target):
 
 def stage(target):
     full = target / "full"
-    shutil.copytree(ASSETS / "web", full)
-    for name in GOOGLE_OVERRIDES:
-        shutil.copy2(ASSETS / "google" / name, full / name)
+    full.mkdir()
+    for name in FULL_SHARED:
+        source = ASSETS / ("google" if name == "styles.css" else "web") / name
+        if source.is_dir():
+            shutil.copytree(source, full / name)
+        else:
+            shutil.copy2(source, full / name)
     senior = target / "senior"
     senior.mkdir()
     for entry in ASSETS.iterdir():
@@ -53,13 +59,25 @@ def stage(target):
                    for name in ("live-streams.js", "live-tv.js", "bridge.js"))
     tags = [f'<link rel="stylesheet" href="{css}">', *(f'<script src="{url}"></script>' for url in scripts)]
     hook = "\n  ".join(tags)
-    for folder in (full, senior):
-        page = folder / "index.html"
-        html = page.read_text(encoding="utf-8")
-        charset = '<meta charset="utf-8">'
-        if html.count(charset) != 1:
-            raise ValueError(f"Missing UTF-8 declaration in {page}")
-        page.write_text(html.replace(charset, charset + "\n  " + hook), encoding="utf-8")
+    page = senior / "index.html"
+    html = page.read_text(encoding="utf-8")
+    charset = '<meta charset="utf-8">'
+    if html.count(charset) != 1:
+        raise ValueError(f"Missing UTF-8 declaration in {page}")
+    page.write_text(html.replace(charset, charset + "\n  " + hook), encoding="utf-8")
+
+    # The full demo authors its own HTML. Refresh its cache keys against both the
+    # generated assets above and the site-owned JS and CSS, including the bridge.
+    authored = DEST / "full/index.html"
+    def refresh_asset(match):
+        relative = match.group(2)
+        generated = full / relative
+        source = generated if generated.is_file() else authored.parent / relative
+        return match.group(1) + asset_url(relative, source) + '"'
+
+    html = re.sub(r'((?:src|href)=")([.\w/-]+)\?v=[a-f0-9]{12}"',
+                  refresh_asset, authored.read_text(encoding="utf-8"))
+    (full / "index.html").write_text(html, encoding="utf-8")
 
 
 def same_tree(left, right):
@@ -77,15 +95,25 @@ def main():
         expected = Path(temp) / "demo"
         expected.mkdir()
         stage(expected)
-        if args.check:
-            if not same_tree(expected, DEST):
-                raise SystemExit("Demo differs from the Android launcher. Run python3 tools/sync_web_demo.py.")
-            print("Demo matches both Android launchers.")
-        else:
-            if DEST.exists():
-                shutil.rmtree(DEST)
-            shutil.copytree(expected, DEST)
-            print("Staged both Android launchers under docs/demo.")
+        generated = [Path("channels.js"), Path("senior")]
+        generated.extend(Path("full") / name for name in (*FULL_SHARED, "index.html"))
+        for name in generated:
+            source, dest = expected / name, DEST / name
+            if source.is_dir():
+                matches = dest.is_dir() and same_tree(source, dest)
+            else:
+                matches = dest.is_file() and source.read_bytes() == dest.read_bytes()
+            if matches:
+                continue
+            if args.check:
+                raise SystemExit(f"Demo asset {name} differs. Run python3 tools/sync_web_demo.py.")
+            if source.is_dir():
+                if dest.exists():
+                    shutil.rmtree(dest)
+                shutil.copytree(source, dest)
+            else:
+                shutil.copy2(source, dest)
+        print("Shared launcher assets and browser references are up to date.")
 
 
 if __name__ == "__main__":

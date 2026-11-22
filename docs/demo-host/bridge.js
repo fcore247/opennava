@@ -171,7 +171,7 @@
         ? channelItems(provider)
         : programmes.filter((p) => p.provider !== "youtube");
     if (query.method === "home" && provider === "all") {
-      // The home hero uses one of the original sample films. News listings remain searchable.
+      // The default library selection contains sample films. Search also includes news listings.
       items = items.filter(
         (p) => !["tagesschau", "heute", "stadt"].includes(p.id),
       );
@@ -537,7 +537,60 @@
     "Enter",
     "Escape",
   ];
+  function websiteWatchlist() {
+    if (profile !== "full" || parent === window) return null;
+    try { return parent.openNavaLunaDemo; } catch { return null; }
+  }
+  function websiteText(key, fallback) {
+    return websiteWatchlist()?.t?.(key) || fallback;
+  }
+  function netflixHandoff(title, url, label, fallback) {
+    note(title, websiteText("netflixNote","The installed Netflix app opens the title or its home screen on your TV."));
+    const link = document.createElement("a");
+    link.href = url; link.target = "_blank"; link.rel = "noopener noreferrer";
+    link.textContent = websiteText(label,fallback);
+    layer.querySelector(".demo-entries").prepend(link);
+    return true;
+  }
   window.NavaTV = Object.freeze({
+    getLunaSettings: () => {
+      try {
+        const settings = websiteWatchlist()?.getSettings() || JSON.parse(sessionStorage.getItem("openNavaDemoTVSettings.v1") || "null");
+        return JSON.stringify(settings || {version:1,tiles:["luna","live","library"],libraries:["ard","zdf","arte"],language:"auto",appearance:"graphite",showClock:true,showWatchlistCount:true,defaultSearchService:"auto"});
+      } catch { return "{}"; }
+    },
+    requestLunaSettings: () => {
+      if (websiteWatchlist()?.openSettings) return websiteWatchlist().openSettings();
+      if (parent === window) { location.assign("../../tvsettings/"); return true; }
+      return false;
+    },
+    arteSearch: (requestId, query) => {
+      const term = String(query || "").trim().toLocaleLowerCase();
+      const catalogue = channelItems("arte").map(p => p.id === "ocean" ? {
+        ...p, title: websiteText("oceanFilm", p.title), alternateTitle:p.title,
+      } : p);
+      const items = catalogue.filter(p => [p.title, p.alternateTitle, p.subtitle].some(text => text && text.toLocaleLowerCase().includes(term)));
+      setTimeout(() => window.navaArteResult?.(requestId, JSON.stringify({items})), 0);
+      return true;
+    },
+    playArte: id => play(find(id)),
+    searchNetflix: query => {
+      const term = String(query || "").trim();
+      const url = new URL("https://www.netflix.com/search");
+      url.searchParams.set("q",term);
+      return netflixHandoff("Netflix",url.href,"netflixSearch","Search on Netflix");
+    },
+    getLunaWatchlist: () => JSON.stringify(websiteWatchlist()?.list() || []),
+    removeLunaProgramme: (id) => websiteWatchlist()?.remove(id) || false,
+    openLunaProgramme: (id) => {
+      const item = websiteWatchlist()?.list().find((entry) => entry.id === id);
+      if (!item) return false;
+      if (id === "netflix") {
+        return netflixHandoff(item.title, "https://www.netflix.com/de/title/80049832", "openNetflix", "Open title on Netflix");
+      }
+      const programme = find(id);
+      return programme ? play({ ...programme, title: item.title }) : false;
+    },
     getApps: () =>
       JSON.stringify([
         { packageName: "de.swr.avp.ard.tv", name: "ARD" },
@@ -557,6 +610,12 @@
       return true;
     },
     launchApp: (pkg) => {
+      if (pkg === "com.netflix.ninja") return netflixHandoff("Netflix", "https://www.netflix.com/", "openNetflix", "Open Netflix");
+      if (pkg === "com.google.android.youtube.tv") {
+        return note("YouTube", websiteText("openProvider", "On your TV this opens the installed app."));
+      }
+      const provider = {"de.swr.avp.ard.tv":"ard","com.zdf.android.mediathek":"zdf"}[pkg];
+      if (provider) {library(provider); return true;}
       if (pkg === "tv.arte.plus7") {
         library("arte");
         return true;
@@ -617,5 +676,7 @@
   document.addEventListener("DOMContentLoaded", () => {
     window.dismissSeniorStartup?.();
     document.documentElement.dataset.launcherReady = "true";
+    if (profile === "full" && parent === window && document.activeElement === document.body)
+      window.NavaHome?.focusHome(true);
   });
 })();

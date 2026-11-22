@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101115" />
+    <title data-i18n="installTitle">OpenNava installieren.</title>
+    <meta
+      name="description"
+      content="Wähle die geführte Einrichtung oder lade die stabile OpenNava-App für deinen Fernseher und dein Android-Handy herunter."
+    />
+    <link rel="canonical" href="https://opennava.site/download/" />
+    <link rel="icon" href="../assets/opennava-mark.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="../assets/fonts/Manrope.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="../assets/fonts/Caveat.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
+    <link rel="stylesheet" href="../style.css" />
+    <link rel="stylesheet" href="../navigation.css" />
+    <link rel="stylesheet" href="../brand.css" />
+    <link rel="stylesheet" href="./download.css" />
+    <script src="../site-i18n.js" defer></script>
+    <script src="../navigation.js" defer></script>
+  </head>
+  <body data-page="download">
+    <a class="skip" href="#main" data-i18n="skip">Zum Inhalt</a>
+    <header class="mast frame">
+      <a
+        class="brand"
+        aria-label="OpenNava und Luna Browser, zur Startseite"
+        data-i18n-aria-label="homeLink"
+        href="../"
+        ><span class="wordmark" translate="no">Opennava</span></a
+      >
+    </header>
+    <main id="main">
+      <section class="install-scene frame" aria-labelledby="install-title">
+        <img
+          class="install-landscape"
+          src="../assets/alpine-lake.webp"
+          alt=""
+          fetchpriority="high"
+        />
+        <header class="install-heading">
+          <div class="install-title-wrap">
+            <h1 id="install-title" data-i18n="installTitle">
+              OpenNava installieren.
+            </h1>
+            <svg class="install-scribble" viewBox="0 0 270 20" aria-hidden="true">
+              <path d="M4 12C62 5 174 2 264 7M18 17C90 9 186 9 233 12" />
+            </svg>
+          </div>
+          <p data-i18n="installIntro">Wähle, wie du starten möchtest.</p>
+        </header>
+
+        <div class="install-options">
+          <a
+            class="install-choice install-guided"
+            data-install="guided"
+            href="../einrichten/"
+          >
+            <span class="install-symbols" aria-hidden="true">
+              <svg viewBox="0 0 28 28">
+                <path
+                  d="M5 22V7a3 3 0 0 1 3-3h13a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H10z"
+                />
+                <path d="m10 9 3 3-3 3m6 0h3" />
+              </svg>
+            </span>
+            <div class="install-copy">
+              <h2 data-i18n="installGuided">Mit KI einrichten</h2>
+              <p data-i18n="installGuidedHelp">
+                Eine kurze Anleitung für deinen KI-Assistenten.
+              </p>
+            </div>
+            <span class="install-action" data-i18n="installGuidedAction"
+              >Einrichtung starten</span
+            >
+          </a>
+          <a
+            class="install-choice"
+            data-install="tv"
+            href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk"
+          >
+            <span class="install-symbols" aria-hidden="true">
+              <svg viewBox="0 0 28 28">
+                <rect x="2.5" y="4.5" width="23" height="15.5" rx="3" />
+                <path d="M10 24h8m-4-4v4" />
+              </svg>
+            </span>
+            <div class="install-copy">
+              <h2 data-i18n="installAPK">Direkt auf den TV</h2>
+              <p data-i18n="installAPKHelp">
+                Die TV-App für Android TV, Google TV und Fire TV mit Fire OS.
+              </p>
+            </div>
+            <span class="install-action"
+              ><span data-i18n="installAPKAction">TV-App herunterladen</span
+              ><svg
+                aria-hidden="true"
+                class="install-arrow"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4" /></svg
+            ></span>
+          </a>
+          <a
+            class="install-choice"
+            data-install="companion"
+            href="https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk"
+          >
+            <span class="install-symbols" aria-hidden="true">
+              <svg viewBox="0 0 28 28">
+                <rect x="7" y="2" width="14" height="24" rx="3" />
+                <path d="M12 5.5h4m-3.5 17h3" />
+              </svg>
+            </span>
+            <div class="install-copy">
+              <h2 data-i18n="installCompanion">Auch auf dem Handy</h2>
+              <p data-i18n="installCompanionHelp">
+                Die optionale Begleitapp für dein Android-Smartphone.
+              </p>
+            </div>
+            <span class="install-action"
+              ><span data-i18n="installCompanionAction"
+                >Begleitapp herunterladen</span
+              ><svg
+                aria-hidden="true"
+                class="install-arrow"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4" /></svg
+            ></span>
+          </a>
+        </div>
+        <p class="install-note" data-i18n="installStable">
+          Stabile Version. Die neue Oberfläche ist zunächst eine Vorschau.
+        </p>
+        <a class="prototype-link" href="../handy/" data-i18n="phoneHeading">OpenNava fürs Handy</a>
+      </section>
+    </main>
+    <footer class="site-footer frame">
+      <a href="https://github.com/fcore247/opennava">GitHub</a>
+      <nav
+        class="footer-products"
+        aria-label="Produkte"
+        data-i18n-aria-label="products"
+      >
+        <a href="../luna/"
+          ><img
+            src="../assets/luna-icon.svg"
+            alt=""
+            width="24"
+            height="24"
+          />Luna Browser <span aria-hidden="true">↗</span></a
+        >
+        <a href="../"
+          ><img
+            src="../assets/opennava-mark.svg"
+            alt=""
+            width="26"
+            height="24"
+          />OpenNava <span aria-hidden="true">↗</span></a
+        >
+      </nav>
+      <a class="site-language-button" data-language-link href="../sprache/">
+        <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="12" cy="12" r="9"></circle>
+          <ellipse cx="12" cy="12" rx="4" ry="9"></ellipse>
+          <path d="M3 12h18"></path>
+        </svg>
+        <span data-i18n="language">Sprache</span>
+      </a>
+    </footer>
+  </body>
+</html>

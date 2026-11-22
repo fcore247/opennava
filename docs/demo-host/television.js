@@ -2,15 +2,35 @@ const tvFrame = document.querySelector("#demo-tv");
 const viewport = document.querySelector("#tv-viewport");
 
 function loadTelevision(profile) {
+  if (document.getElementById("tv-panel").hidden) return;
   const view = profile === "senior" ? "senior" : "full";
-  const url = "./demo/" + view + "/index.html";
+  const url = "./" + view + "/index.html";
   if (tvFrame.getAttribute("src") !== url) tvFrame.src = url;
 }
 
-document.addEventListener("navatv:profile", (event) =>
-  loadTelevision(event.detail),
-);
-loadTelevision(document.body.dataset.profile);
+const profileInputs = document.querySelectorAll('input[name="preview"]');
+
+function setDemoProfile(value, updateURL = true) {
+  const profile = value === "senior" ? "senior" : "full";
+  document.body.dataset.profile = profile;
+  for (const input of profileInputs) input.checked = input.value === profile;
+  window.LiquidNav?.refresh(document.querySelector(".profile-tabs"));
+  if (updateURL) {
+    const url = new URL(location.href);
+    url.searchParams.set("profile", profile);
+    history.replaceState(null, "", url);
+  }
+  loadTelevision(profile);
+}
+
+function readProfile() {
+  setDemoProfile(new URL(location.href).searchParams.get("profile"), false);
+}
+for (const input of profileInputs) {
+  input.addEventListener("change", () => setDemoProfile(input.value));
+}
+window.addEventListener("popstate", readProfile);
+readProfile();
 
 // Both the website profile selector and the launcher's own Switch view button control this TV.
 window.addEventListener("message", (event) => {
@@ -23,7 +43,7 @@ window.addEventListener("message", (event) => {
   )
     return;
   if (message.profile === "full" || message.profile === "senior")
-    showProfile(message.profile);
+    setDemoProfile(message.profile);
 });
 
 new ResizeObserver(() => {
