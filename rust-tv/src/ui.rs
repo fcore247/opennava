@@ -1241,10 +1241,9 @@ impl Ui {
                 stroke(&mut c, dot, 5., [32, 72, 46, 255], 1.);
             }
         }
-        let hint = self
-            .video_controls_hint()
-            .unwrap_or("Pfeiltasten zum Bewegen · OK zum Öffnen · Zurück");
-        self.text(&mut c, hint, 64., 711., 12, SOFT, false);
+        if let Some(hint) = self.video_controls_hint() {
+            self.text(&mut c, hint, 64., 711., 12, SOFT, false);
+        }
         if !self.message.is_empty() {
             fill(&mut c, [150., 88., 980., 52.], 14., [28, 26, 39, 255]);
             self.centered(
