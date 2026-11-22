@@ -1280,6 +1280,36 @@ footer {
   width: 13px;
   height: 13px;
 }
+.prototype-link {
+  color: var(--violet);
+  border: 1px solid #756587;
+}
+.prototype-link:hover {
+  background: #2d2736;
+}
+.prototype-guide {
+  margin-top: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #c9c4cb;
+}
+.prototype-guide h3 {
+  font-size: clamp(25px, 2.2vw, 34px);
+  letter-spacing: -0.045em;
+}
+.prototype-guide p,
+.prototype-guide ol {
+  margin: 12px 0 16px;
+}
+.prototype-guide ol {
+  padding-inline-start: 1.35em;
+}
+.prototype-guide li + li {
+  margin-top: 8px;
+}
+.prototype-guide .primary {
+  background: #302a3a;
+  color: #fff;
+}
 .brand-credit a {
   color: #d5c2ee;
   text-decoration: underline;
