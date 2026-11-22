@@ -180,3 +180,20 @@ test('the confirmed choice is retained when a dictionary is still loading', asyn
   }
   await expect(page).toHaveURL(new URL('?lang=fr', baseURL).href);
 });
+
+test('the wheel accepts its first key while the initial dictionary is in flight', async ({page}) => {
+  let release;
+  const wait = new Promise(resolve => { release = resolve; });
+  await page.route('**/locales/en.json', async route => {
+    await wait;
+    await route.continue().catch(() => {});
+  }, {times: 1});
+  try {
+    await page.goto('sprache/?lang=en');
+    await page.getByRole('listbox').press('ArrowUp');
+    await expectCentered(page, 'de');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'de');
+  } finally {
+    release();
+  }
+});

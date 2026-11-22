@@ -71,7 +71,8 @@
     }
   }
   function refreshLabels() {
-    options[0].firstElementChild.textContent = site.t('auto');
+    const automatic = site.t('auto');
+    if (automatic !== 'auto') options[0].firstElementChild.textContent = automatic;
     options[0].lang = site.language;
     const preference = site.preference;
     done.href = returnLink(preference);
@@ -166,8 +167,8 @@
     }
   }
 
-  async function initialize() {
-    await site.ready;
+  function initialize() {
+    // Language names are available before the dictionary. Accept the first key immediately.
     const rows = document.createDocumentFragment();
     for (const [index, code] of codes.entries()) {
       const option = document.createElement('div');
@@ -180,7 +181,7 @@
       option.lang = code === 'auto' ? site.language : code;
       const name = document.createElement('span');
       name.className = 'language-option-label';
-      name.textContent = code === 'auto' ? site.t('auto') : site.languages[code];
+      name.textContent = code === 'auto' ? 'Automatisch' : site.languages[code];
       option.append(name);
       options.push(option);
       rows.append(option);
