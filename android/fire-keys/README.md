@@ -6,15 +6,15 @@ The native Rust launcher from version 0.2.5 can bind to the dedicated Home servi
 
 ## Set it up
 
-1. Install the [official TV launcher](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk) and pair your own computer with the Fire TV. Check its serial and model with `adb devices -l`.
-2. Download [OpenNava-Fire-Keys.apk](https://github.com/fcore247/opennava/releases/download/tools-v1.0.0/OpenNava-Fire-Keys.apk). Substitute the exact serial for `FIRE_TV_SERIAL` below. Android installs a service, so this package has no app tile.
+1. Install the [Rust launcher](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Rust-TV.apk) or the [classic and senior launcher](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk) and pair your own computer with the Fire TV. Check its serial and model with `adb devices -l`.
+2. Download [OpenNava-Fire-Keys.apk](https://github.com/fcore247/opennava/releases/download/tools-v1.0.1/OpenNava-Fire-Keys.apk). Substitute the exact serial for `FIRE_TV_SERIAL` below. Android installs a service, so this package has no app tile.
 
    ```sh
    adb -s FIRE_TV_SERIAL install -r OpenNava-Fire-Keys.apk
    adb -s FIRE_TV_SERIAL shell pm grant site.navatv.keys android.permission.READ_LOGS
    ```
 
-3. In the TV's accessibility settings, enable **OpenNava Home button** if your firmware offers that service. OpenNava binds to the helper when its signature and permission match. Try the actual remote while using senior view. Fire OS versions and remotes differ in which button events they expose.
+3. In the TV's accessibility settings, enable **OpenNava als Fire-TV-Startseite** for Rust, or **OpenNava Home button** for the classic launcher if your firmware offers it. OpenNava binds to the helper when its signature and permission match. Try the actual remote while using senior view. Fire OS versions and remotes differ in which button events they expose.
 
 **What the permission enables.** Android's `READ_LOGS` grant can read system logs. The helper opens only the system buffer with filters for `ActivityTaskManager` and `ContextImpl`. It checks recent events in memory and sends the recognized button and timestamp to the matching launcher. Its manifest requests no internet or storage permissions. [Service implementation](src/main/java/site/navatv/keys/KeySignalService.java) · [Launcher receiver](../tv/src/main/java/site/navatv/launcher/FireButtonConnection.java)
 

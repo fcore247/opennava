@@ -35,6 +35,6 @@ For live television, the staging script carries the Android station IDs into the
 | --- | --- | --- |
 | `OpenNava.apk` and `OpenNava-Companion.apk` | [Android builder](../android/build.py) | Android installer, desktop setup, phone-to-TV install |
 | [release.json](../release.json) and the published `update.json` | [Release publisher](../tools/publish.py) | First-time setup reads its checkout's manifest. The shared [native updater](../android/updates/) and [host updater](../tools/update.py) read the stable release feed. |
-| `OpenNava-Studio-macOS.zip` and `OpenNava-Fire-Keys.apk` | [Studio builder](../macos/build.py) and the Android builder's `--only-fire-keys` option | Separate, optional downloads in the [tools release](https://github.com/fcore247/opennava/releases/tag/tools-v1.0.0). |
+| `OpenNava-Studio-macOS.zip` and `OpenNava-Fire-Keys.apk` | [Studio builder](../macos/build.py) and the Android builder's `--only-fire-keys` option | Separate, optional downloads in the [tools release](https://github.com/fcore247/opennava/releases/tag/tools-v1.0.1). |
 
 The Android identifiers `site.navatv.launcher`, `site.navatv.companion` and `site.navatv.keys` are part of device and update compatibility. The project records the official certificate's [public SHA-256 fingerprint](../release-key.sha256). Private signing material, ADB identities, paired addresses and each household's recordings belong on their owners' devices. [Build instructions](../android/BUILD.md) · [Release process](MAINTAINING.md)

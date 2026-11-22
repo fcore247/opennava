@@ -24,7 +24,7 @@ Both profiles ship in one TV APK. On the interactive website, open **Live TV** i
 | Tool | Download | What to read first |
 | --- | --- | --- |
 | **OpenNava Studio** | [Mac app ZIP](https://github.com/fcore247/opennava/releases/download/tools-v1.0.0/OpenNava-Studio-macOS.zip) | An ad-hoc signed macOS remote for working with an authorized television. [Studio guide](macos/README.md) |
-| **Fire TV key helper** | [Signed helper APK](https://github.com/fcore247/opennava/releases/download/tools-v1.0.0/OpenNava-Fire-Keys.apk) | Optional physical remote shortcuts for compatible Android-based Fire TV devices. [Fire TV setup](android/fire-keys/README.md) |
+| **Fire TV key helper** | [Signed helper APK](https://github.com/fcore247/opennava/releases/download/tools-v1.0.1/OpenNava-Fire-Keys.apk) | Optional physical remote shortcuts for compatible Android-based Fire TV devices. [Fire TV setup](android/fire-keys/README.md) |
 
 ## Set it up with your AI agent
 

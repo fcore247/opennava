@@ -1,25 +1,25 @@
 {
   "schema": 1,
-  "version": "1.1.3",
+  "version": "1.1.4",
   "apps": {
     "tv": {
       "package": "site.navatv.launcher",
-      "versionCode": 113,
+      "versionCode": 114,
       "asset": "OpenNava.apk",
-      "sha256": "828598379f2c93bc7a9cd82ce751fdb3bb198e9efdb66e6ee62a8970fc6482b2"
+      "sha256": "4c8838e52720e31781ea6a7327b979d72e07e4beeccf264367a7c8196bd83cb8"
     },
     "phone": {
       "package": "site.navatv.companion",
-      "versionCode": 113,
+      "versionCode": 114,
       "asset": "OpenNava-Companion.apk",
-      "sha256": "b23996ac55b896e23848c127a2b71ca9405a9bf98da2651d7b6230b582ca7535"
+      "sha256": "2e5dbff65d935dd2c5a44d980e8bc70b3289c776b1aac36e0edb5a57ce6d24fa"
     },
     "preview": {
       "package": "site.navatv.rustpreview",
-      "versionCode": 8,
+      "versionCode": 12,
       "asset": "OpenNava-Rust-TV.apk",
-      "sha256": "f2a134696f8deddd3b4c5948046da720e9ac63b4e16c7d3cc9d490197b8f0108",
-      "versionName": "0.2.2"
+      "sha256": "74ae92a1234076db579d5c751c02b72e9170c93fd889424131ab25e6f8fe6e93",
+      "versionName": "0.2.6"
     }
   }
 }
