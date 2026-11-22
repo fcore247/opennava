@@ -61,7 +61,12 @@ public final class MainActivity extends Activity {
     private WebView webView;
     private boolean pageReady;
     private boolean openingYouTube;
-    private boolean pendingHomeNavigation;
+    private boolean pendingHomeNavigation, pendingPreviewHint;
+    private boolean normalFullHome(Intent intent) {
+        return combined() && intent != null && intent.getData() == null &&
+                (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0 &&
+                (intent.getBooleanExtra("opennava.normalHome", false) || intent.getBooleanExtra(EXTRA_FROM_HOME, false));
+    }
     private volatile boolean editingText;
     private NavaYouTube youtube;
     private MediathekService mediathek;
@@ -72,6 +77,7 @@ public final class MainActivity extends Activity {
         super.onCreate(savedState);
         site.navatv.updates.Updates.home(this);
         pendingHomeNavigation = homeNavigation(getIntent());
+        pendingPreviewHint = savedState == null && normalFullHome(getIntent());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         immersive();
         webView = new WebView(this);
@@ -131,6 +137,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override protected void onPause() {
+        pendingPreviewHint = false;
         if (webView != null) {
             if (pageReady) webView.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});", null);
             webView.onPause();
@@ -141,6 +148,7 @@ public final class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        pendingPreviewHint = normalFullHome(intent);
         if (homeNavigation(intent)) pendingHomeNavigation = true;
         LauncherState.clearBypass(this);
         notifyResume();
@@ -149,7 +157,23 @@ public final class MainActivity extends Activity {
 
     @Override public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus) immersive();
+        if (hasFocus) { immersive(); maybeShowPreviewHint(); }
+    }
+
+    private void maybeShowPreviewHint() {
+        if (!pendingPreviewHint || !pageReady || !hasWindowFocus() || isFinishing() || isDestroyed()) return;
+        pendingPreviewHint = false;
+        if (getSharedPreferences("software-updates", MODE_PRIVATE).getBoolean("rustPreviewHintHandled", false)) return;
+        try {
+            android.content.pm.PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
+            // A fresh installation does not need this migration hint, including on subsequent launches.
+            getSharedPreferences("software-updates", MODE_PRIVATE).edit().putBoolean("rustPreviewHintHandled", true).apply();
+            if (info.firstInstallTime <= 0 || info.lastUpdateTime <= info.firstInstallTime) return;
+            boolean german = "de".equals(getResources().getConfiguration().getLocales().get(0).getLanguage());
+            Toast.makeText(this, german
+                    ? "Neue Rust-Oberfläche ausprobieren? Unter „Software updates“ findest du die Vorschau."
+                    : "Try the new Rust interface under Software updates.", Toast.LENGTH_LONG).show();
+        } catch (PackageManager.NameNotFoundException ignored) { /* The activity is exiting. */ }
     }
 
     private void notifyResume() {
@@ -162,7 +186,7 @@ public final class MainActivity extends Activity {
         pendingHomeNavigation = false;
         if (getIntent() != null) getIntent().removeExtra(EXTRA_FROM_HOME);
         webView.evaluateJavascript(
-                "if(typeof window.navaNativeHome==='function'){window.navaNativeHome();}", null);
+                "if(typeof window.navaNativeHome==='function'){window.navaNativeHome();}", result -> maybeShowPreviewHint());
     }
 
     private void deliverYouTubeResult(String requestId, String json) {

@@ -9,6 +9,10 @@ public final class InstallResult extends BroadcastReceiver {
     @Override public void onReceive(Context c, Intent result) {
         if (!"site.navatv.INSTALL_RESULT".equals(result.getAction())) return;
         int status = result.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+        if (result.getBooleanExtra("preview", false)) {
+            PreviewActivity.installResult(c, result, status);
+            return;
+        }
         UpdateActivity foreground = UpdateActivity.foreground();
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
             Intent consent = result.getParcelableExtra(Intent.EXTRA_INTENT);

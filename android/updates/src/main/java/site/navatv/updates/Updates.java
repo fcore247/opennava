@@ -25,7 +25,11 @@ public final class Updates {
     static SharedPreferences prefs(Context c) { return c.getSharedPreferences("software-updates", Context.MODE_PRIVATE); }
     public static boolean enabled(Context c) { return prefs(c).getBoolean("automatic", true); }
     static long current(Context c) throws Exception {
-        return ReleaseFeed.code(c.getPackageManager().getPackageInfo(c.getPackageName(), 0));
+        return current(c, c.getPackageName());
+    }
+    static long current(Context c, String pkg) throws Exception {
+        try { return ReleaseFeed.code(c.getPackageManager().getPackageInfo(pkg, 0)); }
+        catch (android.content.pm.PackageManager.NameNotFoundException missing) { return 0; }
     }
 
     static void schedule(Context c) {
@@ -67,11 +71,15 @@ public final class Updates {
     public static void open(Context c) { c.startActivity(new Intent(c, UpdateActivity.class)); }
 
     static synchronized void install(Context c, ReleaseFeed release, boolean interactive) throws Exception {
-        if (release.versionCode <= current(c)) return;
+        boolean preview = ReleaseFeed.PREVIEW.equals(release.packageName);
+        if (!release.packageName.equals(c.getPackageName()) &&
+                !(preview && interactive && ReleaseFeed.TV.equals(c.getPackageName())))
+            throw new IllegalArgumentException("Invalid installation target.");
+        if (release.versionCode <= current(c, release.packageName)) return;
         PackageInstaller installer = c.getPackageManager().getPackageInstaller();
         // Recover a session interrupted during transfer; do not create a second active install.
         for (PackageInstaller.SessionInfo existing : installer.getMySessions()) {
-            if (!c.getPackageName().equals(existing.getAppPackageName())) continue;
+            if (!release.packageName.equals(existing.getAppPackageName())) continue;
             if (existing.isActive() || (Build.VERSION.SDK_INT >= 31 && existing.isCommitted())) return;
             installer.abandonSession(existing.getSessionId());
         }
@@ -79,12 +87,13 @@ public final class Updates {
         int id = -1;
         boolean committed = false;
         try {
-            if (Thread.currentThread().isInterrupted() || (!interactive && !enabled(c)) || release.versionCode <= current(c)) return;
+            if (Thread.currentThread().isInterrupted() || (!interactive && !enabled(c)) || release.versionCode <= current(c, release.packageName)) return;
             PackageInstaller.SessionParams params = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
-            params.setAppPackageName(c.getPackageName());
+            params.setAppPackageName(release.packageName);
             params.setSize(apk.length());
             if (Build.VERSION.SDK_INT >= 31)
-                params.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
+                params.setRequireUserAction(preview ? PackageInstaller.SessionParams.USER_ACTION_REQUIRED :
+                        PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
             id = installer.createSession(params);
             try (PackageInstaller.Session session = installer.openSession(id)) {
                 try (FileInputStream in = new FileInputStream(apk); OutputStream out = session.openWrite("base.apk", 0, apk.length())) {
@@ -93,7 +102,7 @@ public final class Updates {
                     session.fsync(out);
                 }
                 Intent result = new Intent(c, InstallResult.class).setAction("site.navatv.INSTALL_RESULT")
-                        .putExtra("interactive", interactive).putExtra("releaseCode", release.versionCode);
+                        .putExtra("preview", preview).putExtra("interactive", interactive).putExtra("releaseCode", release.versionCode);
                 int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
                 session.commit(PendingIntent.getBroadcast(c, id, result, flags).getIntentSender());
                 committed = true;

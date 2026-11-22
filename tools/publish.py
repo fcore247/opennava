@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 
-from navatv import APPS, ROOT, Failure, command, find_tool, validate_manifest, verify_signer_and_package
+from navatv import APPS, PREVIEW, ROOT, Failure, command, find_tool, validate_manifest, verify_signer_and_package
 
 REPO = 'fcore247/opennava'
 
@@ -31,13 +31,15 @@ def release_files(directory, version):
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
         raise Failure('Use a stable version such as 1.0.0 (without v).')
     apps = {}
-    for kind, (package, name, _) in APPS.items():
+    for kind, (package, name, _) in {**APPS, 'preview': PREVIEW}.items():
         path = directory / name
         metadata = command(find_tool('aapt'), 'dump', 'badging', path).splitlines()[0]
         app = re.search(r"^package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'", metadata)
-        if not app or app.group(1) != package or app.group(3) != version:
-            raise Failure(f'{name} must be {package}, versionName {version}.')
+        if not app or app.group(1) != package or (kind != 'preview' and app.group(3) != version):
+            raise Failure(f'Unexpected package or version for {name}.')
         item = dict(package=package, versionCode=int(app.group(2)), asset=name, sha256=digest(path))
+        if kind == 'preview':
+            item['versionName'] = app.group(3)
         verify_signer_and_package(path, item)
         apps[kind] = item
     with ZipFile(directory / APPS['phone'][1]) as bundle, bundle.open('assets/OpenNava.apk') as payload:

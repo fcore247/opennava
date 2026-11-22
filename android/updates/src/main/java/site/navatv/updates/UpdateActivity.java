@@ -12,6 +12,7 @@ import java.lang.ref.WeakReference;
 
 public final class UpdateActivity extends Activity {
     private static WeakReference<UpdateActivity> active = new WeakReference<>(null);
+    private static final int PREVIEW = 41;
     private TextView status;
     private Button action;
     private Switch automatic;
@@ -48,6 +49,13 @@ public final class UpdateActivity extends Activity {
         panel.addView(automatic);
         action = new Button(this); action.setAllCaps(false); panel.addView(action);
         action.setOnClickListener(v -> { if (release == null) check(); else install(); });
+        if (ReleaseFeed.TV.equals(getPackageName())) {
+            Button preview = new Button(this);
+            preview.setAllCaps(false);
+            preview.setText("Try the Rust preview");
+            preview.setOnClickListener(v -> startActivityForResult(new Intent(this, PreviewActivity.class), PREVIEW));
+            panel.addView(preview);
+        }
         Button close = new Button(this); close.setAllCaps(false); close.setText("Back");
         close.setOnClickListener(v -> finish()); panel.addView(close);
         if (ReleaseFeed.PHONE.equals(getPackageName())) {
@@ -71,6 +79,11 @@ public final class UpdateActivity extends Activity {
             setContentView(scroll);
         }
         check();
+    }
+
+    @Override protected void onActivityResult(int request, int result, Intent data) {
+        super.onActivityResult(request, result, data);
+        if (request == PREVIEW && result == RESULT_OK) finish();
     }
 
     @Override protected void onResume() {

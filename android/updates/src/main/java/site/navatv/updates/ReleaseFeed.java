@@ -21,27 +21,33 @@ import java.util.Locale;
 /** Only stable releases from this repository and APKs signed by OpenNava are accepted. */
 public final class ReleaseFeed {
     public static final String TV = "site.navatv.launcher";
+    public static final String PREVIEW = "site.navatv.rustpreview";
     public static final String PHONE = "site.navatv.companion";
     private static final String RELEASES = "https://github.com/fcore247/opennava/releases/";
     private static final String SIGNER = "578636674ca41cd11a62d70f49f3ea043bc685cee26c68d787c45b9c238b9998";
     private static final long MAX_APK = 256L * 1024 * 1024;
 
     public final String version, packageName, asset, sha256;
+    private final String releaseTag;
     public final long versionCode;
 
     private ReleaseFeed(JSONObject manifest, String pkg) throws Exception {
-        boolean tv = TV.equals(pkg);
-        if (!tv && !PHONE.equals(pkg)) throw new IOException("Unknown update target.");
-        JSONObject entry = manifest.getJSONObject("apps").getJSONObject(tv ? "tv" : "phone");
-        version = manifest.getString("version");
+        String key, expectedAsset;
+        if (TV.equals(pkg)) { key = "tv"; expectedAsset = "OpenNava.apk"; }
+        else if (PHONE.equals(pkg)) { key = "phone"; expectedAsset = "OpenNava-Companion.apk"; }
+        else if (PREVIEW.equals(pkg)) { key = "preview"; expectedAsset = "OpenNava-Rust-TV.apk"; }
+        else throw new IOException("Unknown update target.");
+        JSONObject entry = manifest.getJSONObject("apps").getJSONObject(key);
+        releaseTag = manifest.getString("version");
+        version = PREVIEW.equals(pkg) ? entry.getString("versionName") : releaseTag;
         packageName = entry.getString("package");
         versionCode = entry.getLong("versionCode");
         sha256 = entry.getString("sha256");
         asset = entry.getString("asset");
-        if (manifest.getInt("schema") != 1 || !version.matches("[0-9]+\\.[0-9]+\\.[0-9]+") ||
+        String semantic = "[0-9]+\\.[0-9]+\\.[0-9]+";
+        if (manifest.getInt("schema") != 1 || !releaseTag.matches(semantic) || !version.matches(semantic) ||
                 !pkg.equals(packageName) || versionCode <= 0 || !sha256.matches("[a-f0-9]{64}") ||
-                !asset.equals(tv ? "OpenNava.apk" : "OpenNava-Companion.apk"))
-            throw new IOException("Invalid OpenNava release information.");
+                !asset.equals(expectedAsset)) throw new IOException("Invalid OpenNava release information.");
     }
 
     private static HttpURLConnection open(String address) throws IOException {
@@ -85,7 +91,7 @@ public final class ReleaseFeed {
         File apk = File.createTempFile("navatv-release-", ".apk", context.getCacheDir());
         boolean valid = false;
         try {
-            HttpURLConnection c = open(RELEASES + "download/v" + version + "/" + asset);
+            HttpURLConnection c = open(RELEASES + "download/v" + releaseTag + "/" + asset);
             try (InputStream in = c.getInputStream(); FileOutputStream out = new FileOutputStream(apk)) {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 byte[] buffer = new byte[65536];
@@ -103,13 +109,18 @@ public final class ReleaseFeed {
                     Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES);
             if (info == null || !packageName.equals(info.packageName) || code(info) != versionCode ||
                     !version.equals(info.versionName)) throw new IOException("Wrong package or release version.");
-            Signature[] signatures = Build.VERSION.SDK_INT >= 28 ? info.signingInfo.getApkContentsSigners() : info.signatures;
-            if (signatures == null || signatures.length != 1 ||
-                    !hex(MessageDigest.getInstance("SHA-256").digest(signatures[0].toByteArray())).equals(SIGNER))
+            if (!officialSigner(info))
                 throw new IOException("This package was not signed by OpenNava.");
             valid = true;
             return apk;
         } finally { if (!valid) apk.delete(); }
+    }
+
+    static boolean officialSigner(PackageInfo info) throws Exception {
+        Signature[] signatures = Build.VERSION.SDK_INT >= 28
+                ? (info.signingInfo == null ? null : info.signingInfo.getApkContentsSigners()) : info.signatures;
+        return signatures != null && signatures.length == 1 &&
+                hex(MessageDigest.getInstance("SHA-256").digest(signatures[0].toByteArray())).equals(SIGNER);
     }
 
     public static long code(PackageInfo info) {

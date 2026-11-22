@@ -1,0 +1,64 @@
+plugins { id 'com.android.application' version '8.13.2' }
+
+def sdkPlayer = file('../../android/player/build/export')
+def rustLibs = layout.buildDirectory.dir('rustJni')
+def playerSources = layout.buildDirectory.dir('nativePlayerSources')
+def collectSources = tasks.register('collectPlayerSources', Sync) {
+    from('../../android/tv/src/main/java/site/navatv/full') {
+        include 'NavaPlayerActivity.java', 'NavaMediaSources.java', 'YouTubePlayback.java',
+                'NavaYouTube.java', 'ThumbnailProxy.java', 'MediathekService.java'
+        into 'site/navatv/full'
+    }
+    into playerSources
+}
+def collectRust = tasks.register('collectRust', Sync) {
+    from(providers.gradleProperty('rustLibraryArm32')) { into 'armeabi-v7a' }
+    from(providers.gradleProperty('rustLibraryArm64')) { into 'arm64-v8a' }
+    into rustLibs
+}
+def notices = layout.buildDirectory.dir('previewNotices')
+def collectNotices = tasks.register('collectNotices', Sync) {
+    from('../../android/tv/src/main/assets/web/licenses') { into 'licenses/player' }
+    from('../../android/NOTICE.md') { into 'licenses/player' }
+    from('../assets') { include 'OFL*.txt'; into 'licenses/fonts' }
+    from('../ASSETS.md') { into 'licenses' }
+    from(providers.gradleProperty('rustNotices')) { into 'licenses/rust' }
+    into notices
+}
+
+android {
+    namespace 'site.navatv.rustpreview'
+    compileSdk 36
+    buildToolsVersion '36.0.0'
+    defaultConfig {
+        applicationId 'site.navatv.rustpreview'
+        minSdk 26
+        targetSdk 34
+        versionCode 3
+        versionName '0.1.2'
+        ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
+    }
+    sourceSets.main {
+        assets.srcDir notices
+        res.srcDir '../res'
+        jniLibs.srcDir rustLibs
+        java.srcDir playerSources
+    }
+    packaging {
+        jniLibs { useLegacyPackaging = true; keepDebugSymbols += ['**/libopennava_rust.so'] }
+        resources { excludes += ['META-INF/DEPENDENCIES','META-INF/INDEX.LIST','META-INF/*.kotlin_module'] }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+preBuild.dependsOn collectRust, collectSources, collectNotices
+
+dependencies {
+    implementation fileTree(dir: sdkPlayer, include: ['*.aar'])
+    new File(sdkPlayer, 'dependencies.txt').eachLine { coordinate ->
+        def artifact = coordinate.startsWith('com.eclipsesource.j2v8:j2v8:') ? coordinate + '@aar' : coordinate
+        implementation(artifact) { transitive = false }
+    }
+}

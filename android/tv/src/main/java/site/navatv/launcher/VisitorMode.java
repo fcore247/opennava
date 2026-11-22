@@ -69,22 +69,26 @@ final class VisitorMode {
 
     /** Called on the main thread when a person explicitly chooses the visitor home. */
     static boolean enter(Context context) {
-        if (available(context) && setMode(context, VISITOR) && launch(context)) return true;
+        if (available(context) && setMode(context, VISITOR) && launch(context, false)) return true;
         selectPersonal(context);
         return false;
     }
 
     /** Called by both actual Android HOME intents and the Google TV Home window redirect. */
     static boolean launchIfSelected(Context context) {
+        return launchIfSelected(context, true);
+    }
+
+    static boolean launchIfSelected(Context context, boolean normalHome) {
         if (!isVisitor(context)) return false;
-        if (available(context) && launch(context)) return true;
+        if (available(context) && launch(context, normalHome)) return true;
         selectPersonal(context);
         return false;
     }
 
-    private static boolean launch(Context context) {
+    private static boolean launch(Context context, boolean normalHome) {
         try {
-            context.startActivity(visitorIntent(context));
+            context.startActivity(visitorIntent(context).putExtra("opennava.normalHome", normalHome));
             return true;
         } catch (RuntimeException unavailable) {
             Log.w("Libraries", "Could not open the full launcher", unavailable);

@@ -83,6 +83,8 @@ Android handles updates in place using the existing OpenNava signing identity. T
 
 Open **Software updates** inside OpenNava or the companion to check for a release. Automatic checks are enabled by default. Android schedules them when the device is idle and connected. Each app verifies the release and asks Android to install it. Depending on the Android version and how the app was first installed, you may need to allow installs from this source or confirm the Android installation prompt. Turn off **Automatic updates** on that screen to opt out on that device.
 
+**Try the native Rust interface.** On the TV’s **Software updates** screen, choose **Try the Rust preview**. Android installs it as a separate app when you confirm. On its home screen, press Back and choose **Zur klassischen Ansicht** to return to your saved classic profile. The preview and installation guide are available on the [OpenNava website](https://opennava.site/#rust-prototype).
+
 ### Update from your computer
 
 For unattended updates, install Android SDK **Build Tools** (for `apksigner` and `aapt`) and a Java runtime on the computer that has ADB access. Set `ANDROID_HOME` to the SDK or add its build-tools and platform-tools directories to `PATH`. [Android SDK Manager](https://developer.android.com/tools/sdkmanager)

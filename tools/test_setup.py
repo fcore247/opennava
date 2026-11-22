@@ -36,6 +36,19 @@ class SetupTests(unittest.TestCase):
         with self.assertRaises(navatv.Failure):
             navatv.validate_manifest(release)
 
+    def test_optional_preview_never_becomes_an_automatic_update_target(self):
+        release = manifest()
+        self.assertEqual(navatv.validate_manifest(release), release)
+        package, asset, _ = navatv.PREVIEW
+        preview = dict(package=package, asset=asset, versionName='0.1.2', versionCode=3, sha256='a' * 64)
+        release['apps']['preview'] = preview
+        self.assertEqual(navatv.validate_manifest(release), release)
+        self.assertEqual(set(navatv.APPS), {'tv', 'phone'})
+        for field, invalid in [('versionName', 'bad'), ('package', 'wrong'), ('asset', 'OpenNava.apk')]:
+            release['apps']['preview'] = {**preview, field: invalid}
+            with self.assertRaises(navatv.Failure):
+                navatv.validate_manifest(release)
+
     def test_verification_checks_actual_signer(self):
         digest = (navatv.ROOT / 'release-key.sha256').read_text().strip()
         item = manifest()['apps']['tv']

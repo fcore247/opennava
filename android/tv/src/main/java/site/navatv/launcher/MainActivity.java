@@ -247,6 +247,11 @@ public class MainActivity extends Activity {
             startup.clear();
             return false;
         }
+        if ("site.opennava.action.OPEN_CLASSIC".equals(intent.getAction())) {
+            if (VisitorMode.launchIfSelected(this, false)) { finish(); return true; }
+            pendingHome = true;
+            return false;
+        }
         boolean main = Intent.ACTION_MAIN.equals(intent.getAction());
         boolean home = main && intent.hasCategory(Intent.CATEGORY_HOME);
         boolean appList = main && (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0

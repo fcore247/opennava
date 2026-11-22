@@ -76,13 +76,13 @@ Reopen the TV app and confirm it still uses the saved profile. Also exercise a l
 
 1. Set the same three-part `versionName` in [tv/build.gradle](../android/tv/build.gradle) and [companion/build.gradle](../android/companion/build.gradle). Increase both `versionCode` values above the previous public release. Keep package IDs and signing identity stable so Android can replace existing installations in place.
 2. Build both APKs from the intended release source using the official key. Store the private keystore and password file outside the checkout. The committed [fingerprint](../release-key.sha256) contains only the public certificate's SHA-256. Local build APKs, test fixtures and passwords stay out of the source distribution.
-3. From the same checkout, prepare the release files. Replace the example version with the new version.
+3. Build the [Rust preview](../rust-tv/README.md) from the same checkout and sign it with the release key. Place `OpenNava-Rust-TV.apk` alongside the signed TV and companion builds. The optional app has its own package and version. From the same checkout, prepare the release files. Replace the example version with the new version.
 
    ```sh
    python3 tools/publish.py prepare --version 1.1.0 --assets-dir ../opennava-release
    ```
 
-   The script verifies each APK signature, package, version and digest, and checks the embedded TV APK. It writes the initial install manifest (`release.json`) to the root, and writes identical `update.json` and a separate `SHA256SUMS` into the release directory. Each manifest entry contains the asset filename, Android package name, integer version code and SHA-256 under `apps.tv` or `apps.phone`.
+   The script verifies each APK signature, package, version and digest, and checks the embedded TV APK. It writes the initial install manifest (`release.json`) to the root, and writes identical `update.json` and a separate `SHA256SUMS` into the release directory. Each manifest entry contains the asset filename, Android package name, integer version code and SHA-256 under `apps.tv`, `apps.phone` or `apps.preview`. The preview entry also carries its independent Android version name. Automatic TV and phone updates target only the classic apps.
 
 4. Review both apps, the source changes and `release.json`. Commit and push the release source to `main`. Use a signed-in GitHub CLI with release write access, a clean checkout and the exact pushed commit.
 
@@ -90,7 +90,7 @@ Reopen the TV app and confirm it still uses the saved profile. Also exercise a l
    python3 tools/publish.py publish --version 1.1.0 --assets-dir ../opennava-release
    ```
 
-   For custom release notes, supply `--notes-file /path/to/notes.md` when creating the draft. The publisher binds the `vVERSION` release to the current source commit. It uploads the two APKs, `update.json` and `SHA256SUMS` to a draft, checks the complete uploaded set and promotes it to the latest stable release. Re-running against the same draft can finish an interrupted upload. A public tag is immutable in this workflow. Ship a higher version to correct a published build.
+   For custom release notes, supply `--notes-file /path/to/notes.md` when creating the draft. The publisher binds the `vVERSION` release to the current source commit. It uploads all three APKs, `update.json` and `SHA256SUMS` to a draft, checks the complete uploaded set and promotes it to the latest stable release. Re-running against the same draft can finish an interrupted upload. A public tag is immutable in this workflow. Ship a higher version to correct a published build.
 
 5. Verify the public release independently. In the following example, start in the repository root and use an empty destination.
 

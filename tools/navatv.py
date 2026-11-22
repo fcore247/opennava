@@ -20,6 +20,9 @@ APPS = {
     'phone': ('site.navatv.companion', 'OpenNava-Companion.apk', 30),
 }
 
+# The preview is installed only after the viewer opts in on the TV.
+PREVIEW = ('site.navatv.rustpreview', 'OpenNava-Rust-TV.apk', 26)
+
 
 class Failure(Exception):
     pass
@@ -113,7 +116,13 @@ def version_code(adb, serial, user, package):
 def validate_manifest(manifest):
     if manifest.get('schema') != 1 or not re.fullmatch(r'\d+\.\d+\.\d+', manifest.get('version', '')):
         raise Failure('Unsupported release manifest.')
-    for kind, (package, asset, _) in APPS.items():
+    expected = dict(APPS)
+    if 'preview' in manifest.get('apps', {}):
+        expected['preview'] = PREVIEW
+        name = manifest['apps']['preview'].get('versionName', '')
+        if not isinstance(name, str) or not re.fullmatch(r'\d+\.\d+\.\d+', name):
+            raise Failure('Invalid preview version.')
+    for kind, (package, asset, _) in expected.items():
         item = manifest.get('apps', {}).get(kind, {})
         if (item.get('package') != package or item.get('asset') != asset
                 or type(item.get('versionCode')) is not int or item['versionCode'] < 1

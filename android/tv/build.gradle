@@ -11,8 +11,8 @@ android {
         applicationId 'site.navatv.launcher'
         minSdk 26
         targetSdk 34
-        versionCode 101
-        versionName '1.0.1'
+        versionCode 102
+        versionName '1.0.2'
         buildConfigField 'boolean', 'RTL_ENABLED', 'false'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
