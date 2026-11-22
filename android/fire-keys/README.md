@@ -2,6 +2,8 @@
 
 This optional helper recognizes two remote shortcuts on supported Android-based Fire TV firmware. Double-pressing Home opens the programme guide in senior view when OpenNava's Home redirection is active. Pressing the Netflix shortcut selects the senior home. Opening Netflix from its normal app tile still launches Netflix. The on-screen guide and the live player's **hold Up** shortcut work independently of this helper.
 
+The native Rust launcher from version 0.2.5 can bind to the dedicated Home service in Fire Keys 1.0.1 or later. With its Home redirection enabled, one press opens OpenNava and two quick presses open Amazon Home. This service sends Home signals only to the same-signer native launcher.
+
 ## Set it up
 
 1. Install the [official TV launcher](https://github.com/fcore247/opennava/releases/latest/download/OpenNava.apk) and pair your own computer with the Fire TV. Check its serial and model with `adb devices -l`.

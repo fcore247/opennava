@@ -48,10 +48,7 @@ public final class HomePersonalizationActivity extends Activity {
         LinearLayout actions = new LinearLayout(this);
         actions.setPadding(0, dp(18), 0, 0);
         copy.addView(actions);
-        if ("site.navatv.launcher".equals(getPackageName())) {
-            action(actions, "Handy verbinden", () -> startActivity(new Intent()
-                    .setClassName(this, "site.navatv.launcher.PhoneLinkActivity")));
-        }
+        action(actions, "Handy verbinden", () -> startActivity(new Intent(this, PhoneLinkActivity.class)));
         action(actions, "Zurück", this::finish);
         int side = Math.min(dp(235), Math.round(getResources().getDisplayMetrics().heightPixels * .52f));
         ImageView qr = new ImageView(this);

@@ -41,7 +41,9 @@ pub enum Action {
     Launch(Vec<&'static str>),
     LaunchApp(String),
     Personalization,
+    ConnectPhone,
     Updates,
+    SetFireHome(bool),
     YoutubeCatalog {
         request: u64,
     },
@@ -112,7 +114,9 @@ enum Command {
     Launch(Vec<&'static str>),
     LaunchApp(String),
     Personalization,
+    ConnectPhone,
     Updates,
+    SetFireHome(bool),
     Provider(usize),
     More(isize),
     HomeTurn(isize),
@@ -199,6 +203,7 @@ const TITLES: [Title; 6] = [
 pub struct Ui {
     home: HomeLayout,
     update_available: bool,
+    fire_home_enabled: Option<bool>,
     home_offset: usize,
     home_icons: HashMap<String, RgbaImage>,
     shelf: Shelf,
@@ -268,6 +273,7 @@ impl Ui {
             shelf: Shelf::default(),
             home: HomeLayout::default(),
             update_available: false,
+            fire_home_enabled: None,
             home_offset: 0,
             home_icons: HashMap::new(),
             page: Page::Home,
@@ -322,6 +328,10 @@ impl Ui {
             self.notice("Die Änderung konnte nicht gespeichert werden.");
         }
     }
+    pub fn set_fire_home_enabled(&mut self, enabled: Option<bool>) {
+        self.fire_home_enabled = enabled;
+    }
+
     pub fn set_update_available(&mut self, available: bool) -> bool {
         std::mem::replace(&mut self.update_available, available) != available
     }
@@ -329,6 +339,11 @@ impl Ui {
     pub fn notice(&mut self, text: &str) {
         self.message = text.chars().take(100).collect();
     }
+    #[cfg(target_os = "android")]
+    pub(crate) fn open_home(&mut self) {
+        self.go(Page::Home);
+    }
+
     fn go(&mut self, page: Page) {
         self.shelf.loading_more = false;
         self.shelf.request = self.shelf.request.wrapping_add(1);
@@ -372,7 +387,9 @@ impl Ui {
             }
             Command::LaunchApp(package) => return Action::LaunchApp(package),
             Command::Personalization => return Action::Personalization,
+            Command::ConnectPhone => return Action::ConnectPhone,
             Command::Updates => return Action::Updates,
+            Command::SetFireHome(enabled) => return Action::SetFireHome(enabled),
             Command::CloseFolder(i) => self.close_folder(i),
             Command::HomeTurn(direction) => self.turn_home(direction),
             Command::More(direction) => {
@@ -1096,11 +1113,17 @@ impl Ui {
                 );
             }
             Page::Settings => {
+                let spacing = if self.fire_home_enabled.is_some() {
+                    64.
+                } else {
+                    70.
+                };
+                let row = |index: f32| [64., 170. + index * spacing, 430., 58.];
                 self.button(
                     &mut c,
                     4,
                     "Personalisierung",
-                    [64., 170., 430., 58.],
+                    row(0.),
                     Command::Personalization,
                     false,
                 );
@@ -1112,7 +1135,7 @@ impl Ui {
                     } else {
                         "Hintergrund: dunkel"
                     },
-                    [64., 240., 430., 58.],
+                    row(1.),
                     Command::Shade,
                     false,
                 );
@@ -1120,7 +1143,7 @@ impl Ui {
                     &mut c,
                     3,
                     "YouTube-Konto verwalten",
-                    [64., 310., 430., 58.],
+                    row(2.),
                     Command::YoutubeAccount,
                     false,
                 );
@@ -1128,7 +1151,7 @@ impl Ui {
                     &mut c,
                     1,
                     "Zur klassischen Ansicht",
-                    [64., 380., 430., 58.],
+                    row(3.),
                     Command::ReturnClassic,
                     false,
                 );
@@ -1136,7 +1159,7 @@ impl Ui {
                     &mut c,
                     2,
                     "Vorschau schließen",
-                    [64., 450., 430., 58.],
+                    row(4.),
                     Command::Page(Page::Exit),
                     false,
                 );
@@ -1148,8 +1171,30 @@ impl Ui {
                     } else {
                         "Nach Updates suchen"
                     },
-                    [64., 520., 430., 58.],
+                    row(5.),
                     Command::Updates,
+                    false,
+                );
+                if let Some(enabled) = self.fire_home_enabled {
+                    self.button(
+                        &mut c,
+                        6,
+                        if enabled {
+                            "Home-Taste: OpenNava"
+                        } else {
+                            "Home-Taste: Amazon"
+                        },
+                        row(6.),
+                        Command::SetFireHome(!enabled),
+                        false,
+                    );
+                }
+                self.button(
+                    &mut c,
+                    7,
+                    "Handy verbinden",
+                    [585., 170., 430., 58.],
+                    Command::ConnectPhone,
                     false,
                 );
                 self.text(
@@ -1163,7 +1208,11 @@ impl Ui {
                 );
                 for (row, text) in [
                     "Die bisherigen Apps und ihre Daten bleiben erhalten.",
-                    "Die Home-Taste funktioniert weiter wie bisher.",
+                    if self.fire_home_enabled.is_some() {
+                        "Unter „Home-Taste“ wechselst du die Startseite."
+                    } else {
+                        "Die Home-Taste funktioniert weiter wie bisher."
+                    },
                     "Diese Merkliste bleibt lokal in der Rust-App.",
                     "Luna-Synchronisierung ist noch nicht angebunden.",
                 ]
@@ -1436,6 +1485,33 @@ mod tests {
         ui.focus = 2;
         assert!(matches!(ui.key(Key::Select), Action::Exit));
     }
+    #[test]
+    fn remote_opens_phone_pairing_from_settings() {
+        let mut ui = Ui::new();
+        ui.go(Page::Settings);
+        draw(&mut ui);
+        ui.key(Key::Up);
+        assert!(matches!(ui.key(Key::Select), Action::Personalization));
+        ui.key(Key::Right);
+        assert!(matches!(ui.key(Key::Select), Action::ConnectPhone));
+    }
+
+    #[test]
+    fn fire_home_toggle_only_appears_for_configured_service() {
+        let mut ui = Ui::new();
+        ui.go(Page::Settings);
+        draw(&mut ui);
+        assert!(ui.controls.iter().all(|control| control.id != 6));
+        for enabled in [true, false] {
+            ui.set_fire_home_enabled(Some(enabled));
+            draw(&mut ui);
+            ui.focus = 5;
+            ui.key(Key::Down);
+            assert_eq!(ui.focus, 6);
+            assert!(matches!(ui.key(Key::Select), Action::SetFireHome(next) if next != enabled));
+        }
+    }
+
     #[test]
     fn updates_are_always_reachable_and_a_new_update_focuses_the_entry() {
         let mut ui = Ui::new();

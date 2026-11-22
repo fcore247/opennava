@@ -1,11 +1,11 @@
 [package]
 name = "opennava-rust"
-version = "0.2.2"
+version = "0.2.5"
 edition = "2024"
 rust-version = "1.88"
 
 [package.metadata.android]
-version-code = 8
+version-code = 11
 
 [lib]
 name = "opennava_rust"

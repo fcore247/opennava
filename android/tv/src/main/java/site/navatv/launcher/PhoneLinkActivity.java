@@ -127,7 +127,10 @@ public final class PhoneLinkActivity extends Activity {
                     if (generation != current) return;
                     code.setImageBitmap(qr);
                     placeholder.setVisibility(View.GONE);
-                    hint.setText("Launch OpenNava Companion on your phone. Under Devices, choose “Scan QR code”.");
+                    hint.setText(address.needsPhoneCheck
+                            ? "Enable ADB debugging on Fire TV. In OpenNava Companion, choose Devices → Scan QR code. Confirm the connection on your TV."
+                            : "Launch OpenNava Companion on your phone. Under Devices, choose “Scan QR code”.");
+                    if (address.needsPhoneCheck) enterPort.setVisibility(View.VISIBLE);
                     String transport = address.tail != null ? "Tailscale" : "Home network";
                     route.setText(transport + "   " + address.host() + " · Port " + address.port
                             + (address.tail != null && address.lan != null ? "\nHome network   " + address.lan : ""));

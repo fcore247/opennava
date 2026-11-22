@@ -125,13 +125,14 @@ def verify_package(apk, rust_libraries, tools, env, expected_signer):
     for value in (PACKAGE, 'android:banner', 'android.app.NativeActivity', 'site.navatv.launcher',
                   'android.intent.category.LEANBACK_LAUNCHER', 'site.navatv.full.NavaPlayerActivity',
                   PACKAGE + '.StreamActivity', PACKAGE + '.YoutubeAccountActivity',
-                  'site.navatv.launcher.LiveTvActivity', 'site.navatv.updates.UpdateActivity',
+                  'site.navatv.launcher.LiveTvActivity', 'site.navatv.launcher.PhoneLinkActivity',
+                  'site.navatv.updates.UpdateActivity',
                   'site.navatv.updates.UpdateJob', 'site.navatv.updates.InstallResult',
                   'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.RECEIVE_BOOT_COMPLETED'):
         if value not in xml:
             raise ValueError('Missing TV metadata: ' + value)
-    if 'android.intent.category.HOME' in xml:
-        raise ValueError('Preview must not claim the Home role.')
+    if 'android.intent.category.HOME' not in xml:
+        raise ValueError('Missing Android Home intent filter.')
     badging = subprocess.check_output([tools / 'aapt', 'dump', 'badging', apk], env=env, text=True)
     package = json.loads(subprocess.check_output(
         ['cargo', 'metadata', '--locked', '--no-deps', '--format-version=1'], cwd=PROJECT, env=env,

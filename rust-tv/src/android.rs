@@ -425,6 +425,16 @@ fn app_class<'local>(
     env.cast_local::<JClass>(class)
 }
 
+fn consume_home_request(app: &AndroidApp) -> JniResult<bool> {
+    JavaVM::singleton()?.attach_current_thread(|env| {
+        let raw = app.activity_as_ptr().cast();
+        let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+        let class = app_class(env, &activity, "site.navatv.rustpreview.FireHomeService")?;
+        env.call_static_method(&class, jni_str!("consumeHomeRequest"), jni_sig!("()Z"), &[])?
+            .z()
+    })
+}
+
 fn with_update_backend<T>(
     app: &AndroidApp,
     call: impl FnOnce(&mut Env, &JClass, &JObject) -> JniResult<T>,
@@ -434,6 +444,27 @@ fn with_update_backend<T>(
         let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
         let class = app_class(env, &activity, "site.navatv.updates.Updates")?;
         call(env, &class, &activity)
+    })
+}
+
+fn fire_home_setting(app: &AndroidApp) -> JniResult<Option<bool>> {
+    JavaVM::singleton()?.attach_current_thread(|env| {
+        let raw = app.activity_as_ptr().cast();
+        let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+        let class = app_class(env, &activity, "site.navatv.rustpreview.FireHomeSettings")?;
+        let setting = env
+            .call_static_method(
+                &class,
+                jni_str!("state"),
+                jni_sig!("(Landroid/content/Context;)I"),
+                &[JValue::Object(&activity)],
+            )?
+            .i()?;
+        Ok(match setting {
+            0 => Some(false),
+            1 => Some(true),
+            _ => None,
+        })
     })
 }
 
@@ -576,6 +607,17 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
         let activity_global = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
         let activity: &JObject = &activity_global;
         match action {
+            Action::SetFireHome(enabled) => {
+                let class = app_class(env, activity, "site.navatv.rustpreview.FireHomeService")?;
+                env.call_static_method(
+                    &class,
+                    jni_str!("setRedirectEnabled"),
+                    jni_sig!("(Landroid/content/Context;Z)V"),
+                    &[JValue::Object(activity), JValue::Bool(*enabled)],
+                )?
+                .v()?;
+                Ok(true)
+            }
             Action::Updates => {
                 let class = app_class(env, activity, "site.navatv.updates.Updates")?;
                 env.call_static_method(
@@ -585,6 +627,10 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
                     &[JValue::Object(activity)],
                 )?
                 .v()?;
+                Ok(true)
+            }
+            Action::ConnectPhone => {
+                internal_player(env, activity, "site.navatv.launcher.PhoneLinkActivity", &[])?;
                 Ok(true)
             }
             Action::Personalization => {
@@ -715,6 +761,19 @@ pub fn run(app: AndroidApp) {
         app.poll_events(timeout, |event| {
             let mut redraw = false;
             let mut actions = Vec::new();
+            if matches!(
+                &event,
+                PollEvent::Main(MainEvent::Resume { .. } | MainEvent::GainedFocus)
+            ) {
+                match consume_home_request(&app) {
+                    Ok(true) => {
+                        ui.open_home();
+                        refresh_youtube_on_resume = false;
+                    }
+                    Err(error) => log::warn!("Home-Anfrage konnte nicht gelesen werden: {error}"),
+                    Ok(false) => {}
+                }
+            }
             match event {
                 PollEvent::Main(MainEvent::InitWindow { .. }) => {
                     surface = app.native_window().and_then(|window| {
@@ -750,6 +809,7 @@ pub fn run(app: AndroidApp) {
                         home_started = true;
                         check_home_updates(&app);
                     }
+                    ui.set_fire_home_enabled(fire_home_setting(&app).unwrap_or(None));
                     next_update_refresh = Instant::now();
                     if std::mem::take(&mut refresh_youtube_on_resume) {
                         actions.push(ui.request_page());
@@ -955,6 +1015,10 @@ pub fn run(app: AndroidApp) {
                     _ => {}
                 }
                 let result = platform_action(&app, &action);
+                if matches!(action, Action::SetFireHome(_)) {
+                    ui.set_fire_home_enabled(fire_home_setting(&app).unwrap_or(None));
+                    redraw = true;
+                }
                 if matches!((&action, &result), (Action::YoutubeAccount, Ok(true))) {
                     refresh_youtube_on_resume = true;
                 }

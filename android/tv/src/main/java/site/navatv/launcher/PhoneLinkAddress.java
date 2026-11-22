@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 final class PhoneLinkAddress {
     String tail, lan;
     int port;
+    boolean needsPhoneCheck;
 
     static PhoneLinkAddress find(Context context, int suppliedPort) throws Exception {
         PhoneLinkAddress result = new PhoneLinkAddress();
@@ -60,10 +61,11 @@ final class PhoneLinkAddress {
             }
         }
         if (result.host() == null) return result;
+        int tcpPort = propertyPort("service.adb.tcp.port");
         Set<Integer> candidates = new LinkedHashSet<>();
         if (suppliedPort > 0) candidates.add(suppliedPort);
         else {
-            candidates.add(propertyPort("service.adb.tcp.port"));
+            candidates.add(tcpPort);
             candidates.add(propertyPort("service.adb.tls.port"));
             candidates.add(5555);
         }
@@ -73,7 +75,14 @@ final class PhoneLinkAddress {
                 return result;
             }
         }
-        if (suppliedPort == 0) result.port = result.advertisedPort(context);
+        // Fire OS can block an app on the TV from connecting back to its own adbd.
+        // The phone establishes and authorizes its own LAN connection after scanning.
+        if (context.getPackageManager().hasSystemFeature("amazon.hardware.fire_tv")) {
+            result.needsPhoneCheck = true;
+            result.port = suppliedPort > 0 ? suppliedPort : (tcpPort > 0 ? tcpPort : 5555);
+        } else if (suppliedPort == 0) {
+            result.port = result.advertisedPort(context);
+        }
         return result;
     }
 

@@ -10,7 +10,7 @@ def collectSources = tasks.register('collectPlayerSources', Sync) {
         into 'site/navatv/full'
     }
     from('../../android/tv/src/main/java/site/navatv/launcher') {
-        include 'HomeLayoutStore.java', 'HomeLayoutProvider.java'
+        include 'HomeLayoutStore.java', 'HomeLayoutProvider.java', 'PhoneLinkActivity.java', 'PhoneLinkAddress.java'
         include 'PlayerChrome.java', 'CompactPlaybackControls.java', 'HomePersonalizationActivity.java', 'PlaybackLoadingMark.java',
                 'LiveGuide.java', 'ArteCatalog.java', 'MediathekService.java'
         into 'site/navatv/launcher'
@@ -44,8 +44,8 @@ android {
         applicationId 'site.navatv.rustpreview'
         minSdk 26
         targetSdk 34
-        versionCode 8
-        versionName '0.2.2'
+        versionCode 11
+        versionName '0.2.5'
         ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
     }
     sourceSets.main {

@@ -14,9 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 /** Runs only while a launcher signed with the same key is bound. */
-public final class KeySignalService extends Service {
+public class KeySignalService extends Service {
     private static final String RECEIVER = "site.navatv.launcher";
     private static final String PERMISSION = RECEIVER + ".permission.REMOTE_KEYS";
+    protected boolean homeOnly() { return false; }
+
     private final IBinder binder = new Binder();
     private LogReader reader;
 
@@ -75,7 +77,7 @@ public final class KeySignalService extends Service {
                 if (closed) return;
                 source = new ProcessBuilder("/system/bin/logcat", "-b", "system",
                         "-v", "threadtime", "-v", "epoch", "-v", "uid", "-T", start, "ActivityTaskManager:I",
-                        "ContextImpl:W", "*:S")
+                        homeOnly() ? "ContextImpl:S" : "ContextImpl:W", "*:S")
                         .redirectErrorStream(true).start();
                 process = source;
             }
@@ -85,15 +87,16 @@ public final class KeySignalService extends Service {
                 String line;
                 while (!closed && (line = lines.readLine()) != null) {
                     FireKeyEvent key = monitor.parse(line);
-                    if (key == null || key.wallMs < startMs) continue;
+                    if (key == null || key.wallMs < startMs || (homeOnly() && !"home".equals(key.kind))) continue;
                     long latency = System.currentTimeMillis() - key.wallMs;
                     if (latency < -100 || latency > 2000) continue;
-                    Intent event = new Intent(RECEIVER + ".FIRE_KEY").setPackage(RECEIVER)
+                    Intent event = new Intent(RECEIVER + ".FIRE_KEY")
+                            .setPackage(homeOnly() ? "site.navatv.rustpreview" : RECEIVER)
                             .addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY | Intent.FLAG_RECEIVER_FOREGROUND)
                             .putExtra("kind", key.kind).putExtra("eventTimeMs", key.wallMs)
                             .putExtra("elapsedMs", SystemClock.elapsedRealtime() - Math.max(0, latency));
                     synchronized (this) {
-                        if (!closed) sendBroadcast(event, PERMISSION);
+                        if (!closed) sendBroadcast(event, homeOnly() ? "site.navatv.keys.permission.RUST_HOME" : PERMISSION);
                     }
                 }
             } finally {

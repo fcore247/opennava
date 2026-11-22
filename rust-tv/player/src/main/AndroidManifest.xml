@@ -4,6 +4,7 @@
     <uses-feature android:name="android.hardware.usb.host" android:required="false" tools:replace="android:required"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="site.navatv.launcher.permission.HOME_LAYOUT"/>
+    <uses-permission android:name="site.navatv.keys.permission.RUST_HOME"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.BLUETOOTH" tools:node="remove"/>
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
@@ -11,6 +12,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <queries>
         <package android:name="site.navatv.launcher"/>
+        <package android:name="site.navatv.keys"/>
         <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LEANBACK_LAUNCHER"/></intent>
         <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent>
     </queries>
@@ -25,17 +27,30 @@
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
         <activity android:name="site.navatv.full.NavaPlayerActivity" android:exported="false"
             android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode|screenLayout|smallestScreenSize"/>
         <activity android:name="site.navatv.launcher.LiveTvActivity" android:exported="false"
             android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode|screenLayout|smallestScreenSize"/>
         <activity android:name="site.navatv.launcher.HomePersonalizationActivity" android:exported="false" android:screenOrientation="landscape"/>
+        <activity android:name="site.navatv.launcher.PhoneLinkActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name=".YoutubeAccountActivity" android:exported="false" android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode|screenLayout|smallestScreenSize"/>
         <activity android:name=".StreamActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name="site.navatv.updates.UpdateActivity" android:exported="false"
             android:theme="@android:style/Theme.Material.NoActionBar"/>
+        <service android:name=".FireHomeService" android:label="@string/fire_home_label"
+                 android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService"/>
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/fire_home_service"/>
+        </service>
         <service android:name="site.navatv.updates.UpdateJob" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE"/>
         <receiver android:name="site.navatv.updates.InstallResult" android:exported="false"/>
         <provider android:name="site.navatv.launcher.HomeLayoutProvider" android:authorities="site.navatv.rustpreview.companion"

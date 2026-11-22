@@ -8,11 +8,15 @@ In classic OpenNava, open **Software updates** and select the Rust preview. Andr
 
 Choose **Einstellungen → Zur klassischen Ansicht** to return. This action is also available from the exit screen when pressing Back on the preview home. A preview launched by classic OpenNava returns to the same TV session and profile. From a standalone launch it opens the official classic launcher, including older versions. **Vorschau schließen** closes the preview. Its watchlist and preferences are stored in its own application directory. Android's Home setting remains independent of both launch paths.
 
+### Home on Fire TV
+
+On a Fire TV Stick 4K Max, enable the optional Android accessibility service **OpenNava als Fire-TV-Startseite** to open the Rust home when Fire OS shows its own Home activity. With the matching OpenNava Fire Keys helper (1.0.1 or later) installed and granted Android’s READ_LOGS permission, press Home once for OpenNava or twice quickly for the Amazon home. The helper recognizes the Fire OS Home events locally. After setup, **Einstellungen → Home-Taste** switches between OpenNava and Amazon. Android TV devices that support choosing a default Home app can select OpenNava Rust directly in system settings.
+
 ## Included
 
 - Remote and touch navigation, visible focus, search keyboard and a local watchlist.
 - Open **Einstellungen → Nach Updates suchen** to check for a new Rust version. When an update is available, a green dot appears beside **Einstellungen** and the entry reads **Update verfügbar**.
-- Open **Einstellungen → Personalisierung** for the Android companion download. On the paired phone, pin installed TV apps, group them in folders and choose a row or grid. The TV updates its home while it is open.
+- Open **Einstellungen → Personalisierung** for the Android companion download. To connect the installed companion, open **Einstellungen → Handy verbinden** and scan its TV-specific QR code under **Devices → Scan QR code** on the phone. On the paired phone, pin installed TV apps, group them in folders and choose a row or grid. The TV updates its home while it is open.
 - ARD, ZDF and ARTE browsing, search, episode details and native in-app playback, subject to provider availability.
 - YouTube videos open in the native player with a single press. Search from the YouTube screen or the launcher's main search. **Alle** includes videos alongside broadcaster results, and **YouTube** narrows the search. Move right from the last visible result to keep browsing. Back from playback returns to the selected video.
 - Pair your account under **Einstellungen → YouTube-Konto verwalten** or **YouTube → YouTube-Konto**. Scan the QR with a phone and approve the connection on Google's screen. Both search entry points and the player share the account on this TV. Guests can browse selected public channels. Sign out from either account entry.

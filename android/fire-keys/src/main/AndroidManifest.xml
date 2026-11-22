@@ -1,8 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="site.navatv.launcher.permission.REMOTE_KEYS" />
+    <permission android:name="site.navatv.keys.permission.RUST_HOME" android:protectionLevel="signature" />
+    <uses-permission android:name="site.navatv.keys.permission.RUST_HOME" />
     <application android:label="OpenNava Fire Keys" android:allowBackup="false">
         <service android:name=".KeySignalService" android:exported="true"
             android:permission="site.navatv.launcher.permission.REMOTE_KEYS" />
+        <service android:name=".RustHomeSignalService" android:exported="true"
+            android:permission="site.navatv.keys.permission.RUST_HOME" />
     </application>
 </manifest>

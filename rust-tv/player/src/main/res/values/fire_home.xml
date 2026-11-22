@@ -1,0 +1,4 @@
+<resources>
+    <string name="fire_home_label">OpenNava als Fire-TV-Startseite</string>
+    <string name="fire_home_description">Öffnet OpenNava, sobald die Amazon-Startseite erscheint.</string>
+</resources>
