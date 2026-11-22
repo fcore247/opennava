@@ -9,8 +9,8 @@ android {
         applicationId 'site.navatv.companion'
         minSdk 30
         targetSdk 34
-        versionCode 111
-        versionName '1.1.1'
+        versionCode 112
+        versionName '1.1.2'
     }
     sourceSets.main.java.srcDir(layout.buildDirectory.dir('shared-java'))
     sourceSets.main.assets.srcDir(layout.buildDirectory.dir('shared-assets'))

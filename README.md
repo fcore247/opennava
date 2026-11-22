@@ -81,7 +81,9 @@ Android handles updates in place using the existing OpenNava signing identity. T
 
 ### Update on the TV or phone
 
-Open **Software updates** inside OpenNava or the companion to check for a release. Automatic checks are enabled by default. Android schedules them when the device is idle and connected. Each app verifies the release and asks Android to install it. Depending on the Android version and how the app was first installed, you may need to allow installs from this source or confirm the Android installation prompt. Turn off **Automatic updates** on that screen to opt out on that device.
+On the TV, open **Settings → Software updates** to check for an update at any time. OpenNava also checks daily when the TV has a network connection. A green dot on Settings means a newer release is available for the launcher you are using. The launcher starts installation on its next cold start. Android may ask you to allow installations from OpenNava or confirm the update. You can also install immediately, download the update for a later start, or turn off automatic updates in the same screen. The phone companion has its own **Software updates** screen.
+
+Rust builds through 0.2.0 can move to the first self-updating release using the [Rust APK](https://opennava.site/download/) or **Check for preview update** in the classic launcher's Rust preview screen. Installing over the existing Rust app keeps its data.
 
 **Switch to the native Rust launcher from your TV.** Open **Software updates** in the classic launcher. On an older release, select **Install update** and reopen OpenNava. Open **Try the Rust preview**, choose **Install Rust preview**, and confirm the Android installation prompt. You can open Rust once or choose **Use Rust as my launcher** to use it the next time you open OpenNava in the full profile. To switch back, press Back on the Rust home screen and choose **Zur klassischen Ansicht**. Classic stays installed and keeps your saved profile and recordings. Both TV downloads are available on the [OpenNava download page](https://opennava.site/download/).
 

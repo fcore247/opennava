@@ -14,13 +14,17 @@ public final class InstallResult extends BroadcastReceiver {
             return;
         }
         UpdateActivity foreground = UpdateActivity.foreground();
+        long releaseCode = result.getLongExtra("releaseCode", 0);
         if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
             Intent consent = result.getParcelableExtra(Intent.EXTRA_INTENT);
-            if (result.getBooleanExtra("interactive", false) && foreground != null && consent != null) {
-                foreground.startActivity(consent);
-                return;
+            if (result.getBooleanExtra("interactive", false) && foreground != null && consent != null
+                    && UpdateActivity.allowsInstallation(foreground)) {
+                try {
+                    foreground.startActivity(consent);
+                    return;
+                } catch (RuntimeException unavailable) { /* Retry from the update screen. */ }
             }
-            Updates.prefs(c).edit().putLong("needsApproval", result.getLongExtra("releaseCode", 0)).apply();
+            Updates.prefs(c).edit().putLong("needsApproval", releaseCode).apply();
             int session = result.getIntExtra(PackageInstaller.EXTRA_SESSION_ID, -1);
             if (session >= 0) {
                 try { c.getPackageManager().getPackageInstaller().abandonSession(session); }
@@ -29,7 +33,9 @@ public final class InstallResult extends BroadcastReceiver {
         } else if (status == PackageInstaller.STATUS_SUCCESS) {
             Updates.prefs(c).edit().remove("needsApproval").apply();
         }
-        if (foreground != null) foreground.message(status == PackageInstaller.STATUS_SUCCESS ?
-                "Update installed." : "Open software updates to retry the installation.");
+        boolean success = status == PackageInstaller.STATUS_SUCCESS;
+        if (!success) Updates.deferAutomatic(c, releaseCode);
+        if (foreground != null) foreground.installFinished(success);
+        else if (result.getBooleanExtra("interactive", false)) Updates.prefs(c).edit().putBoolean("installResult", success).apply();
     }
 }

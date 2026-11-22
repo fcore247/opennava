@@ -8,6 +8,7 @@
   <title>OpenNava — Your TV home</title>
   <link rel="icon" href="brand.svg">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="update-badge.css">
   <link rel="stylesheet" href="tube.css">
   <link rel="stylesheet" href="home.css">
   <script src="app.js" defer></script>
@@ -16,6 +17,7 @@
   <script src="native.js" defer></script>
 </head>
 <body>
+  <span id="update-description" hidden></span>
   <div class="backdrop" id="backdrop"></div>
   <header class="header">
     <button class="brand" data-action="home" aria-label="OpenNava home"><svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 44" fill="none"><defs><linearGradient id="a" x1="5" y1="32" x2="44" y2="4" gradientUnits="userSpaceOnUse"><stop stop-color="#9daffc"/><stop offset=".52" stop-color="#c4a9f1"/><stop offset="1" stop-color="#f6b9a3"/></linearGradient></defs><path d="M2 38 19 6h12L14 38H2Z" fill="url(#a)"/><path d="m20 6 14 24 7-13 11 21H34L17 12l3-6Z" fill="url(#a)"/></svg><span>OpenNava</span></button>
@@ -26,7 +28,7 @@
     </nav>
     <div class="header-tools">
       <button class="icon-button" data-action="search" aria-label="Search" data-icon="search"></button>
-      <button class="icon-button" data-action="settings" aria-label="Settings" data-icon="settings"></button>
+      <button class="icon-button" data-action="settings" data-update-badge aria-describedby="update-description" aria-label="Settings" data-icon="settings"></button>
       <span class="header-divider"></span><time id="clock">--:--</time>
       <button class="avatar" data-action="profile" aria-label="Edit profile">F</button>
     </div>

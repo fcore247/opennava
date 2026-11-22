@@ -26,6 +26,7 @@ public final class TvConnection {
     public static final String TV_PACKAGE = "site.navatv.launcher";
     private static final String OLD_NavaTV = "site.navatv.full";
     private static final int MIN_COMPANION_TV_VERSION = 100;
+    static final int FIRST_TV_WITH_STARTUP_UPDATES = 112;
     private static final int BUNDLED_TV_VERSION = BuildConfig.VERSION_CODE;
     private static final int LIVE_TUNE_VERSION = 37;
     private static final String LIVE_CALL = "content call --uri content://site.navatv.launcher.companion --method ";
@@ -490,6 +491,7 @@ public final class TvConnection {
         String pkg = "dumpsys package " + TV_PACKAGE + " | grep -m 1 versionCode= || true";
         int installed = versionCode(shell(session, pkg));
         if (installed <= 0) throw new IOException("OpenNava is not installed on this TV.");
+        if (automatic && installed >= FIRST_TV_WITH_STARTUP_UPDATES) return "Updates are managed on the TV.";
         if (release.versionCode <= installed) return "The TV is up to date.";
         File local = release.download(context);
         String remote = "/data/local/tmp/navatv-" + UUID.randomUUID() + ".apk";
@@ -501,6 +503,7 @@ public final class TvConnection {
             if (session != link || (automatic && (!site.navatv.updates.Updates.enabled(context) || !idle(session)))) return "The update will be retried when the TV is idle.";
             int beforeInstall = versionCode(shell(session, pkg));
             if (beforeInstall >= release.versionCode) return "The TV is up to date.";
+            if (automatic && beforeInstall >= FIRST_TV_WITH_STARTUP_UPDATES) return "Updates are managed on the TV.";
             if (beforeInstall <= 0) throw new IOException("OpenNava was removed while downloading.");
             String result = shell(session, "pm install -r " + remote).trim();
             if (!"Success".equals(result) || versionCode(shell(session, pkg)) < release.versionCode)

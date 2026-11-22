@@ -152,7 +152,9 @@ final class DevicePage {
         edit.putString("connectedInvite", routes).putString("knownTvs", SavedTv.encode(tvs));
         edit.apply();
         String checked = "lastUpdateCheck." + device.androidId;
-        if (device.seniorVersion > 0 && site.navatv.updates.Updates.enabled(a)
+        // Starting with 1.1.2 the TV owns its daily check and next-start installation.
+        if (device.seniorVersion > 0 && device.seniorVersion < TvConnection.FIRST_TV_WITH_STARTUP_UPDATES
+                && site.navatv.updates.Updates.enabled(a)
                 && System.currentTimeMillis() - prefs.getLong(checked, 0) > java.util.concurrent.TimeUnit.HOURS.toMillis(12)) {
             TvConnection connection = a.tv;
             a.browse.execute(() -> {

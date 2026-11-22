@@ -41,6 +41,7 @@ pub enum Action {
     Launch(Vec<&'static str>),
     LaunchApp(String),
     Personalization,
+    Updates,
     YoutubeCatalog {
         request: u64,
     },
@@ -111,6 +112,7 @@ enum Command {
     Launch(Vec<&'static str>),
     LaunchApp(String),
     Personalization,
+    Updates,
     Provider(usize),
     More(isize),
     HomeTurn(isize),
@@ -196,6 +198,7 @@ const TITLES: [Title; 6] = [
 
 pub struct Ui {
     home: HomeLayout,
+    update_available: bool,
     home_offset: usize,
     home_icons: HashMap<String, RgbaImage>,
     shelf: Shelf,
@@ -264,6 +267,7 @@ impl Ui {
         Self {
             shelf: Shelf::default(),
             home: HomeLayout::default(),
+            update_available: false,
             home_offset: 0,
             home_icons: HashMap::new(),
             page: Page::Home,
@@ -318,6 +322,10 @@ impl Ui {
             self.notice("Die Änderung konnte nicht gespeichert werden.");
         }
     }
+    pub fn set_update_available(&mut self, available: bool) -> bool {
+        std::mem::replace(&mut self.update_available, available) != available
+    }
+
     pub fn notice(&mut self, text: &str) {
         self.message = text.chars().take(100).collect();
     }
@@ -330,6 +338,7 @@ impl Ui {
             Page::Home if self.home.has_items() => 1000,
             Page::HomeFolder(_) => 1000,
             Page::Search | Page::YoutubeSearch => 300,
+            Page::Settings if self.update_available => 5,
             Page::Watchlist
                 if !self.prefs.saved.is_empty() || !self.prefs.programmes.is_empty() =>
             {
@@ -363,6 +372,7 @@ impl Ui {
             }
             Command::LaunchApp(package) => return Action::LaunchApp(package),
             Command::Personalization => return Action::Personalization,
+            Command::Updates => return Action::Updates,
             Command::CloseFolder(i) => self.close_folder(i),
             Command::HomeTurn(direction) => self.turn_home(direction),
             Command::More(direction) => {
@@ -1090,7 +1100,7 @@ impl Ui {
                     &mut c,
                     4,
                     "Personalisierung",
-                    [64., 170., 430., 65.],
+                    [64., 170., 430., 58.],
                     Command::Personalization,
                     false,
                 );
@@ -1102,7 +1112,7 @@ impl Ui {
                     } else {
                         "Hintergrund: dunkel"
                     },
-                    [64., 250., 430., 65.],
+                    [64., 240., 430., 58.],
                     Command::Shade,
                     false,
                 );
@@ -1110,7 +1120,7 @@ impl Ui {
                     &mut c,
                     3,
                     "YouTube-Konto verwalten",
-                    [64., 330., 430., 65.],
+                    [64., 310., 430., 58.],
                     Command::YoutubeAccount,
                     false,
                 );
@@ -1118,7 +1128,7 @@ impl Ui {
                     &mut c,
                     1,
                     "Zur klassischen Ansicht",
-                    [64., 410., 430., 65.],
+                    [64., 380., 430., 58.],
                     Command::ReturnClassic,
                     false,
                 );
@@ -1126,8 +1136,20 @@ impl Ui {
                     &mut c,
                     2,
                     "Vorschau schließen",
-                    [64., 490., 430., 65.],
+                    [64., 450., 430., 58.],
                     Command::Page(Page::Exit),
+                    false,
+                );
+                self.button(
+                    &mut c,
+                    5,
+                    if self.update_available {
+                        "Update verfügbar"
+                    } else {
+                        "Nach Updates suchen"
+                    },
+                    [64., 520., 430., 58.],
+                    Command::Updates,
                     false,
                 );
                 self.text(
@@ -1213,6 +1235,11 @@ impl Ui {
                     SOFT
                 },
             );
+            if *page == Page::Settings && self.update_available {
+                let dot = [rect[0] + rect[2] - 17., rect[1] + 11., 10., 10.];
+                fill(&mut c, dot, 5., [112, 219, 144, 255]);
+                stroke(&mut c, dot, 5., [32, 72, 46, 255], 1.);
+            }
         }
         let hint = self
             .video_controls_hint()
@@ -1410,6 +1437,20 @@ mod tests {
         ui.focus = 2;
         assert!(matches!(ui.key(Key::Select), Action::Exit));
     }
+    #[test]
+    fn updates_are_always_reachable_and_a_new_update_focuses_the_entry() {
+        let mut ui = Ui::new();
+        for available in [false, true, false] {
+            ui.set_update_available(available);
+            assert!(!ui.set_update_available(available));
+            ui.go(Page::Settings);
+            draw(&mut ui);
+            assert_eq!(ui.focus, if available { 5 } else { 0 });
+            ui.focus = 5;
+            assert!(matches!(ui.key(Key::Select), Action::Updates));
+        }
+    }
+
     #[test]
     fn home_live_tv_opens_the_embedded_player() {
         let mut ui = Ui::new();

@@ -51,7 +51,9 @@ if (window.NavaTV) {
     panel.querySelector('.quick-appearance').before(section);
     const updates = document.createElement('button');
     updates.className = 'native-home-toggle';
-    updates.textContent = 'Software updates';
+    updates.textContent = navigator.language.startsWith('de') ? 'Softwareupdates' : 'Software updates';
+    updates.setAttribute('data-update-badge', '');
+    updates.setAttribute('aria-describedby', 'update-description');
     updates.addEventListener('click', () => window.NavaTV.openUpdates());
     section.after(updates);
     if (typeof NavaTV.openHomePersonalization === 'function') {

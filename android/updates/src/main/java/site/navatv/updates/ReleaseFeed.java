@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ public final class ReleaseFeed {
 
     public final String version, packageName, asset, sha256;
     private final String releaseTag;
+    final String manifest;
     public final long versionCode;
 
     private ReleaseFeed(JSONObject manifest, String pkg) throws Exception {
@@ -48,6 +50,11 @@ public final class ReleaseFeed {
         if (manifest.getInt("schema") != 1 || !releaseTag.matches(semantic) || !version.matches(semantic) ||
                 !pkg.equals(packageName) || versionCode <= 0 || !sha256.matches("[a-f0-9]{64}") ||
                 !asset.equals(expectedAsset)) throw new IOException("Invalid OpenNava release information.");
+        this.manifest = manifest.toString();
+    }
+
+    static ReleaseFeed parse(String manifest, String pkg) throws Exception {
+        return new ReleaseFeed(new JSONObject(manifest), pkg);
     }
 
     private static HttpURLConnection open(String address) throws IOException {
@@ -82,13 +89,17 @@ public final class ReleaseFeed {
                 if (body.size() + n > 65536) throw new IOException("Update manifest too large.");
                 body.write(buf, 0, n);
             }
-            return new ReleaseFeed(new JSONObject(body.toString(StandardCharsets.UTF_8.name())), pkg);
+            return parse(body.toString(StandardCharsets.UTF_8.name()), pkg);
         } finally { c.disconnect(); }
     }
 
     /** Caller owns the returned temporary file. Validation occurs before the file is returned. */
     public File download(Context context) throws Exception {
-        File apk = File.createTempFile("navatv-release-", ".apk", context.getCacheDir());
+        return download(context, context.getCacheDir());
+    }
+
+    private File download(Context context, File directory) throws Exception {
+        File apk = File.createTempFile("navatv-release-", ".apk", directory);
         boolean valid = false;
         try {
             HttpURLConnection c = open(RELEASES + "download/v" + releaseTag + "/" + asset);
@@ -104,16 +115,60 @@ public final class ReleaseFeed {
                     digest.update(buffer, 0, n);
                 }
                 if (!hex(digest.digest()).equals(sha256)) throw new IOException("Package checksum does not match the release.");
+                out.getFD().sync();
             } finally { c.disconnect(); }
-            PackageInfo info = context.getPackageManager().getPackageArchiveInfo(apk.getPath(),
-                    Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES);
-            if (info == null || !packageName.equals(info.packageName) || code(info) != versionCode ||
-                    !version.equals(info.versionName)) throw new IOException("Wrong package or release version.");
-            if (!officialSigner(info))
-                throw new IOException("This package was not signed by OpenNava.");
+            verifyArchive(context, apk);
             valid = true;
             return apk;
         } finally { if (!valid) apk.delete(); }
+    }
+
+    private void verifyArchive(Context context, File apk) throws Exception {
+        PackageInfo info = context.getPackageManager().getPackageArchiveInfo(apk.getPath(),
+                Build.VERSION.SDK_INT >= 28 ? PackageManager.GET_SIGNING_CERTIFICATES : PackageManager.GET_SIGNATURES);
+        if (info == null || !packageName.equals(info.packageName) || code(info) != versionCode ||
+                !version.equals(info.versionName)) throw new IOException("Wrong package or release version.");
+        if (!officialSigner(info)) throw new IOException("This package was not signed by OpenNava.");
+    }
+
+    private static File directory(Context context) { return new File(context.getNoBackupFilesDir(), "updates"); }
+    private File staged(Context context) { return new File(directory(context), sha256 + ".apk"); }
+    boolean downloaded(Context context) { return staged(context).isFile(); }
+
+    static void discardOtherFiles(Context context, ReleaseFeed keep) {
+        File[] files = directory(context).listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (keep == null || !file.equals(keep.staged(context))) file.delete();
+        }
+    }
+
+    /** Runs on the serial updater worker. Reused files are checked again immediately before installation. */
+    File prepare(Context context) throws Exception {
+        File target = staged(context);
+        if (target.isFile()) {
+            boolean valid = target.length() > 0 && target.length() <= MAX_APK;
+            if (valid) {
+                MessageDigest digest = MessageDigest.getInstance("SHA-256");
+                try (InputStream in = new FileInputStream(target)) {
+                    byte[] buffer = new byte[65536]; int count;
+                    while ((count = in.read(buffer)) != -1) {
+                        if (Thread.currentThread().isInterrupted()) throw new IOException("Update interrupted.");
+                        digest.update(buffer, 0, count);
+                    }
+                }
+                valid = hex(digest.digest()).equals(sha256);
+            }
+            if (valid) { verifyArchive(context, target); return target; }
+            if (!target.delete()) throw new IOException("Could not replace incomplete download.");
+        }
+        File directory = directory(context);
+        if (!directory.isDirectory() && !directory.mkdirs()) throw new IOException("Could not create update storage.");
+        File temporary = download(context, directory);
+        try {
+            if (!temporary.renameTo(target)) throw new IOException("Could not save the verified download.");
+        } finally { temporary.delete(); }
+        return target;
     }
 
     static boolean officialSigner(PackageInfo info) throws Exception {

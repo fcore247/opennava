@@ -63,6 +63,7 @@ public final class MainActivity extends Activity {
         return intent != null && (intent.getBooleanExtra(EXTRA_FROM_HOME, false) || "site.navatv.full.VISIT_HOME".equals(intent.getAction()));
     }
     private WebView webView;
+    private site.navatv.launcher.UpdateBadge updateBadge;
     private boolean pageReady;
     private boolean openingYouTube;
     private boolean pendingHomeNavigation, pendingPreviewHint;
@@ -79,12 +80,14 @@ public final class MainActivity extends Activity {
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override public void onCreate(Bundle savedState) {
         super.onCreate(savedState);
-        site.navatv.updates.Updates.home(this, () -> site.navatv.updates.Updates.openFullSettings(this), null);
+        if (savedState == null && normalFullHome(getIntent()))
+            site.navatv.updates.Updates.home(this, () -> site.navatv.updates.Updates.openFullSettings(this), null);
         pendingHomeNavigation = homeNavigation(getIntent());
         pendingPreviewHint = savedState == null && normalFullHome(getIntent());
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         immersive();
         webView = new WebView(this);
+        updateBadge = new site.navatv.launcher.UpdateBadge(webView);
         webView.setBackgroundColor(Color.rgb(16, 19, 18));
         webView.setFocusable(true);
         webView.setFocusableInTouchMode(true);
@@ -141,6 +144,7 @@ public final class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        if (updateBadge != null) updateBadge.attach();
         openingYouTube = false;
         getContentResolver().registerContentObserver(HomeLayoutStore.CHANGES, false, homeObserver);
         LauncherState.clearBypass(this);
@@ -155,6 +159,7 @@ public final class MainActivity extends Activity {
             if (pageReady) webView.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});", null);
             webView.onPause();
         }
+        if (updateBadge != null) updateBadge.detach();
         super.onPause();
     }
 
@@ -301,6 +306,7 @@ public final class MainActivity extends Activity {
         @Override public void onPageFinished(WebView view, String url) {
             pageReady = trusted(Uri.parse(url));
             if (pageReady) {
+                updateBadge.refresh();
                 view.evaluateJavascript("(function(){if(window.__navaEditingInstalled)return;"
                         + "window.__navaEditingInstalled=true;function sync(){var e=document.activeElement;"
                         + "NavaTV.setTextEditing(!!(e&&(e.isContentEditable||e.matches("
@@ -332,7 +338,7 @@ public final class MainActivity extends Activity {
             return emptyResponse(405, "Method not allowed");
         boolean googlePage = combined() && !firePlatform() && (path.equals("/index.html") || path.equals("/styles.css")
                 || path.equals("/native.js") || path.equals("/tube.js"));
-        String asset = (googlePage ? "google" : "web") + path;
+        String asset = path.equals("/update-badge.css") ? "update-badge.css" : (googlePage ? "google" : "web") + path;
         InputStream stream = null;
         try {
             long length;

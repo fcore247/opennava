@@ -12,8 +12,8 @@ public final class UpdateJob extends JobService {
             boolean retry = false;
             try {
                 if (Updates.enabled(this)) {
-                    ReleaseFeed release = ReleaseFeed.latest(getPackageName());
-                    if (release.versionCode > Updates.current(this) && getPackageManager().canRequestPackageInstalls()
+                    ReleaseFeed release = Updates.check(this);
+                    if (ReleaseFeed.PHONE.equals(getPackageName()) && release != null && getPackageManager().canRequestPackageInstalls()
                             && Updates.prefs(this).getLong("needsApproval", 0) != release.versionCode)
                         Updates.install(this, release, false);
                 }

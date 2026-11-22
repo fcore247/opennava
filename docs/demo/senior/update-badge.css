@@ -1,0 +1,16 @@
+.update-available [data-update-badge] {
+  position: relative;
+}
+
+.update-available [data-update-badge]::after {
+  content: "";
+  position: absolute;
+  top: 0.38em;
+  right: 0.38em;
+  width: 0.62em;
+  height: 0.62em;
+  border-radius: 50%;
+  background: #85e9a1;
+  box-shadow: 0 0 0 2px #203028;
+  pointer-events: none;
+}

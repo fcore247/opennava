@@ -425,6 +425,48 @@ fn app_class<'local>(
     env.cast_local::<JClass>(class)
 }
 
+fn with_update_backend<T>(
+    app: &AndroidApp,
+    call: impl FnOnce(&mut Env, &JClass, &JObject) -> JniResult<T>,
+) -> JniResult<T> {
+    JavaVM::singleton()?.attach_current_thread(|env| {
+        let raw = app.activity_as_ptr().cast();
+        let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+        let class = app_class(env, &activity, "site.navatv.updates.Updates")?;
+        call(env, &class, &activity)
+    })
+}
+
+fn check_home_updates(app: &AndroidApp) {
+    let current = app.clone();
+    app.run_on_java_main_thread(Box::new(move || {
+        let result = with_update_backend(&current, |env, class, activity| {
+            env.call_static_method(
+                class,
+                jni_str!("home"),
+                jni_sig!("(Landroid/app/Activity;)V"),
+                &[JValue::Object(activity)],
+            )?
+            .v()
+        });
+        if let Err(error) = result {
+            log::warn!("Updateprüfung konnte nicht gestartet werden: {error}");
+        }
+    }));
+}
+
+fn update_available(app: &AndroidApp) -> JniResult<bool> {
+    with_update_backend(app, |env, class, activity| {
+        env.call_static_method(
+            class,
+            jni_str!("available"),
+            jni_sig!("(Landroid/content/Context;)Z"),
+            &[JValue::Object(activity)],
+        )?
+        .z()
+    })
+}
+
 fn home_store_string(app: &AndroidApp, revision: bool) -> JniResult<String> {
     JavaVM::singleton()?.attach_current_thread(|env| {
         let raw = app.activity_as_ptr().cast();
@@ -534,6 +576,17 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
         let activity_global = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
         let activity: &JObject = &activity_global;
         match action {
+            Action::Updates => {
+                let class = app_class(env, activity, "site.navatv.updates.Updates")?;
+                env.call_static_method(
+                    &class,
+                    jni_str!("open"),
+                    jni_sig!("(Landroid/content/Context;)V"),
+                    &[JValue::Object(activity)],
+                )?
+                .v()?;
+                Ok(true)
+            }
             Action::Personalization => {
                 internal_player(
                     env,
@@ -642,6 +695,8 @@ pub fn run(app: AndroidApp) {
     let mut refresh_youtube_on_resume = false;
     log::info!("NativeActivity gestartet");
     let mut next_home_check = Instant::now();
+    let mut next_update_refresh = Instant::now();
+    let mut home_started = false;
     let mut clock_minute = 0;
     while running {
         // A displayed clock needs one refresh on the minute. Suspended activities sleep indefinitely.
@@ -650,11 +705,12 @@ pub fn run(app: AndroidApp) {
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default();
             let until_clock = Duration::from_millis(60_000 - (now.as_millis() % 60_000) as u64);
+            let now = Instant::now();
+            let mut timeout = until_clock.min(next_update_refresh.saturating_duration_since(now));
             if ui.watches_home() {
-                until_clock.min(next_home_check.saturating_duration_since(Instant::now()))
-            } else {
-                until_clock
+                timeout = timeout.min(next_home_check.saturating_duration_since(now));
             }
+            timeout
         });
         app.poll_events(timeout, |event| {
             let mut redraw = false;
@@ -690,6 +746,11 @@ pub fn run(app: AndroidApp) {
                     redraw = true;
                 }
                 PollEvent::Main(MainEvent::Resume { .. }) => {
+                    if !home_started {
+                        home_started = true;
+                        check_home_updates(&app);
+                    }
+                    next_update_refresh = Instant::now();
                     if std::mem::take(&mut refresh_youtube_on_resume) {
                         actions.push(ui.request_page());
                     }
@@ -752,6 +813,14 @@ pub fn run(app: AndroidApp) {
             }
             if !running {
                 return;
+            }
+            if resumed && Instant::now() >= next_update_refresh {
+                // The shared updater caches availability. Also pick up checks that finish while
+                // the launcher stays in the foreground without waking a suspended activity.
+                if let Ok(available) = update_available(&app) {
+                    redraw |= ui.set_update_available(available);
+                }
+                next_update_refresh = Instant::now() + Duration::from_secs(5);
             }
             if resumed && ui.watches_home() && Instant::now() >= next_home_check {
                 worker.refresh_home(false);

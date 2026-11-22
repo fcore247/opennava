@@ -25,6 +25,7 @@ public class MainActivity extends Activity {
     private static final String START = "https://nava.local/index.html";
     private static final int PLAYER = 10;
     private WebView web;
+    private site.navatv.launcher.UpdateBadge updateBadge;
     private String liveLibrary;
     private String visibleProvider = "", visiblePage = "home", visibleQuery = "";
     private MediathekService service;
@@ -53,17 +54,21 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        site.navatv.updates.Updates.home(this);
         startup = (StartupSignals)getApplication();
         liveLibrary = initialLibrary();
         if (liveLibrary == null) {
             if (routeEntry(getIntent(), state == null)) return;
+            Intent entry = getIntent();
+            if (state == null && entry != null && Intent.ACTION_MAIN.equals(entry.getAction())
+                    && entry.getData() == null && (entry.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0)
+                site.navatv.updates.Updates.home(this);
             startup.attach(this);
         }
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
         service = new MediathekService(getApplicationContext(), this::deliverResult);
         web = new WebView(this);
+        updateBadge = new site.navatv.launcher.UpdateBadge(web);
         web.setBackgroundColor(0xff10211b);
         if (liveLibrary != null || startup.hasPending()) web.setAlpha(0f);
         WebSettings settings = web.getSettings();
@@ -89,6 +94,7 @@ public class MainActivity extends Activity {
         @Override public void onPageFinished(WebView view, String url) {
             ready = START.equals(url);
             if (!ready) return;
+            updateBadge.refresh();
             if (liveLibrary != null) {
                 view.evaluateJavascript("window.navaOpenLiveLibrary(" + JSONObject.quote(liveLibrary) + ")",
                         result -> view.setAlpha(1f));
@@ -287,6 +293,7 @@ public class MainActivity extends Activity {
     }
     @Override protected void onResume() {
         super.onResume();
+        if (updateBadge != null) updateBadge.attach();
         resumed = true;
         dispatchNavigation();
         dispatchStartup();
@@ -299,6 +306,7 @@ public class MainActivity extends Activity {
         if (web != null) web.removeCallbacks(helpHold);
         helpEnterDown = helpEnterHeld = false;
         idle.pause();
+        if (updateBadge != null) updateBadge.detach();
         super.onPause();
     }
     @Override public void onWindowFocusChanged(boolean focused) {

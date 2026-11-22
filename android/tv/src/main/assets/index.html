@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#151b19">
   <title>Media libraries</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="update-badge.css">
   <link rel="stylesheet" href="start.css">
   <link rel="stylesheet" href="hilfe.css">
   <script defer src="hilfe.js"></script>
@@ -14,6 +15,7 @@
   <script defer src="start.js"></script>
 </head>
 <body>
+  <span id="update-description" hidden></span>
   <header class="masthead">
     <div class="mast-title"><span class="screen-symbol" aria-hidden="true"></span>Media libraries</div>
     <div class="clock"><span id="today"></span><time id="clock-time"></time></div>
@@ -48,7 +50,7 @@
     <div class="home-footer">
       <button id="programme" data-command="programme">TV guide</button>
       <button id="instructions" data-command="instructions" aria-haspopup="dialog">Remote guide</button>
-      <button id="change-view" data-command="change-view" aria-haspopup="dialog" aria-controls="view-choice" aria-expanded="false">Switch view</button>
+      <button id="change-view" data-update-badge aria-describedby="update-description" data-command="change-view" aria-haspopup="dialog" aria-controls="view-choice" aria-expanded="false">Switch view</button>
     </div>
   </main>
   <main id="station" hidden aria-labelledby="station-title">
@@ -84,7 +86,7 @@
     <h2 id="view-choice-title">Switch view</h2>
     <button data-command="stay" autofocus>Stay in senior view</button>
     <button data-command="visitor">Open full launcher</button>
-    <button data-command="software-updates">Software updates</button>
+    <button data-update-badge aria-describedby="update-description" data-command="software-updates">Software updates</button>
     <p id="visitor-message" role="status" aria-live="polite"></p>
   </dialog>
   <div id="toast" role="status" aria-live="polite"></div>

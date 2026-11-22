@@ -176,7 +176,7 @@
   "ytScanHelp": "Scanne den QR-Code mit deiner Kamera und gib den Bestätigungscode bei Google ein.",
   "ytQrLabel": "QR-Code zur Google-Anmeldeseite",
   "downloadRust": "OpenNava Rust herunterladen",
-  "upgradeFromClassic": "Öffne im klassischen Launcher „Software updates“. Wird ein Update angeboten, wähle „Install update“. Anschließend kannst du „Try the Rust preview“ öffnen.",
+  "upgradeFromClassic": "Öffne im klassischen Launcher die Softwareupdates. Installiere ein angebotenes Update und wähle dann „Rust-Vorschau ausprobieren“ (in älteren Versionen „Try the Rust preview“).",
   "download": "Download",
   "installTitle": "OpenNava installieren.",
   "installIntro": "Wähle, wie du starten möchtest.",

@@ -11,6 +11,7 @@ Choose **Einstellungen → Zur klassischen Ansicht** to return. This action is a
 ## Included
 
 - Remote and touch navigation, visible focus, search keyboard and a local watchlist.
+- Open **Einstellungen → Nach Updates suchen** to check for a new Rust version. When an update is available, a green dot appears beside **Einstellungen** and the entry reads **Update verfügbar**.
 - Open **Einstellungen → Personalisierung** for the Android companion download. On the paired phone, pin installed TV apps, group them in folders and choose a row or grid. The TV updates its home while it is open.
 - ARD, ZDF and ARTE browsing, search, episode details and native in-app playback, subject to provider availability.
 - YouTube videos open in the native player with a single press. Search from the YouTube screen or the launcher's main search. **Alle** includes videos alongside broadcaster results, and **YouTube** narrows the search. Move right from the last visible result to keep browsing. Back from playback returns to the selected video.
