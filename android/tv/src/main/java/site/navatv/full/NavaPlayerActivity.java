@@ -23,6 +23,8 @@ import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import site.navatv.launcher.CompactPlaybackControls;
+import site.navatv.launcher.PlaybackLoadingMark;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
 import com.google.android.exoplayer2.DefaultLoadControl;
@@ -83,7 +85,8 @@ public final class NavaPlayerActivity extends Activity {
     private SurfaceView surface;
     private TextView brand, liveBadge, title, author, status, play, rewind, forward, time;
     private LinearLayout controls, loadingPanel;
-    private ProgressBar spinner;
+    private CompactPlaybackControls compact;
+    private View spinner;
     private SeekBar progress;
     private String videoId;
     private String mediathekId, providerLabel = "YOUTUBE";
@@ -169,22 +172,19 @@ public final class NavaPlayerActivity extends Activity {
                 ready = !failed && (state == Player.STATE_READY || state == Player.STATE_ENDED);
                 if (ready) seekable = player.isCurrentWindowSeekable();
                 surface.setKeepScreenOn(playing && (state == Player.STATE_READY || state == Player.STATE_BUFFERING));
-                spinner.setVisibility(!failed && (state == Player.STATE_BUFFERING
-                        || (state == Player.STATE_READY && !renderedFrame)) ? View.VISIBLE : View.GONE);
-                if (ready && renderedFrame && !failed) {
-                    status.setVisibility(View.GONE);
-                    loadingPanel.setVisibility(View.GONE);
-                } else if (!failed && state == Player.STATE_BUFFERING) {
-                    status.setText(liveMedia ? "Loading live TV…" : "Loading video…");
-                    status.setVisibility(View.VISIBLE);
-                    loadingPanel.setVisibility(View.VISIBLE);
+                if (!failed && sourcePrepared) {
+                    if ((!renderedFrame || state == Player.STATE_BUFFERING) && playing) {
+                        showLoading(null);
+                    } else {
+                        loadingPanel.setVisibility(View.GONE);
+                    }
                 }
                 if (state == Player.STATE_ENDED && !renderedFrame && !failed) {
                     Log.w("OpenNava", "OpenNava player ended without a rendered video frame");
                     if (mediathekMode) showError(); else recoverPlayback(new IOException("No video frame"));
                     return;
                 }
-                play.setText(failed ? "↻  Retry" : playing && state != Player.STATE_ENDED ? "Ⅱ  Pause" : "▶  Play");
+                if (compact == null) play.setText(failed ? "↻  Retry" : playing && state != Player.STATE_ENDED ? "Ⅱ  Pause" : "▶  Play");
                 if (!playing || state == Player.STATE_ENDED) showControls();
                 else if (ready) scheduleHide();
                 updateProgress();
@@ -250,10 +250,8 @@ public final class NavaPlayerActivity extends Activity {
         failed = false;
         ready = false;
         renderedFrame = false;
-        status.setText(liveMedia ? "Loading live TV…" : "Loading video…");
-        status.setVisibility(View.VISIBLE);
-        spinner.setVisibility(View.VISIBLE);
-        loadingPanel.setVisibility(View.VISIBLE);
+        if (resumePlaying) showLoading(null);
+        else loadingPanel.setVisibility(View.GONE);
         showControls();
         if (mediathekMode) {
             loading = io.reactivex.Observable.fromCallable(() -> MediathekService.resolve(mediathekId))
@@ -263,9 +261,12 @@ public final class NavaPlayerActivity extends Activity {
                         try {
                             liveMedia = item.live;
                             providerLabel = "ZDF".equals(item.channel) ? "ZDF" : "ARD";
-                            brand.setText("OpenNava   /   " + providerLabel);
-                            liveBadge.setVisibility(liveMedia ? View.VISIBLE : View.GONE);
-                            title.setText(item.title); author.setText(item.author);
+                            if (compact != null) compact.setMetadata(providerLabel, item.title, item.author);
+                            else {
+                                brand.setText("OpenNava   /   " + providerLabel);
+                                liveBadge.setVisibility(liveMedia ? View.VISIBLE : View.GONE);
+                                title.setText(item.title); author.setText(item.author);
+                            }
                             seekable = !liveMedia;
                             MediaSource media = sources.createMediathek(item.url, item.mimeType);
                             sourcePrepared = true;
@@ -305,11 +306,16 @@ public final class NavaPlayerActivity extends Activity {
 
     private void openFormat(PreparedVideo result) {
         MediaItemFormatInfo info = result.info;
-        if (notEmpty(info.getTitle())) title.setText(info.getTitle());
-        if (notEmpty(info.getAuthor())) author.setText(info.getAuthor());
+        if (compact != null) compact.setMetadata("YouTube",
+                notEmpty(info.getTitle()) ? info.getTitle() : null,
+                notEmpty(info.getAuthor()) ? info.getAuthor() : null);
+        else {
+            if (notEmpty(info.getTitle())) title.setText(info.getTitle());
+            if (notEmpty(info.getAuthor())) author.setText(info.getAuthor());
+        }
         seekable = !info.isLive() || info.isStreamSeekable();
         liveMedia = info.isLive();
-        liveBadge.setVisibility(liveMedia ? View.VISIBLE : View.GONE);
+        if (compact == null) liveBadge.setVisibility(liveMedia ? View.VISIBLE : View.GONE);
 
         // The pinned SABR extractor requests one itag per renderer. With a multi-track
         // selection the fetched itag and ExoPlayer's chosen representation can diverge.
@@ -382,9 +388,7 @@ public final class NavaPlayerActivity extends Activity {
         sourcePrepared = false;
         if (++recoveryAttempts > 2) { showError(mediathekMode ? mediathekFailure(error) : null); return; }
         if (mediathekMode) {
-            status.setText(liveMedia ? "Reconnecting to live TV…" : "Resuming playback…");
-            status.setVisibility(View.VISIBLE); spinner.setVisibility(View.VISIBLE);
-            loadingPanel.setVisibility(View.VISIBLE);
+            showLoading(liveMedia ? "Reconnecting to live TV…" : "Resuming playback…");
             if (pendingRecovery != null) ui.removeCallbacks(pendingRecovery);
             pendingRecovery = () -> { if (started) loadVideo(); };
             ui.postDelayed(pendingRecovery, 1500);
@@ -410,10 +414,7 @@ public final class NavaPlayerActivity extends Activity {
             else service.switchNextClientNow();
         }
         player.stop(true);
-        status.setText("Resuming playback…");
-        status.setVisibility(View.VISIBLE);
-        spinner.setVisibility(View.VISIBLE);
-        loadingPanel.setVisibility(View.VISIBLE);
+        showLoading("Resuming playback…");
         if (pendingRecovery != null) ui.removeCallbacks(pendingRecovery);
         pendingRecovery = () -> { if (started) loadVideo(); };
         ui.postDelayed(pendingRecovery, delay);
@@ -421,6 +422,14 @@ public final class NavaPlayerActivity extends Activity {
 
     private void showError() {
         showError(null);
+    }
+
+    private void showLoading(String notice) {
+        boolean showCaption = compact == null || notice != null;
+        if (showCaption) status.setText(notice != null ? notice : liveMedia ? "Loading live TV…" : "Loading video…");
+        status.setVisibility(showCaption ? View.VISIBLE : View.GONE);
+        spinner.setVisibility(View.VISIBLE);
+        loadingPanel.setVisibility(View.VISIBLE);
     }
 
     private void showError(String safeMessage) {
@@ -433,7 +442,8 @@ public final class NavaPlayerActivity extends Activity {
                 + "\nOK to retry · Back to close the player");
         status.setVisibility(View.VISIBLE);
         loadingPanel.setVisibility(View.VISIBLE);
-        play.setText("↻  Retry");
+        if (compact == null) play.setText("↻  Retry");
+        else updateProgress();
         if (player != null) player.setPlayWhenReady(false);
         surface.setKeepScreenOn(false);
         showControls();
@@ -498,6 +508,7 @@ public final class NavaPlayerActivity extends Activity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (compact != null && compact.handleNavigation(event)) return true;
         int code = event.getKeyCode();
         boolean control = code == KeyEvent.KEYCODE_DPAD_CENTER || code == KeyEvent.KEYCODE_ENTER
                 || code == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE || code == KeyEvent.KEYCODE_MEDIA_PLAY
@@ -524,6 +535,7 @@ public final class NavaPlayerActivity extends Activity {
     @Override public void onBackPressed() { finish(); }
 
     private void showControls() {
+        if (compact != null) { compact.reveal(); return; }
         if (controls == null) return;
         controls.setVisibility(View.VISIBLE);
         brand.setVisibility(View.VISIBLE);
@@ -532,12 +544,13 @@ public final class NavaPlayerActivity extends Activity {
     }
 
     private void scheduleHide() {
+        if (compact != null) return;
         ui.removeCallbacks(hideControls);
         if (!failed && player != null && player.getPlayWhenReady()) ui.postDelayed(hideControls, 4_000);
     }
 
     private void updateProgress() {
-        if (player == null || progress == null) return;
+        if (player == null || (progress == null && compact == null)) return;
         long duration = player.getDuration(), position = Math.max(0, player.getCurrentPosition());
         if (ready) seekable = player.isCurrentWindowSeekable();
         long now = android.os.SystemClock.elapsedRealtime();
@@ -546,6 +559,12 @@ public final class NavaPlayerActivity extends Activity {
             Log.i("OpenNava", "OpenNava player positionMs=" + position + " durationMs=" + duration
                     + " playing=" + player.getPlayWhenReady() + " firstFrame=" + renderedFrame
                     + " videoFormat=" + (player.getVideoFormat() == null ? "none" : player.getVideoFormat().sampleMimeType));
+        }
+        if (compact != null) {
+            boolean playing = player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED;
+            compact.update(playing, playing && ready && renderedFrame && !failed, failed, seekable && ready,
+                    liveMedia, position, player.getBufferedPosition(), duration);
+            return;
         }
         updatingProgress = true;
         progress.setEnabled(seekable && duration > 0);
@@ -575,6 +594,44 @@ public final class NavaPlayerActivity extends Activity {
         videoFrame.addView(surface, new FrameLayout.LayoutParams(-1, -1, Gravity.CENTER));
         root.addView(videoFrame, new FrameLayout.LayoutParams(-1, -1));
 
+        loadingPanel = new LinearLayout(this);
+        loadingPanel.setGravity(Gravity.CENTER); loadingPanel.setOrientation(LinearLayout.VERTICAL);
+        boolean preview = "site.navatv.rustpreview".equals(getPackageName());
+        status = label("", 16, Color.WHITE);
+        status.setGravity(Gravity.CENTER);
+        if (preview) {
+            spinner = new PlaybackLoadingMark(this);
+            loadingPanel.addView(spinner, new LinearLayout.LayoutParams(-2, -2));
+            status.setBackground(rounded(0xeb211f2b, 14, 0x4068657f));
+            status.setPadding(dp(16), dp(10), dp(16), dp(10));
+            status.setMaxWidth(dp(440));
+            loadingPanel.addView(status, new LinearLayout.LayoutParams(-2, -2));
+        } else {
+            loadingPanel.setPadding(dp(28), dp(24), dp(28), dp(24));
+            loadingPanel.setBackground(rounded(0xf016201b, 20, 0x446d8f7a));
+            ProgressBar progressWheel = new ProgressBar(this);
+            progressWheel.setIndeterminateTintList(ColorStateList.valueOf(ACCENT));
+            spinner = progressWheel;
+            loadingPanel.addView(spinner, new LinearLayout.LayoutParams(dp(32), dp(32)));
+            status.setPadding(0, dp(16), 0, 0);
+            loadingPanel.addView(status, new LinearLayout.LayoutParams(dp(360), -2));
+            loadingPanel.setTranslationY(-dp(40));
+        }
+        loadingPanel.setVisibility(View.GONE);
+        root.addView(loadingPanel, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+
+        if (preview) {
+            compact = new CompactPlaybackControls(this, mediathekMode ? "Mediathek" : "YouTube",
+                    getIntent().getStringExtra(EXTRA_TITLE), getIntent().getStringExtra(EXTRA_AUTHOR),
+                    this::togglePlayback, this::seek, ms -> {
+                        if (player != null && ready && seekable) player.seekTo(ms);
+                    });
+            root.addView(compact, new FrameLayout.LayoutParams(-1, -1));
+            loadingPanel.bringToFront();
+            root.setOnClickListener(v -> compact.reveal());
+            setContentView(root);
+            return;
+        }
         brand = label("OpenNava   /   " + providerLabel, 11, ACCENT);
         applyFontWeight(brand, 600);
         brand.setLetterSpacing(.14f);
@@ -589,18 +646,6 @@ public final class NavaPlayerActivity extends Activity {
         liveBadge.setVisibility(View.GONE);
         FrameLayout.LayoutParams livePosition = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.RIGHT);
         livePosition.setMargins(0, dp(26), dp(32), 0); root.addView(liveBadge, livePosition);
-
-        loadingPanel = new LinearLayout(this);
-        loadingPanel.setGravity(Gravity.CENTER); loadingPanel.setOrientation(LinearLayout.VERTICAL);
-        loadingPanel.setPadding(dp(28), dp(24), dp(28), dp(24));
-        loadingPanel.setBackground(rounded(0xf016201b, 20, 0x446d8f7a));
-        spinner = new ProgressBar(this); spinner.setIndeterminateTintList(ColorStateList.valueOf(ACCENT));
-        loadingPanel.addView(spinner, new LinearLayout.LayoutParams(dp(32), dp(32)));
-        status = label("Loading video…", 16, Color.WHITE); status.setGravity(Gravity.CENTER);
-        status.setPadding(0, dp(16), 0, 0);
-        loadingPanel.addView(status, new LinearLayout.LayoutParams(dp(360), -2));
-        loadingPanel.setTranslationY(-dp(40));
-        root.addView(loadingPanel, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
 
         controls = new LinearLayout(this); controls.setOrientation(LinearLayout.VERTICAL);
         controls.setPadding(dp(26), dp(20), dp(26), dp(18));
@@ -697,6 +742,7 @@ public final class NavaPlayerActivity extends Activity {
 
     @Override protected void onStop() {
         started = false; ++loadGeneration;
+        if (loadingPanel != null) loadingPanel.setVisibility(View.GONE);
         ui.removeCallbacksAndMessages(null);
         if (loading != null) { loading.dispose(); loading = null; }
         if (player != null) {

@@ -1,4 +1,7 @@
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant, SystemTime, UNIX_EPOCH},
+};
 
 use android_activity::{
     AndroidApp, InputStatus, MainEvent, PollEvent, Rect, WindowManagerFlags,
@@ -6,13 +9,17 @@ use android_activity::{
     ndk::{hardware_buffer_format::HardwareBufferFormat, native_window::NativeWindow},
 };
 use jni::{
-    Env, JValue, JavaVM, errors::Result as JniResult, jni_sig, jni_str, objects::JObject,
+    Env, JValue, JavaVM,
+    errors::Result as JniResult,
+    jni_sig, jni_str,
+    objects::JObject,
+    objects::{JByteArray, JClass, JString},
     refs::Global,
 };
 
 use crate::{
-    ui::{Action, Key, Ui},
-    worker::{Job, Reply, Worker},
+    ui::{Action, Key, Ui, home::HomeLayout},
+    worker::{Job, Reply, SearchScope, Worker},
     youtube,
 };
 
@@ -107,7 +114,20 @@ impl Surface {
     }
 }
 
-fn key_input(app: &AndroidApp, ui: &mut Ui, event: &KeyEvent) -> (InputStatus, Option<Action>) {
+const LONG_PRESS_NS: i64 = 500_000_000;
+
+struct VideoPress {
+    id: String,
+    key: Keycode,
+    device: i32,
+    repeated: bool,
+}
+fn key_input(
+    app: &AndroidApp,
+    ui: &mut Ui,
+    event: &KeyEvent,
+    press: &mut Option<VideoPress>,
+) -> (InputStatus, Option<Action>) {
     use Keycode as K;
     let (key, repeat) = match event.key_code() {
         K::DpadUp => (Key::Up, true),
@@ -115,8 +135,40 @@ fn key_input(app: &AndroidApp, ui: &mut Ui, event: &KeyEvent) -> (InputStatus, O
         K::DpadLeft => (Key::Left, true),
         K::DpadRight => (Key::Right, true),
         K::DpadCenter | K::Enter | K::NumpadEnter | K::ButtonA | K::ButtonSelect => {
+            let key = event.key_code();
+            let device = event.device_id();
+            let held = event.event_time().saturating_sub(event.down_time()) >= LONG_PRESS_NS;
+            if event.action() == KeyAction::Down && event.repeat_count() == 0 {
+                *press = ui.focused_video_id().map(|id| VideoPress {
+                    id: id.to_owned(),
+                    key,
+                    device,
+                    repeated: false,
+                });
+            }
+            if press
+                .as_ref()
+                .is_some_and(|p| p.key == key && p.device == device)
+            {
+                if event.action() == KeyAction::Up {
+                    let p = press.take().unwrap();
+                    let action = (ui.focused_video_id() == Some(p.id.as_str())).then(|| {
+                        ui.key(if p.repeated || held {
+                            Key::Menu
+                        } else {
+                            Key::Select
+                        })
+                    });
+                    return (InputStatus::Handled, action);
+                }
+                if let Some(p) = press.as_mut() {
+                    p.repeated |= event.repeat_count() > 0;
+                }
+                return (InputStatus::Handled, None);
+            }
             (Key::Select, false)
         }
+        K::Menu if ui.focused_video_id().is_some() => (Key::Menu, false),
         K::Back | K::Escape | K::ButtonB => (Key::Back, false),
         K::Del | K::ForwardDel => (Key::Delete, true),
         code => {
@@ -156,8 +208,15 @@ fn touch_input(
                 *start = point.map(|(x, y)| TouchStart { id, x, y });
                 None
             } else if let (Some(from), Some((x, y))) = (start.take(), point) {
-                (id == from.id && (x - from.x).hypot(y - from.y) < 24.0)
-                    .then(|| ui.tap(x, y, surface.drawn.0, surface.drawn.1))
+                if id != from.id {
+                    None
+                } else if (x - from.x).hypot(y - from.y) < 24.0 {
+                    let held =
+                        event.event_time().saturating_sub(event.down_time()) >= LONG_PRESS_NS;
+                    Some(ui.activate_at(x, y, surface.drawn.0, surface.drawn.1, held))
+                } else {
+                    ui.swipe((from.x, from.y), (x, y), surface.drawn)
+                }
             } else {
                 None
             }
@@ -341,28 +400,172 @@ fn return_classic(env: &mut Env, activity: &JObject) -> JniResult<bool> {
     Ok(true)
 }
 
-fn platform_action(app: &AndroidApp, action: &Action, ui: &Ui) -> JniResult<bool> {
+fn app_class<'local>(
+    env: &mut Env<'local>,
+    activity: &JObject,
+    name: &str,
+) -> JniResult<JClass<'local>> {
+    let loader = env
+        .call_method(
+            activity,
+            jni_str!("getClassLoader"),
+            jni_sig!("()Ljava/lang/ClassLoader;"),
+            &[],
+        )?
+        .l()?;
+    let name = env.new_string(name)?;
+    let class = env
+        .call_method(
+            &loader,
+            jni_str!("loadClass"),
+            jni_sig!("(Ljava/lang/String;)Ljava/lang/Class;"),
+            &[JValue::Object(&name)],
+        )?
+        .l()?;
+    env.cast_local::<JClass>(class)
+}
+
+fn home_store_string(app: &AndroidApp, revision: bool) -> JniResult<String> {
+    JavaVM::singleton()?.attach_current_thread(|env| {
+        let raw = app.activity_as_ptr().cast();
+        let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+        let class = app_class(env, &activity, "site.navatv.launcher.HomeLayoutStore")?;
+        let method = if revision {
+            jni_str!("revision")
+        } else {
+            jni_str!("snapshot")
+        };
+        let value = env
+            .call_static_method(
+                &class,
+                method,
+                jni_sig!("(Landroid/content/Context;)Ljava/lang/String;"),
+                &[JValue::Object(&activity)],
+            )?
+            .l()?;
+        env.cast_local::<JString>(value)?.try_to_string(env)
+    })
+}
+
+fn installed_icon(app: &AndroidApp, pkg: &str) -> Option<image::RgbaImage> {
+    let bytes: JniResult<Vec<u8>> = JavaVM::singleton().and_then(|vm| {
+        vm.attach_current_thread(|env| {
+            let raw = app.activity_as_ptr().cast();
+            let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+            let class = app_class(env, &activity, "site.navatv.rustpreview.HomeAppIcons")?;
+            let package = env.new_string(pkg)?;
+            let value = env
+                .call_static_method(
+                    &class,
+                    jni_str!("icon"),
+                    jni_sig!("(Landroid/content/Context;Ljava/lang/String;)[B"),
+                    &[JValue::Object(&activity), JValue::Object(&package)],
+                )?
+                .l()?;
+            if value.is_null() {
+                return Ok(vec![]);
+            }
+            env.convert_byte_array(env.cast_local::<JByteArray>(value)?)
+        })
+    });
+    image::load_from_memory(&bytes.ok()?)
+        .ok()
+        .map(|bitmap| bitmap.into_rgba8())
+}
+
+pub(crate) fn refresh_home(
+    app: &AndroidApp,
+    previous: &str,
+    force: bool,
+) -> Option<(String, Reply)> {
+    let revision = home_store_string(app, true).ok()?;
+    if !force && revision == previous {
+        return None;
+    }
+    let json = home_store_string(app, false).ok()?;
+    let layout: HomeLayout = serde_json::from_str(&json).ok()?;
+    let icons: HashMap<_, _> = layout
+        .pinned_packages()
+        .into_iter()
+        .filter_map(|pkg| installed_icon(app, pkg).map(|icon| (format!("app:{pkg}"), icon)))
+        .collect();
+    Some((revision, Reply::Home(layout, icons)))
+}
+/// Rust workers are attached native threads. App classes need the Activity's own class loader.
+pub(crate) fn native_youtube(
+    app: &AndroidApp,
+    value: &str,
+    continuation: bool,
+) -> Result<Option<youtube::YoutubePage>, String> {
+    let json: JniResult<String> = JavaVM::singleton().and_then(|vm| {
+        vm.attach_current_thread(|env| {
+            let raw = app.activity_as_ptr().cast();
+            let activity_global = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+            let activity: &JObject = &activity_global;
+            let class = app_class(env, activity, "site.navatv.full.YoutubeBridge")?;
+            let input = env.new_string(value)?;
+            let method = if continuation {
+                jni_str!("more")
+            } else {
+                jni_str!("videos")
+            };
+            let response = env
+                .call_static_method(
+                    &class,
+                    method,
+                    jni_sig!("(Landroid/app/Activity;Ljava/lang/String;)Ljava/lang/String;"),
+                    &[JValue::Object(activity), JValue::Object(&input)],
+                )?
+                .l()?;
+            env.cast_local::<JString>(response)?.try_to_string(env)
+        })
+    });
+    let json = json.map_err(|error| {
+        log::warn!("YouTube-Dienst konnte nicht abgefragt werden: {error}");
+        "YouTube ist gerade nicht erreichbar.".to_owned()
+    })?;
+    youtube::native_videos(&json, !continuation && value.is_empty())
+}
+
+fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
     JavaVM::singleton()?.attach_current_thread(|env| {
         // Borrow the global Activity reference owned by android-activity for this callback only.
         let raw = app.activity_as_ptr().cast();
         let activity_global = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
         let activity: &JObject = &activity_global;
         match action {
-            Action::YoutubePlay(id) => {
+            Action::Personalization => {
+                internal_player(
+                    env,
+                    activity,
+                    "site.navatv.launcher.HomePersonalizationActivity",
+                    &[],
+                )?;
+                Ok(true)
+            }
+            Action::LaunchApp(package) => launch_packages(env, activity, &[package.as_str()]),
+            Action::LiveTv => {
+                internal_player(env, activity, "site.navatv.launcher.LiveTvActivity", &[])?;
+                Ok(true)
+            }
+            Action::YoutubeAccount => {
+                internal_player(
+                    env,
+                    activity,
+                    "site.navatv.rustpreview.YoutubeAccountActivity",
+                    &[],
+                )?;
+                Ok(true)
+            }
+            Action::YoutubePlay { id, title, channel } => {
                 if !youtube::valid_id(id) {
                     return Ok(false);
                 }
-                let metadata = ui.youtube_metadata(id);
-                let (title, author) = metadata
-                    .as_ref()
-                    .map_or((id.as_str(), ""), |(title, author)| {
-                        (title.as_str(), author.as_str())
-                    });
                 internal_player(
                     env,
                     activity,
                     "site.navatv.full.NavaPlayerActivity",
-                    &[("video_id", id), ("title", title), ("author", author)],
+                    &[("video_id", id), ("title", title), ("author", channel)],
                 )?;
                 Ok(true)
             }
@@ -379,9 +582,13 @@ fn platform_action(app: &AndroidApp, action: &Action, ui: &Ui) -> JniResult<bool
                 Ok(true)
             }
             Action::None => Ok(true),
-            Action::YoutubeCatalog { .. } | Action::Catalog { .. } | Action::CatalogPlay { .. } => {
-                Ok(false)
-            }
+            Action::YoutubeCatalog { .. }
+            | Action::MainSearch { .. }
+            | Action::SearchMore { .. }
+            | Action::YoutubeMore { .. }
+            | Action::YoutubeSearch { .. }
+            | Action::Catalog { .. }
+            | Action::CatalogPlay { .. } => Ok(false),
             Action::ReturnClassic => return_classic(env, activity),
             Action::Exit => {
                 env.call_method(activity, jni_str!("finish"), jni_sig!("()V"), &[])?
@@ -428,17 +635,26 @@ pub fn run(app: AndroidApp) {
     }
     let mut surface: Option<Surface> = None;
     let mut touch: Option<TouchStart> = None;
+    let mut video_press = None;
     let mut resumed = false;
     let mut running = true;
-    let mut worker = Worker::new(app.create_waker());
+    let mut worker = Worker::new(app.clone());
+    let mut refresh_youtube_on_resume = false;
     log::info!("NativeActivity gestartet");
+    let mut next_home_check = Instant::now();
+    let mut clock_minute = 0;
     while running {
         // A displayed clock needs one refresh on the minute. Suspended activities sleep indefinitely.
         let timeout = (resumed && surface.is_some()).then(|| {
             let now = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap_or_default();
-            Duration::from_millis(60_000 - (now.as_millis() % 60_000) as u64)
+            let until_clock = Duration::from_millis(60_000 - (now.as_millis() % 60_000) as u64);
+            if ui.watches_home() {
+                until_clock.min(next_home_check.saturating_duration_since(Instant::now()))
+            } else {
+                until_clock
+            }
         });
         app.poll_events(timeout, |event| {
             let mut redraw = false;
@@ -459,6 +675,7 @@ pub fn run(app: AndroidApp) {
                 PollEvent::Main(MainEvent::TerminateWindow { .. }) => {
                     surface = None;
                     touch = None;
+                    video_press = None;
                 }
                 PollEvent::Main(
                     MainEvent::WindowResized { .. }
@@ -473,18 +690,33 @@ pub fn run(app: AndroidApp) {
                     redraw = true;
                 }
                 PollEvent::Main(MainEvent::Resume { .. }) => {
+                    if std::mem::take(&mut refresh_youtube_on_resume) {
+                        actions.push(ui.request_page());
+                    }
+                    worker.refresh_home(true);
+                    next_home_check = Instant::now() + Duration::from_secs(2);
                     resumed = true;
                     redraw = true;
                 }
                 PollEvent::Main(MainEvent::Pause | MainEvent::Stop) => {
                     resumed = false;
                     touch = None;
+                    video_press = None;
                 }
                 PollEvent::Main(MainEvent::LostFocus) => {
                     touch = None;
+                    video_press = None;
                 }
-                PollEvent::Main(MainEvent::RedrawNeeded { .. } | MainEvent::GainedFocus)
-                | PollEvent::Timeout => {
+                PollEvent::Timeout => {
+                    let minute = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_secs()
+                        / 60;
+                    redraw = minute != clock_minute;
+                    clock_minute = minute;
+                }
+                PollEvent::Main(MainEvent::RedrawNeeded { .. } | MainEvent::GainedFocus) => {
                     redraw = true;
                 }
                 PollEvent::Main(MainEvent::Destroy) => {
@@ -495,7 +727,9 @@ pub fn run(app: AndroidApp) {
                     if let Ok(mut events) = app.input_events_iter() {
                         while events.next(|event| {
                             let (status, action) = match event {
-                                InputEvent::KeyEvent(key) => key_input(&app, &mut ui, key),
+                                InputEvent::KeyEvent(key) => {
+                                    key_input(&app, &mut ui, key, &mut video_press)
+                                }
                                 InputEvent::MotionEvent(event) => match &surface {
                                     Some(surface) => {
                                         touch_input(&mut ui, surface, &mut touch, event)
@@ -519,16 +753,46 @@ pub fn run(app: AndroidApp) {
             if !running {
                 return;
             }
+            if resumed && ui.watches_home() && Instant::now() >= next_home_check {
+                worker.refresh_home(false);
+                next_home_check = Instant::now() + Duration::from_secs(2);
+            }
             while let Ok(reply) = worker.replies.try_recv() {
                 match reply {
+                    Reply::Home(layout, icons) => {
+                        ui.set_home(layout, icons);
+                        redraw |= ui.watches_home();
+                    }
+                    Reply::CombinedSearch(id, broadcasts, youtube) if ui.is_current_request(id) => {
+                        log::info!(
+                            "Hauptsuche: {} Mediathek-Treffer, {} YouTube-Videos",
+                            broadcasts.as_ref().map_or(0, |page| page.items.len()),
+                            youtube.as_ref().map_or(0, |page| page.videos.len())
+                        );
+                        actions.push(ui.combined_search_loaded(id, broadcasts, youtube));
+                        redraw = true;
+                    }
+                    Reply::SearchMore(id, broadcasts, youtube) if ui.is_current_request(id) => {
+                        log::info!(
+                            "Hauptsuche nachgeladen: {} Mediathek-Treffer, {} YouTube-Videos",
+                            broadcasts.as_ref().map_or(0, |page| page.items.len()),
+                            youtube.as_ref().map_or(0, |page| page.videos.len())
+                        );
+                        actions.push(ui.search_more_loaded(id, Some(broadcasts), youtube));
+                        redraw = true;
+                    }
                     Reply::Youtube(id, result) if ui.is_current_request(id) => {
                         match &result {
                             Ok(rows) => {
-                                log::info!("YouTube-Katalog: {} Videos", rows.len());
+                                log::info!("YouTube-Katalog: {} Videos", rows.videos.len());
                             }
                             Err(_) => log::warn!("YouTube-Katalog nicht verfügbar"),
                         }
-                        ui.youtube_loaded(id, result);
+                        actions.push(ui.youtube_loaded(id, result));
+                        redraw = true;
+                    }
+                    Reply::YoutubeMore(id, result) if ui.is_current_request(id) => {
+                        actions.push(ui.youtube_more_loaded(id, result));
                         redraw = true;
                     }
                     Reply::Catalog(id, provider, result) if ui.is_current_request(id) => {
@@ -559,8 +823,48 @@ pub fn run(app: AndroidApp) {
             }
             for action in actions {
                 match action {
+                    Action::YoutubeMore { request, cursor } => {
+                        worker.submit(Job::YoutubeMore { request, cursor });
+                        continue;
+                    }
+                    Action::YoutubeSearch { request, query } => {
+                        worker.search(request, query, SearchScope::Youtube);
+                        continue;
+                    }
                     Action::YoutubeCatalog { request } => {
                         worker.submit(Job::Youtube(request));
+                        continue;
+                    }
+                    Action::MainSearch {
+                        request,
+                        provider,
+                        query,
+                    } => {
+                        if query.is_empty() {
+                            worker.submit(Job::MainSearch {
+                                request,
+                                provider,
+                                query,
+                            });
+                        } else {
+                            worker.search(request, query, SearchScope::Main(provider));
+                        }
+                        continue;
+                    }
+                    Action::SearchMore {
+                        request,
+                        query,
+                        providers,
+                        page,
+                        youtube_cursor,
+                    } => {
+                        worker.submit(Job::SearchMore {
+                            request,
+                            query,
+                            providers,
+                            page,
+                            youtube_cursor,
+                        });
                         continue;
                     }
                     Action::Catalog {
@@ -581,14 +885,19 @@ pub fn run(app: AndroidApp) {
                     }
                     _ => {}
                 }
-                let result = platform_action(&app, &action, &ui);
+                let result = platform_action(&app, &action);
+                if matches!((&action, &result), (Action::YoutubeAccount, Ok(true))) {
+                    refresh_youtube_on_resume = true;
+                }
                 if !matches!(result, Ok(true)) {
                     if let Err(error) = result {
                         log::warn!("Android-Intent fehlgeschlagen: {error}");
                     }
                     ui.notice(match action {
                         Action::ReturnClassic => "Die klassische OpenNava-App ist nicht verfügbar.",
-                        Action::Launch(_) => "Diese App ist auf diesem Fernseher nicht verfügbar.",
+                        Action::Launch(_) | Action::LaunchApp(_) => {
+                            "Diese App ist auf diesem Fernseher nicht verfügbar."
+                        }
                         _ => "Android konnte dieses Ziel nicht öffnen.",
                     });
                 }

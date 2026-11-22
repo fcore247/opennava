@@ -12,8 +12,27 @@ fn load(ui: &mut Ui, action: Action) {
             provider,
             query,
         } => ui.catalog_loaded(request, catalog::fetch(provider, &query)),
+        Action::MainSearch {
+            request,
+            provider,
+            query,
+        } => {
+            let mask = if provider == 0 {
+                7
+            } else {
+                1 << (provider - 1)
+            };
+            ui.combined_search_loaded(
+                request,
+                catalog::search_page(mask, &query, 0),
+                Ok(Default::default()),
+            );
+        }
         Action::YoutubeCatalog { request } => {
-            ui.youtube_loaded(request, youtube::catalog(|url| net::get(url, 512 * 1024)))
+            ui.youtube_loaded(
+                request,
+                youtube::catalog(|url| net::get(url, 512 * 1024)).map(Into::into),
+            );
         }
         _ => {}
     }

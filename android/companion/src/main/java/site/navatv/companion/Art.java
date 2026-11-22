@@ -145,6 +145,10 @@ final class Art extends View {
             case "down":
                 line(c, 6, 9.5f, 12, 15.5f, 18, 9.5f);
                 break;
+            case "folder":
+                line(c, 2.5f, 8, 2.5f, 5, 9, 5, 11, 7.5f, 21.5f, 7.5f, 21.5f, 19.5f, 2.5f, 19.5f, 2.5f, 8);
+                line(c, 3, 10, 21, 10);
+                break;
             case "search":
                 c.drawCircle(10.5f, 10.5f, 6.7f, p);
                 line(c, 15.7f, 15.7f, 21, 21);

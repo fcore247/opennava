@@ -26,17 +26,12 @@ spec.loader.exec_module(android_build)
 
 
 def build_player_libraries(env, tools):
-    libraries = ANDROID / 'player/build/export'
-    if (libraries / 'dependencies.txt').is_file() and all(
-            (libraries / (name + '-release.aar')).is_file()
-            for name in ('commonsio', 'exo-core', 'exo-cronet', 'exo-dash', 'exo-hls',
-                         'exo-sabr', 'mediaserviceinterfaces', 'sharedutils', 'youtubeapi')):
-        return
+    libraries = PROJECT / 'player/build/sdk'
     player_env = dict(env, NAVATV_PLAYER_SOURCE=str(android_build.upstream()), TV_PLAYER_LIBS=str(libraries))
     if env.get('NAVATV_LEGACY_GRADLE_HOME'):
         player_env['GRADLE_USER_HOME'] = env['NAVATV_LEGACY_GRADLE_HOME']
     subprocess.run([android_build.gradle('7.5'), '-p', ANDROID / 'player',
-                    '-I', ANDROID / 'player/export.gradle', '-Pandroid.aapt2FromMavenOverride=' + str(tools / 'aapt2'),
+                    '-I', ANDROID / 'player/export.gradle', '-PopennavaTvPairing=true', '-Pandroid.aapt2FromMavenOverride=' + str(tools / 'aapt2'),
                     ':app:exportPlayerLibraries'], env=player_env, check=True)
 
 
@@ -129,7 +124,8 @@ def verify_package(apk, rust_libraries, tools, env, expected_signer):
                                   env=env, text=True)
     for value in (PACKAGE, 'android:banner', 'android.app.NativeActivity', 'site.navatv.launcher',
                   'android.intent.category.LEANBACK_LAUNCHER', 'site.navatv.full.NavaPlayerActivity',
-                  PACKAGE + '.StreamActivity'):
+                  PACKAGE + '.StreamActivity', PACKAGE + '.YoutubeAccountActivity',
+                  'site.navatv.launcher.LiveTvActivity'):
         if value not in xml:
             raise ValueError('Missing TV metadata: ' + value)
     if 'android.intent.category.HOME' in xml:

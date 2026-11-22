@@ -5,7 +5,11 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Intent;
-import android.content.pm.ApplicationInfo;
+import android.database.ContentObserver;
+import android.os.Handler;
+import android.os.Looper;
+import site.navatv.launcher.HomeLayoutStore;
+import site.navatv.launcher.HomePersonalizationActivity;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.AssetFileDescriptor;
@@ -128,15 +132,24 @@ public final class MainActivity extends Activity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
     }
 
+    private final ContentObserver homeObserver = new ContentObserver(new Handler(Looper.getMainLooper())) {
+        @Override public void onChange(boolean selfChange) {
+            if (pageReady && webView != null) webView.evaluateJavascript(
+                    "window.NavaHome && window.NavaHome.updateLayout()", null);
+        }
+    };
+
     @Override protected void onResume() {
         super.onResume();
         openingYouTube = false;
+        getContentResolver().registerContentObserver(HomeLayoutStore.CHANGES, false, homeObserver);
         LauncherState.clearBypass(this);
         immersive();
         if (webView != null) { webView.onResume(); notifyResume(); }
     }
 
     @Override protected void onPause() {
+        getContentResolver().unregisterContentObserver(homeObserver);
         pendingPreviewHint = false;
         if (webView != null) {
             if (pageReady) webView.evaluateJavascript("document.querySelectorAll('video').forEach(function(v){v.pause();});", null);
@@ -178,7 +191,7 @@ public final class MainActivity extends Activity {
 
     private void notifyResume() {
         if (pageReady && webView != null) webView.evaluateJavascript(
-                "if(typeof window.navaNativeResume==='function'){window.navaNativeResume();}", null);
+                "if(typeof window.navaNativeResume==='function'){window.navaNativeResume();}window.NavaHome && window.NavaHome.updateLayout();", null);
     }
 
     private void notifyHome() {
@@ -422,23 +435,7 @@ public final class MainActivity extends Activity {
     }
 
     private LinkedHashMap<String, ResolveInfo> launchableApps() {
-        PackageManager pm = getPackageManager();
-        LinkedHashMap<String, ResolveInfo> result = new LinkedHashMap<>();
-        for (String category : new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER, Intent.CATEGORY_LAUNCHER}) {
-            for (ResolveInfo info : pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(category), 0)) {
-                if (info.activityInfo == null || !info.activityInfo.enabled || !info.activityInfo.applicationInfo.enabled) continue;
-                String name = info.activityInfo.packageName;
-                if (name.equals(getPackageName()) || name.equals("site.navatv.full")
-                        || name.equals("com.google.android.apps.tv.launcherx") || name.equals("com.amazon.tv.launcher") || name.equals("com.amazon.tv.settings.v2")) continue;
-                boolean normalUserApp = (info.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
-                boolean streamingApp = name.equals("com.amazon.firebat") || name.equals("com.amazon.firetv.youtube")
-                        || name.equals("com.netflix.ninja") || name.equals("com.disney.disneyplus")
-                        || name.equals("de.swr.ard.avp.mobile.android.amazon") || name.equals("com.viki.kindle");
-                if (Intent.CATEGORY_LEANBACK_LAUNCHER.equals(category) || normalUserApp || streamingApp)
-                    if (!result.containsKey(name)) result.put(name, info);
-            }
-        }
-        return result;
+        return HomeLayoutStore.launchableApps(this);
     }
 
     private String iconData(Drawable drawable) {
@@ -581,6 +578,18 @@ public final class MainActivity extends Activity {
                 if (webView == null || !editingText) return;
                 InputMethodManager keyboard = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
                 if (keyboard != null) keyboard.showSoftInput(webView, InputMethodManager.SHOW_IMPLICIT);
+            });
+        }
+
+        @JavascriptInterface public String homeLayout() {
+            return HomeLayoutStore.layout(MainActivity.this);
+        }
+
+        @JavascriptInterface public void openHomePersonalization() {
+            runOnUiThread(() -> {
+                if (pageReady && webView != null && webView.getUrl() != null && trusted(Uri.parse(webView.getUrl()))) {
+                    startActivity(new Intent(MainActivity.this, HomePersonalizationActivity.class));
+                }
             });
         }
 

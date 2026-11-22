@@ -44,10 +44,53 @@
       <span class="nava-broadcast-art">${item.thumbnail ? `<img src="${esc(item.thumbnail)}" alt="" loading="lazy">` : icon('monitor')}<span class="nava-broadcast-source">${esc(item.channel || item.author || 'Media library')}</span><span class="nava-broadcast-play">${icon('play')}</span></span>
       <strong>${esc(item.title)}</strong><small>${esc([dateLabel(item.publishedAt), item.duration].filter(Boolean).join(' · '))}</small></button>`;
   }
+  let layout;
+  let folderOpen = null;
+  function readLayout() {
+    if (typeof window.NavaTV?.homeLayout !== 'function') return null;
+    try { return JSON.parse(window.NavaTV.homeLayout()); } catch { return null; }
+  }
+  function updateLayout() {
+    const next = readLayout();
+    if (!next || layout?.revision === next.revision) return;
+    layout = next;
+    render();
+    if (folderOpen && panel.open) {
+      const folder = layout.items.find(item => item.type === 'folder' && item.id === folderOpen);
+      if (folder) showFolder(folder);
+      else closePanel();
+    }
+  }
+  function appTile(app) {
+    return `<button class="app-card" data-app="${esc(app.id)}" aria-label="Open ${esc(app.name)}">${app.logo}</button>`;
+  }
+  function folderTile(folder) {
+    const icons = folder.apps.map(id => apps.find(app => app.id === id)).filter(Boolean).slice(0, 4)
+      .map(app => `<span>${app.logo}</span>`).join('');
+    return `<button class="app-card home-folder" data-home-folder="${esc(folder.id)}">
+      <span class="home-folder-icons" aria-hidden="true">${icons}</span><span>${esc(folder.name)}</span></button>`;
+  }
+  function homeApps() {
+    if (!layout) layout = readLayout();
+    if (!layout?.revision) return `<div class="app-grid">${apps.slice(0, 6).map(appTile).join('')}</div>`;
+    const tiles = layout.items.map(item => {
+      if (item.type === 'folder') return folderTile(item);
+      const app = apps.find(app => app.id === item.package);
+      return app ? appTile(app) : '';
+    }).join('');
+    return `<div class="app-grid home-layout-${layout.layout === 'grid' ? 'grid' : 'row'}">${tiles}</div>`;
+  }
+  function showFolder(folder) {
+    const tiles = folder.apps.map(id => apps.find(app => app.id === id)).filter(Boolean).map(appTile).join('');
+    folderOpen = folder.id;
+    openPanel(`${closeButton()}<div class="panel-body"><h2 id="panel-title">${esc(folder.name)}</h2>
+      <div class="home-folder-contents">${tiles || '<p>No apps in this folder.</p>'}</div></div>`, tiles ? '[data-app]' : 'button');
+  }
+  panel.addEventListener('close', () => { folderOpen = null; });
   function render() {
     if (!window.NavaTV || state.view !== 'home') return;
     const focused = document.activeElement;
-    const focusKey = focused?.dataset?.homePlay || focused?.dataset?.homeAction || focused?.dataset?.app;
+    const focusKey = focused?.dataset?.homePlay || focused?.dataset?.homeAction || focused?.dataset?.homeFolder || focused?.dataset?.app;
     const wasInside = main.contains(focused);
     const phoneLink = typeof window.NavaTV.showPhoneLink === 'function' && window.NavaTV.hasPersonalView()
       ? `<button class="secondary" data-home-action="phone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 18h4"/></svg>Pair phone</button>` : '';
@@ -66,11 +109,11 @@
       <div class="nava-home-shelves">
         <section class="nava-home-live"><div class="section-heading"><h2>Live now</h2><button class="nava-text-link" data-home-action="live">All channels ${icon('chevron')}</button></div>
           ${cache.live.length ? `<div class="nava-live-grid">${cache.live.slice(0,4).map(liveCard).join('')}</div>` : `<div class="nava-home-note">${cache.loading ? 'Loading channels…' : 'Find live TV in the media library.'}</div>`}</section>
-        <section class="app-section"><div class="section-heading"><h2>Your apps</h2><button class="nava-text-link" data-view="apps">All apps ${icon('chevron')}</button></div><div class="app-grid">${apps.slice(0,6).map(app => `<button class="app-card" data-app="${esc(app.id)}" aria-label="Open ${esc(app.name)}">${app.logo}</button>`).join('')}</div></section>
+        <section class="app-section"><div class="section-heading"><h2>Your apps</h2><button class="nava-text-link" data-view="apps">All apps ${icon('chevron')}</button></div>${homeApps()}</section>
         <section class="nava-home-latest"><div class="section-heading"><h2>Latest from the libraries</h2><span class="subtle">ARD &amp; ZDF</span></div>
           ${cache.items.length ? `<div class="nava-broadcast-grid">${cache.items.slice(0,8).map(videoCard).join('')}</div>` : `<div class="nava-home-note" role="status">${cache.loading ? 'Loading recent shows…' : esc(cache.error || 'Search for shows in the media library.')} ${!cache.loading ? '<button data-home-action="refresh">Reload</button>' : ''}</div>`}</section>
       </div></div>`;
-    if (wasInside && focusKey) [...main.querySelectorAll('button')].find(button => (button.dataset.homePlay || button.dataset.homeAction || button.dataset.app) === focusKey)?.focus({preventScroll:true});
+    if (wasInside && focusKey) [...main.querySelectorAll('button')].find(button => (button.dataset.homePlay || button.dataset.homeAction || button.dataset.homeFolder || button.dataset.app) === focusKey)?.focus({preventScroll:true});
     if (!cache.loading && Date.now() - cache.loadedAt > 5 * 60 * 1000) refresh();
   }
   async function refresh() {
@@ -102,6 +145,11 @@
   document.addEventListener('click', event => {
     const button = event.target.closest('#nava-home button');
     if (!button) return;
+    if (button.dataset.homeFolder) {
+      const folder = layout?.items.find(item => item.type === 'folder' && item.id === button.dataset.homeFolder);
+      if (folder) showFolder(folder);
+      return;
+    }
     if (button.dataset.homePlay) {
       event.preventDefault();
       window.NavaTube?.playMediathek(button.dataset.homePlay);
@@ -115,5 +163,5 @@
       case 'refresh': refresh(); break;
     }
   });
-  window.NavaHome = Object.freeze({render, refresh});
+  window.NavaHome = Object.freeze({render, refresh, updateLayout});
 })();

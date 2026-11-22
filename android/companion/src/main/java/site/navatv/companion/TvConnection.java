@@ -152,6 +152,59 @@ public final class TvConnection {
         return new ScreenState(screen, provider, result);
     }
 
+    private static final String[] HOME_PROVIDERS = {
+            "site.navatv.rustpreview.companion", "site.navatv.launcher.companion"
+    };
+
+    private AdbConnection homeSession(Device expected) throws IOException {
+        AdbConnection session = active();
+        if (expected == null || expected != target || session != link)
+            throw new IOException(context.getString(R.string.home_tv_changed));
+        return session;
+    }
+
+    private static String homeCall(String authority, String method) {
+        return "content call --user \"$(am get-current-user)\" --uri content://" + authority + " --method " + method;
+    }
+
+    TvHomeLayout loadHome(Device expected) throws Exception {
+        AdbConnection session = homeSession(expected);
+        for (String authority : HOME_PROVIDERS) {
+            String result;
+            try {
+                result = shell(session, homeCall(authority, "home_get"));
+            } catch (IOException error) {
+                // Different Android versions disagree about the exit status of missing providers.
+                String message = String.valueOf(error.getMessage());
+                if (message.contains("Could not find provider") || message.contains("Unknown authority")
+                        || message.contains("Unknown method") || message.contains("UnsupportedOperationException")) continue;
+                throw error;
+            }
+            String data = bundleValue(result, "data64");
+            if (!data.isEmpty()) {
+                String json = new String(java.util.Base64.getUrlDecoder().decode(data), StandardCharsets.UTF_8);
+                return new TvHomeLayout(authority, new org.json.JSONObject(json));
+            }
+        }
+        throw new UnsupportedOperationException(context.getString(R.string.home_update_required));
+    }
+
+    long saveHome(Device expected, String authority, org.json.JSONObject request) throws Exception {
+        AdbConnection session = homeSession(expected);
+        if (!java.util.Arrays.asList(HOME_PROVIDERS).contains(authority)) throw new IOException("Unknown TV provider");
+        String encoded = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(request.toString().getBytes(StandardCharsets.UTF_8));
+        // A full layout can exceed adbd's OPEN service-name limit. Stream it through stdin.
+        byte[] input = (encoded + "\n").getBytes(StandardCharsets.US_ASCII);
+        String result = shell(session, "IFS= read -r home && " + homeCall(authority, "home_set")
+                + " --arg \"$home\"", input);
+        if ("conflict".equals(bundleValue(result, "code")))
+            throw new java.util.ConcurrentModificationException(context.getString(R.string.home_conflict));
+        if (!"true".equals(bundleValue(result, "handled")))
+            throw new IOException(context.getString(R.string.home_save_failed));
+        return Long.parseLong(bundleValue(result, "revision"));
+    }
+
     void setReminder(String channel, long start, String title, boolean enabled) throws Exception {
         org.json.JSONObject request = new org.json.JSONObject().put("channel", channel).put("start", start)
                 .put("title", title).put("enabled", enabled);
@@ -391,7 +444,16 @@ public final class TvConnection {
     }
 
     private static String shell(AdbConnection session, String command) throws Exception {
+        return shell(session, command, null);
+    }
+
+    private static String shell(AdbConnection session, String command, byte[] stdin) throws Exception {
         try (AdbStream stream = session.open("shell,v2,raw:" + command)) {
+            if (stdin != null) {
+                byte[] frame = ByteBuffer.allocate(5 + stdin.length).order(ByteOrder.LITTLE_ENDIAN)
+                        .put((byte) 0).putInt(stdin.length).put(stdin).array();
+                stream.openOutputStream().write(frame);
+            }
             DataInputStream input = new DataInputStream(stream.openInputStream());
             ByteArrayOutputStream text = new ByteArrayOutputStream();
             byte[] header = new byte[5];

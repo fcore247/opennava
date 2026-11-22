@@ -105,7 +105,8 @@ final class PhoneTvContextController {
                 if (!screen.screen.equals("live") || !screen.section.equals("channels"))
                     app.livePage.closeMirroredChannelPicker();
                 boolean changed = !screen.sameView(last);
-                boolean manual = app.menuOpen() || app.page.equals("remote") || app.page.equals("devices");
+                boolean manual = app.menuOpen() || app.page.equals("remote") || app.page.equals("devices")
+                        || app.page.equals("personalization");
                 if (manual || app.hasWindowFocus()) last = screen;
                 if (!manual && pageAtRequest.equals(app.page) && app.hasWindowFocus()) {
                     if (changed && (!screen.screen.equals("idle") || app.page.equals("home"))) follow(screen);

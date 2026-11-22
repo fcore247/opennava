@@ -53,6 +53,8 @@ final class HomePage {
         a.body.addView(first);
         u.space(a.body, 11);
         a.body.addView(second);
+        u.space(a.body, 14);
+        a.body.addView(u.button(a.getString(R.string.home_edit), "home", false, () -> a.go("personalization")));
     }
 
     private void separate(LinearLayout row, boolean stacked) {
@@ -115,6 +117,7 @@ final class HomePage {
         u.space(items, 7);
 
         menuRow(items, "cast", "Connection", a.connected() ? a.device.name : "Connect a TV", () -> a.go("devices"));
+        menuRow(items, "home", a.getString(R.string.home_menu), a.getString(R.string.home_title), () -> a.go("personalization"));
         menuRow(items, "remote", "Manual remote", "", () -> a.go("remote"));
         menuRow(items, "settings", "Software updates", "", a::openUpdates);
         separator(items);

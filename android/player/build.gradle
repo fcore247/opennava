@@ -9,7 +9,8 @@ buildscript {
 }
 
 def upstream = new File(System.getenv('NAVATV_PLAYER_SOURCE'))
-def intermediates = new File(rootDir, 'build/modules')
+def previewPairing = providers.gradleProperty('opennavaTvPairing').isPresent()
+def intermediates = new File(rootDir, previewPairing ? 'build/preview-modules' : 'build/modules')
 def sources = [
     sharedutils: 'SharedModules/sharedutils', commonsio: 'SharedModules/commons-io-2.8.0',
     mediaserviceinterfaces: 'MediaServiceCore/mediaserviceinterfaces', youtubeapi: 'MediaServiceCore/youtubeapi',
@@ -69,6 +70,48 @@ subprojects { sub ->
             }
             if (sub.name == 'exo-sabr') sourceSets.main.proto.srcDirs = [new File(sourceRoot, 'src/main/proto')]
         }
+    }
+    if (previewPairing && sub.name in ['youtubeapi', 'sharedutils']) {
+        // Apply the TV-specific adaptations only in the native preview export. Keep pinned
+        // source checkouts untouched and the stable launcher's standard player libraries intact.
+        def javaRoot = new File(upstream, sources[sub.name] + '/src/main/java')
+        def generated = layout.buildDirectory.dir('generated/openNavaPairing')
+        def replacements = sub.name == 'sharedutils'
+                ? ['com/liskovsoft/sharedutils/prefs/GlobalPreferences.java']
+                : ['com/liskovsoft/youtubeapi/auth/V2/AuthApiHelper.java',
+                   'com/liskovsoft/youtubeapi/service/internal/YouTubeAccountManager.java',
+                   'com/liskovsoft/googlecommon/common/helpers/RetrofitHelper.java']
+        def preparePairing = tasks.register('prepareOpenNavaPairing', Sync) {
+            from(new File(rootDir, '../../rust-tv/player/overrides/' + sub.name))
+            replacements.each { path ->
+                from(new File(javaRoot, path)) {
+                    filter { line ->
+                        line.replace(' https://www.googleapis.com/auth/youtube-paid-content', '')
+                            .replace('return getData(MEDIA_SERVICE_ACCOUNT_DATA);',
+                                'return OpenNavaAccountStorage.read(this, MEDIA_SERVICE_ACCOUNT_DATA);')
+                            .replace('setData(MEDIA_SERVICE_ACCOUNT_DATA, data);',
+                                'OpenNavaAccountStorage.write(this, MEDIA_SERVICE_ACCOUNT_DATA, data);')
+                            .replace('private boolean mStorageSynced;', 'private boolean mStorageSynced, mAccountsRestored;')
+                            .replace('public void init() {', 'public synchronized void init() {')
+                            .replace('        restoreAccounts();',
+                                '        if (!mAccountsRestored) { restoreAccounts(); mAccountsRestored = true; }')
+                            .replace('if (!auth) {', 'if (!auth) { OpenNavaSearchScope.requireGuestForAnonymousSearch(wrapper);')
+                            .replace('getAuthService().getAccessTokenWait(userCodeResult.getDeviceCode())',
+                                'OpenNavaDeviceGrant.waitFor(userCodeResult, emitter)')
+                            .replace('persistRefreshToken(token.getRefreshToken());',
+                                'if (token == null || emitter.isDisposed()) return; ' +
+                                'synchronized (OpenNavaDeviceGrant.class) { ' +
+                                'if (emitter.isDisposed()) return; ' +
+                                'persistRefreshToken(token.getRefreshToken()); ' +
+                                'if (emitter.isDisposed()) for (Account saved : new java.util.ArrayList<>(mAccounts)) removeAccount(saved); }')
+                    }
+                }
+            }
+            into generated
+        }
+        replacements.each { android.sourceSets.main.java.exclude(it) }
+        android.sourceSets.main.java.srcDir(generated)
+        preBuild.dependsOn preparePairing
     }
     if (sub.name in ['sharedutils','youtubeapi']) android.kotlinOptions { jvmTarget = '1.8' }
     dependencies {

@@ -1,4 +1,4 @@
-//! Public video metadata from the channels' own YouTube Atom feeds.
+//! Video metadata from the native YouTube service and the public publisher feeds.
 use serde::Deserialize;
 use std::collections::HashSet;
 
@@ -17,6 +17,74 @@ pub struct YoutubeVideo {
     pub channel: String,
     pub published: String,
     pub thumbnail: String,
+}
+
+#[derive(Default, Debug, PartialEq, Eq)]
+pub struct YoutubePage {
+    pub videos: Vec<YoutubeVideo>,
+    pub next: Option<String>,
+}
+impl From<Vec<YoutubeVideo>> for YoutubePage {
+    fn from(videos: Vec<YoutubeVideo>) -> Self {
+        Self { videos, next: None }
+    }
+}
+
+/// An explicitly anonymous, empty home response uses the publisher feeds.
+pub fn native_videos(json: &str, home: bool) -> Result<Option<YoutubePage>, String> {
+    #[derive(Deserialize)]
+    struct Item {
+        id: String,
+        title: String,
+        #[serde(default)]
+        author: String,
+        #[serde(default)]
+        thumbnail: String,
+    }
+    #[derive(Deserialize)]
+    struct List {
+        #[serde(default)]
+        items: Vec<Item>,
+        #[serde(rename = "signedIn")]
+        signed_in: Option<bool>,
+        error: Option<String>,
+        next: Option<String>,
+    }
+
+    let list: List =
+        serde_json::from_str(json).map_err(|_| "YouTube hat ungültige Daten geliefert.")?;
+    if home && list.signed_in == Some(false) && list.items.is_empty() {
+        return Ok(None);
+    }
+    if list.error.is_some() {
+        return Err("YouTube konnte die Videos nicht laden.".into());
+    }
+    let mut seen = HashSet::new();
+    let videos = list
+        .items
+        .into_iter()
+        .filter(|item| {
+            valid_id(&item.id) && !item.title.trim().is_empty() && seen.insert(item.id.clone())
+        })
+        .take(180)
+        .map(|item| YoutubeVideo {
+            thumbnail: if item.thumbnail.starts_with("https://") {
+                item.thumbnail
+            } else {
+                format!("https://i.ytimg.com/vi/{}/hqdefault.jpg", item.id)
+            },
+            id: item.id,
+            title: item.title.trim().chars().take(256).collect(),
+            channel: item.author.trim().chars().take(120).collect(),
+            published: String::new(),
+        })
+        .collect();
+    Ok(Some(YoutubePage {
+        videos,
+        next: list
+            .next
+            .filter(|value| !value.is_empty() && value.len() <= 1024),
+    }))
 }
 
 pub fn valid_id(id: &str) -> bool {
@@ -110,6 +178,23 @@ pub fn catalog(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_an_explicit_anonymous_home_response_uses_publisher_feeds() {
+        assert_eq!(
+            native_videos(r#"{"items":[],"signedIn":false}"#, true).unwrap(),
+            None
+        );
+        assert_eq!(
+            native_videos(r#"{"items":[],"signedIn":false}"#, false).unwrap(),
+            Some(YoutubePage::default())
+        );
+        assert!(native_videos(r#"{"error":"denied","signedIn":true}"#, true).is_err());
+        let list = r#"{"items":[{"id":"abcdefghijk","title":"Moon","author":"Apollo"},{"id":"abcdefghijk","title":"duplicate"},{"id":"bad","title":"invalid"}]}"#;
+        let videos = native_videos(list, false).unwrap().unwrap().videos;
+        assert_eq!(videos.len(), 1);
+        assert_eq!(videos[0].channel, "Apollo");
+    }
 
     #[test]
     fn atom_namespaces_and_titles_match_the_publisher() {

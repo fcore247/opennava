@@ -11,9 +11,11 @@ Choose **Einstellungen → Zur klassischen Ansicht** to return. This action is a
 ## Included
 
 - Remote and touch navigation, visible focus, search keyboard and a local watchlist.
+- Open **Einstellungen → Personalisierung** for the Android companion download. On the paired phone, pin installed TV apps, group them in folders and choose a row or grid. The TV updates its home while it is open.
 - ARD, ZDF and ARTE browsing, search, episode details and native in-app playback, subject to provider availability.
-- YouTube uploads from selected public channels and the shared OpenNava in-app player. Catalogue and account-personalized feeds are separate features. The preview displays public uploads.
-- Live TV and streaming shortcuts open the corresponding installed apps.
+- YouTube videos open in the native player with a single press. Search from the YouTube screen or the launcher's main search. **Alle** includes videos alongside broadcaster results, and **YouTube** narrows the search. Move right from the last visible result to keep browsing. Back from playback returns to the selected video.
+- Pair your account under **Einstellungen → YouTube-Konto verwalten** or **YouTube → YouTube-Konto**. Scan the QR with a phone and approve the connection on Google's screen. Both search entry points and the player share the account on this TV. Guests can browse selected public channels. Sign out from either account entry.
+- Live TV plays inside the preview. Select **Live-TV** on the home screen to watch and change channels with the remote. The player’s compact controls hide while watching. External TV apps remain available under **Apps → Weitere TV-Apps**.
 
 The TV interface and renderer run in Rust with Android's NativeActivity, tiny-skia and fontdue. Android draws the resulting native surface at the TV's display size. The bundled native Android player activities handle playback. The preview currently stores its watchlist on the TV and has no Luna synchronization.
 
@@ -31,4 +33,4 @@ python3 tools/package_tv.py --keystore /path/to/keystore.p12 \
 
 The default output is `target/release/apk/OpenNava-Rust-TV.apk`. Add `--output PATH` to choose another location. Official builds also pass `--expected-signer ../release-key.sha256` to verify the signed certificate against the repository pin. Classic OpenNava accepts preview builds signed with the same release certificate.
 
-The packager checks both native Rust libraries byte for byte, player DEX, native activity declarations, licenses, signature and ZIP alignment. It builds the player libraries from the repository's pinned upstream revisions or uses the existing OpenNava Android build export. Rust-only tests exercise D-pad focus, native catalogue navigation, return and exit actions, watchlist persistence and rendering bounds. See [asset provenance and dependency notices](ASSETS.md).
+The packager checks both native Rust libraries byte for byte, player DEX, native activity declarations, licenses, signature and ZIP alignment. It builds the player libraries from the repository's pinned upstream revisions with its preview-specific TV OAuth scope. Rust-only tests exercise D-pad focus, native catalogue navigation, return and exit actions, watchlist persistence and rendering bounds. See [asset provenance and dependency notices](ASSETS.md).

@@ -41,6 +41,7 @@ public final class MainActivity extends ComponentActivity {
     private CatalogPage catalogPage;
     PhoneLivePage livePage;
     private HomePage homePage;
+    private HomeEditorPage homeEditor;
     private PhoneRecordingsPage recordingsPage;
     private PhoneTvContextController tvContext;
     private View menuButton;
@@ -93,10 +94,12 @@ public final class MainActivity extends ComponentActivity {
         catalogPage = new CatalogPage(this);
         livePage = new PhoneLivePage(this);
         homePage = new HomePage(this);
+        homeEditor = new HomeEditorPage(this);
         recordingsPage = new PhoneRecordingsPage(this);
         devices = new DevicePage(this);
         tvContext = new PhoneTvContextController(this);
         if (state != null) {
+            homeEditor.restoreDraft(state);
             page = state.getString("page", "home");
             playbackTitle = state.getString("playbackTitle", "");
             playbackProvider = state.getString("playbackProvider", "");
@@ -189,6 +192,7 @@ public final class MainActivity extends ComponentActivity {
     @Override
     protected void onSaveInstanceState(Bundle saved) {
         super.onSaveInstanceState(saved);
+        homeEditor.saveDraft(saved);
         saved.putString("page", page);
         saved.putString("playbackTitle", playbackTitle);
         saved.putString("playbackProvider", playbackProvider);
@@ -265,6 +269,9 @@ public final class MainActivity extends ComponentActivity {
                 break;
             case "devices":
                 devices.build();
+                break;
+            case "personalization":
+                homeEditor.build();
                 break;
             case "remote":
                 body.addView(ui.title("Remote control", 42, INK));
@@ -346,6 +353,7 @@ public final class MainActivity extends ComponentActivity {
     }
 
     void go(String where) {
+        if (where.equals("personalization") && !page.equals(where)) homeEditor.enter();
         page = where;
         if (where.equals("catalog")) { provider = ""; query = ""; }
         render();
@@ -580,6 +588,7 @@ public final class MainActivity extends ComponentActivity {
     @Override
     public void onBackPressed() {
         if (menuOpen()) homePage.dismiss();
+        else if (page.equals("personalization") && homeEditor.back()) return;
         else if (page.equals("catalog") && !provider.isEmpty()) {
             provider = "";
             query = "";

@@ -1,8 +1,11 @@
 //! Native, resolution-independent TV interface. No browser or web runtime.
+#[path = "home.rs"]
+pub(crate) mod home;
 #[path = "shelves.rs"]
 mod shelves;
 use crate::catalog::CatalogItem;
 use fontdue::{Font, FontSettings};
+use home::HomeLayout;
 use image::{RgbaImage, imageops::FilterType};
 use serde::{Deserialize, Serialize};
 use shelves::{Selection, Shelf};
@@ -27,6 +30,7 @@ pub enum Key {
     Left,
     Right,
     Select,
+    Menu,
     Back,
     Character(char),
     Delete,
@@ -35,10 +39,38 @@ pub enum Key {
 pub enum Action {
     None,
     Launch(Vec<&'static str>),
+    LaunchApp(String),
+    Personalization,
     YoutubeCatalog {
         request: u64,
     },
-    YoutubePlay(String),
+    YoutubeSearch {
+        request: u64,
+        query: String,
+    },
+    YoutubeMore {
+        request: u64,
+        cursor: String,
+    },
+    MainSearch {
+        request: u64,
+        provider: usize,
+        query: String,
+    },
+    SearchMore {
+        request: u64,
+        query: String,
+        providers: u8,
+        page: u32,
+        youtube_cursor: Option<String>,
+    },
+    YoutubeAccount,
+    YoutubePlay {
+        id: String,
+        title: String,
+        channel: String,
+    },
+    LiveTv,
     Catalog {
         request: u64,
         provider: usize,
@@ -59,11 +91,13 @@ pub enum Action {
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum Page {
     Home,
+    HomeFolder(usize),
     Library,
     Channel(usize),
     Youtube,
+    YoutubeSearch,
     Programme,
-    Live,
+    TvApps,
     Apps,
     Search,
     Watchlist,
@@ -75,11 +109,17 @@ enum Page {
 enum Command {
     Page(Page),
     Launch(Vec<&'static str>),
+    LaunchApp(String),
+    Personalization,
     Provider(usize),
     More(isize),
+    HomeTurn(isize),
+    CloseFolder(usize),
     Pick(usize),
     SavedProgramme(usize),
     PlaySelection,
+    YoutubeAccount,
+    LiveTv,
     SaveSelection,
     Retry,
     FindTitle(usize),
@@ -155,11 +195,15 @@ const TITLES: [Title; 6] = [
 ];
 
 pub struct Ui {
+    home: HomeLayout,
+    home_offset: usize,
+    home_icons: HashMap<String, RgbaImage>,
     shelf: Shelf,
     page: Page,
     focus: usize,
     controls: Vec<Control>,
     query: String,
+    youtube_query: String,
     provider: usize,
     numbers: bool,
     prefs: Preferences,
@@ -219,10 +263,14 @@ impl Ui {
         }
         Self {
             shelf: Shelf::default(),
+            home: HomeLayout::default(),
+            home_offset: 0,
+            home_icons: HashMap::new(),
             page: Page::Home,
             focus: 0,
             controls: vec![],
             query: String::new(),
+            youtube_query: String::new(),
             provider: 0,
             numbers: false,
             prefs: Preferences::default(),
@@ -274,14 +322,29 @@ impl Ui {
         self.message = text.chars().take(100).collect();
     }
     fn go(&mut self, page: Page) {
+        self.shelf.loading_more = false;
         self.shelf.request = self.shelf.request.wrapping_add(1);
         self.page = page;
+        self.home_offset = 0;
         self.focus = match page {
-            Page::Search => 300,
-            Page::Watchlist if !self.prefs.saved.is_empty() => 50,
+            Page::Home if self.home.has_items() => 1000,
+            Page::HomeFolder(_) => 1000,
+            Page::Search | Page::YoutubeSearch => 300,
+            Page::Watchlist
+                if !self.prefs.saved.is_empty() || !self.prefs.programmes.is_empty() =>
+            {
+                50
+            }
             _ => 0,
         };
         self.message.clear();
+    }
+    fn active_query(&mut self) -> &mut String {
+        if self.page == Page::YoutubeSearch {
+            &mut self.youtube_query
+        } else {
+            &mut self.query
+        }
     }
     fn execute(&mut self, command: Command) -> Action {
         self.message.clear();
@@ -298,14 +361,20 @@ impl Ui {
                 self.go(page);
                 return self.request_page();
             }
+            Command::LaunchApp(package) => return Action::LaunchApp(package),
+            Command::Personalization => return Action::Personalization,
+            Command::CloseFolder(i) => self.close_folder(i),
+            Command::HomeTurn(direction) => self.turn_home(direction),
             Command::More(direction) => {
                 self.turn_page(direction);
             }
             Command::Pick(i) => return self.open_result(i),
+            Command::LiveTv => return Action::LiveTv,
             Command::PlaySelection => return self.play_selection(),
+            Command::YoutubeAccount => return Action::YoutubeAccount,
             Command::SavedProgramme(i) => {
                 if let Some(item) = self.prefs.programmes.get(i).cloned() {
-                    self.select_programme(item);
+                    return self.select_programme(item);
                 }
             }
             Command::SaveSelection => self.save_selection(),
@@ -320,19 +389,21 @@ impl Ui {
             Command::Launch(packages) => return Action::Launch(packages),
             Command::Provider(p) => self.provider = p,
             Command::Char(c) => {
-                if self.query.chars().count() < 48 {
-                    self.query.push(c);
+                let query = self.active_query();
+                if query.chars().count() < 48 {
+                    query.push(c);
                 }
             }
             Command::Space => {
-                if self.query.len() < 96 {
-                    self.query.push(' ');
+                let query = self.active_query();
+                if query.chars().count() < 48 {
+                    query.push(' ');
                 }
             }
             Command::Delete => {
-                self.query.pop();
+                self.active_query().pop();
             }
-            Command::Clear => self.query.clear(),
+            Command::Clear => self.active_query().clear(),
             Command::Numbers => self.numbers = !self.numbers,
             Command::Save(i) => {
                 if self.prefs.saved.contains(&i) {
@@ -349,34 +420,67 @@ impl Ui {
             Command::ReturnClassic => return Action::ReturnClassic,
             Command::Exit => return Action::Exit,
         }
-        if updates_search && self.page == Page::Search {
+        if updates_search && matches!(self.page, Page::Search | Page::YoutubeSearch) {
             return self.request_page();
         }
         Action::None
     }
     pub fn key(&mut self, key: Key) -> Action {
+        if self.home_key(key) {
+            return Action::None;
+        }
+        if let Some(index) = self.focused_result_index() {
+            match key {
+                Key::Left | Key::Right => {
+                    return self.move_result(index, key);
+                }
+                Key::Select => return self.open_result(index),
+                _ => {}
+            }
+        }
         match key {
+            Key::Menu => self.toggle_focused_video(),
             Key::Back => {
+                if let Page::HomeFolder(i) = self.page {
+                    self.close_folder(i);
+                    return Action::None;
+                }
                 if self.page == Page::Programme {
                     self.return_to_results();
                     return Action::None;
                 }
+                if self.page == Page::YoutubeSearch {
+                    return self.execute(Command::Page(Page::Youtube));
+                }
                 self.go(match self.page {
                     Page::Home => Page::Exit,
+                    Page::TvApps => Page::Apps,
                     Page::Detail(_) => Page::Watchlist,
                     Page::Channel(_) => Page::Library,
                     _ => Page::Home,
                 });
                 return Action::None;
             }
-            Key::Character(c) if self.page == Page::Search && !c.is_control() => {
+            Key::Character(c)
+                if matches!(self.page, Page::Search | Page::YoutubeSearch) && !c.is_control() =>
+            {
                 return self.execute(Command::Char(c));
             }
-            Key::Delete if self.page == Page::Search => return self.execute(Command::Delete),
+            Key::Delete if matches!(self.page, Page::Search | Page::YoutubeSearch) => {
+                return self.execute(Command::Delete);
+            }
             Key::Select => {
                 if let Some(c) = self.controls.iter().find(|c| c.id == self.focus) {
                     return self.execute(c.command.clone());
                 }
+            }
+            Key::Down
+                if self.page == Page::Youtube
+                    && self.focus <= 1
+                    && self.controls.iter().any(|control| control.id == 80) =>
+            {
+                // The centred retry button is the only row between the toolbar and bottom nav.
+                self.focus = 80;
             }
             Key::Up | Key::Down | Key::Left | Key::Right => {
                 let Some(current) = self.controls.iter().find(|c| c.id == self.focus) else {
@@ -415,6 +519,9 @@ impl Ui {
         Action::None
     }
     pub fn tap(&mut self, x: f32, y: f32, width: u32, height: u32) -> Action {
+        self.activate_at(x, y, width, height, false)
+    }
+    pub fn activate_at(&mut self, x: f32, y: f32, width: u32, height: u32, held: bool) -> Action {
         if width == 0 || height == 0 {
             return Action::None;
         }
@@ -427,7 +534,11 @@ impl Ui {
             .cloned()
         {
             self.focus = c.id;
-            self.execute(c.command)
+            if held && self.focused_video_id().is_some() {
+                self.key(Key::Menu)
+            } else {
+                self.execute(c.command)
+            }
         } else {
             Action::None
         }
@@ -516,6 +627,7 @@ impl Ui {
                 .assets
                 .get(name)
                 .or_else(|| self.shelf.images.get(name))
+                .or_else(|| self.home_icons.get(name))
                 .expect("registered picture");
             let image = if name.ends_with("logo") {
                 image::imageops::resize(source, w, h, FilterType::Lanczos3)
@@ -697,14 +809,15 @@ impl Ui {
         self.text(&mut c, "Opennava", 60., 78., 70, WHITE, true);
         self.text(&mut c, "RUST / PROTOTYP", 1017., 54., 15, SOFT, false);
         let (title, hint) = match self.page {
-            Page::Home => ("", ""),
+            Page::Home | Page::HomeFolder(_) => ("", ""),
             Page::Library => ("Mediatheken", "Sender auswählen"),
             Page::Channel(p) => (provider_name(p), "Aktuelle Sendungen"),
-            Page::Youtube => ("YouTube", "Aktuelle Videos aus vier Kanälen"),
+            Page::Youtube => ("YouTube", ""),
+            Page::YoutubeSearch => ("YouTube durchsuchen", ""),
             Page::Programme => ("", ""),
-            Page::Live => ("Live-TV", "Auf dem Fernseher ansehen"),
+            Page::TvApps => ("TV-Apps", "Eine installierte App öffnen"),
             Page::Apps => ("Apps", "Bereits auf deinem Fernseher"),
-            Page::Search => ("Suche", "Sendungen in den Mediatheken"),
+            Page::Search => ("Suche", "Mediatheken und YouTube"),
             Page::Watchlist => ("Merkliste", "Auf diesem Gerät gespeichert"),
             Page::Settings => ("Einstellungen", "Für die Rust-Vorschau"),
             Page::Detail(_) => ("", ""),
@@ -716,34 +829,45 @@ impl Ui {
         self.text(&mut c, title, 64., 124., 29, WHITE, false);
         self.text(&mut c, hint, 64., 153., 15, SOFT, false);
         match self.page {
+            Page::HomeFolder(_) => self.draw_home_apps(&mut c),
             Page::Home => {
-                for (i, (label, art, command)) in [
-                    ("Live-TV", "ocean", Command::Page(Page::Live)),
-                    ("Mediatheken", "forest", Command::Page(Page::Library)),
-                    ("YouTube", "mountains", Command::Page(Page::Youtube)),
-                ]
-                .into_iter()
-                .enumerate()
-                {
-                    self.tile(
-                        &mut c,
-                        i,
-                        label,
-                        art,
-                        [64. + i as f32 * 388., 148., 376., 300.],
-                        command,
-                        None,
-                    );
+                let custom = self.home.has_items();
+                if custom {
+                    self.draw_home_apps(&mut c);
+                } else {
+                    for (i, (label, art, command)) in [
+                        ("Live-TV", "ocean", Command::LiveTv),
+                        ("Mediatheken", "forest", Command::Page(Page::Library)),
+                        ("YouTube", "mountains", Command::Page(Page::Youtube)),
+                    ]
+                    .into_iter()
+                    .enumerate()
+                    {
+                        self.tile(
+                            &mut c,
+                            i,
+                            label,
+                            art,
+                            if self.home.is_grid() {
+                                [64. + i as f32 * 292., 163., 276., 184.]
+                            } else {
+                                [64. + i as f32 * 388., 148., 376., 300.]
+                            },
+                            command,
+                            None,
+                        );
+                    }
                 }
+                let search_y = if custom { 512. } else { 491. };
                 self.button(
                     &mut c,
                     3,
                     "Was möchtest du ansehen?",
-                    [250., 491., 780., 66.],
+                    [250., search_y, 780., 66.],
                     Command::Page(Page::Search),
                     false,
                 );
-                icon(&mut c, "search", 278., 511., 24., SOFT);
+                icon(&mut c, "search", 278., search_y + 20., 24., SOFT);
             }
             Page::Library | Page::Apps => {
                 let apps = self.page == Page::Apps;
@@ -777,9 +901,17 @@ impl Ui {
                         Command::Launch(vec!["com.netflix.ninja"]),
                         None,
                     );
+                    self.button(
+                        &mut c,
+                        4,
+                        "Weitere TV-Apps",
+                        [460., 551., 360., 50.],
+                        Command::Page(Page::TvApps),
+                        false,
+                    );
                 }
             }
-            Page::Live => {
+            Page::TvApps => {
                 for (i, (name, art, pkgs)) in [
                     ("ARD", "ard", vec![ARD]),
                     ("ZDF", "zdf", vec![ZDF]),
@@ -803,25 +935,58 @@ impl Ui {
                     );
                 }
             }
-            Page::Channel(_) | Page::Youtube => self.draw_shelf(&mut c, false),
+            Page::Channel(_) => self.draw_shelf(&mut c, false),
+            Page::Youtube => {
+                self.button(
+                    &mut c,
+                    0,
+                    "Videos suchen",
+                    [745., 93., 219., 53.],
+                    Command::Page(Page::YoutubeSearch),
+                    false,
+                );
+                self.button(
+                    &mut c,
+                    1,
+                    "YouTube-Konto",
+                    [981., 93., 235., 53.],
+                    Command::YoutubeAccount,
+                    false,
+                );
+                self.draw_shelf(&mut c, false);
+            }
             Page::Programme => self.draw_programme(&mut c),
-            Page::Search => {
+            Page::Search | Page::YoutubeSearch => {
+                let is_youtube = self.page == Page::YoutubeSearch;
                 self.draw_shelf(&mut c, true);
-                for p in 0..4 {
-                    self.button(
-                        &mut c,
-                        200 + p,
-                        provider_name(p),
-                        [400. + p as f32 * 124., 331., 112., 35.],
-                        Command::Provider(p),
-                        self.provider == p,
-                    );
+                if !is_youtube {
+                    for p in 0..=YOUTUBE_PROVIDER {
+                        self.button(
+                            &mut c,
+                            200 + p,
+                            provider_name(p),
+                            [336. + p as f32 * 124., 331., 112., 35.],
+                            Command::Provider(p),
+                            self.provider == p,
+                        );
+                    }
                 }
                 fill(&mut c, [250., 380., 780., 48.], 13., [13, 25, 41, 230]);
-                let query = if self.query.is_empty() {
-                    "Titel eingeben…".to_owned()
+                let input = if is_youtube {
+                    &self.youtube_query
                 } else {
-                    self.query.clone()
+                    &self.query
+                };
+                let empty = input.is_empty();
+                let query = if empty {
+                    if is_youtube {
+                        "Auf YouTube suchen …"
+                    } else {
+                        "Titel eingeben …"
+                    }
+                    .to_owned()
+                } else {
+                    self.ellipsis(input, 22, 735.)
                 };
                 self.text(
                     &mut c,
@@ -829,7 +994,7 @@ impl Ui {
                     276.,
                     412.,
                     22,
-                    if self.query.is_empty() { SOFT } else { WHITE },
+                    if empty { SOFT } else { WHITE },
                     false,
                 );
                 let rows = if self.numbers {
@@ -923,21 +1088,37 @@ impl Ui {
             Page::Settings => {
                 self.button(
                     &mut c,
+                    4,
+                    "Personalisierung",
+                    [64., 170., 430., 65.],
+                    Command::Personalization,
+                    false,
+                );
+                self.button(
+                    &mut c,
                     0,
                     if self.prefs.darker {
                         "Hintergrund: sehr dunkel"
                     } else {
                         "Hintergrund: dunkel"
                     },
-                    [64., 214., 430., 66.],
+                    [64., 250., 430., 65.],
                     Command::Shade,
+                    false,
+                );
+                self.button(
+                    &mut c,
+                    3,
+                    "YouTube-Konto verwalten",
+                    [64., 330., 430., 65.],
+                    Command::YoutubeAccount,
                     false,
                 );
                 self.button(
                     &mut c,
                     1,
                     "Zur klassischen Ansicht",
-                    [64., 302., 430., 66.],
+                    [64., 410., 430., 65.],
                     Command::ReturnClassic,
                     false,
                 );
@@ -945,7 +1126,7 @@ impl Ui {
                     &mut c,
                     2,
                     "Vorschau schließen",
-                    [64., 390., 430., 66.],
+                    [64., 490., 430., 65.],
                     Command::Page(Page::Exit),
                     false,
                 );
@@ -1033,15 +1214,10 @@ impl Ui {
                 },
             );
         }
-        self.text(
-            &mut c,
-            "Pfeiltasten zum Bewegen · OK zum Öffnen · Zurück",
-            64.,
-            711.,
-            12,
-            SOFT,
-            false,
-        );
+        let hint = self
+            .video_controls_hint()
+            .unwrap_or("Pfeiltasten zum Bewegen · OK zum Öffnen · Zurück");
+        self.text(&mut c, hint, 64., 711., 12, SOFT, false);
         if !self.message.is_empty() {
             fill(&mut c, [150., 88., 980., 52.], 14., [28, 26, 39, 255]);
             self.centered(
@@ -1071,8 +1247,13 @@ impl Ui {
     }
 }
 
+const YOUTUBE_PROVIDER: usize = 4;
+
 fn provider_name(p: usize) -> &'static str {
-    ["Alle", "ARD", "ZDF", "ARTE"][p.min(3)]
+    ["Alle", "ARD", "ZDF", "ARTE", "YouTube"]
+        .get(p)
+        .copied()
+        .unwrap_or("")
 }
 
 fn rounded(r: [f32; 4], radius: f32) -> tiny_skia::Path {
@@ -1230,6 +1411,14 @@ mod tests {
         assert!(matches!(ui.key(Key::Select), Action::Exit));
     }
     #[test]
+    fn home_live_tv_opens_the_embedded_player() {
+        let mut ui = Ui::new();
+        draw(&mut ui);
+        assert!(matches!(ui.key(Key::Select), Action::LiveTv));
+        assert_eq!(ui.page, Page::Home);
+        assert!(matches!(ui.tap(200., 250., W, H), Action::LiveTv));
+    }
+    #[test]
     fn home_youtube_opens_native_catalog() {
         let mut ui = Ui::new();
         draw(&mut ui);
@@ -1245,7 +1434,9 @@ mod tests {
             Page::Home,
             Page::Library,
             Page::Apps,
-            Page::Live,
+            Page::TvApps,
+            Page::Youtube,
+            Page::YoutubeSearch,
             Page::Search,
             Page::Watchlist,
             Page::Detail(1),

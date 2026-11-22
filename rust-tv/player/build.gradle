@@ -1,6 +1,6 @@
 plugins { id 'com.android.application' version '8.13.2' }
 
-def sdkPlayer = file('../../android/player/build/export')
+def sdkPlayer = file('build/sdk')
 def rustLibs = layout.buildDirectory.dir('rustJni')
 def playerSources = layout.buildDirectory.dir('nativePlayerSources')
 def collectSources = tasks.register('collectPlayerSources', Sync) {
@@ -8,6 +8,12 @@ def collectSources = tasks.register('collectPlayerSources', Sync) {
         include 'NavaPlayerActivity.java', 'NavaMediaSources.java', 'YouTubePlayback.java',
                 'NavaYouTube.java', 'ThumbnailProxy.java', 'MediathekService.java'
         into 'site/navatv/full'
+    }
+    from('../../android/tv/src/main/java/site/navatv/launcher') {
+        include 'HomeLayoutStore.java', 'HomeLayoutProvider.java'
+        include 'PlayerChrome.java', 'CompactPlaybackControls.java', 'HomePersonalizationActivity.java', 'PlaybackLoadingMark.java',
+                'LiveGuide.java', 'ArteCatalog.java', 'MediathekService.java'
+        into 'site/navatv/launcher'
     }
     into playerSources
 }
@@ -21,6 +27,10 @@ def collectNotices = tasks.register('collectNotices', Sync) {
     from('../../android/tv/src/main/assets/web/licenses') { into 'licenses/player' }
     from('../../android/NOTICE.md') { into 'licenses/player' }
     from('../assets') { include 'OFL*.txt'; into 'licenses/fonts' }
+    from('../../android/tv/src/main/assets/assets/fonts') {
+        include 'Manrope.ttf'
+        into 'assets/fonts'
+    }
     from('../ASSETS.md') { into 'licenses' }
     from(providers.gradleProperty('rustNotices')) { into 'licenses/rust' }
     into notices
@@ -34,8 +44,8 @@ android {
         applicationId 'site.navatv.rustpreview'
         minSdk 26
         targetSdk 34
-        versionCode 3
-        versionName '0.1.2'
+        versionCode 6
+        versionName '0.2.0'
         ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
     }
     sourceSets.main {
@@ -56,6 +66,9 @@ android {
 preBuild.dependsOn collectRust, collectSources, collectNotices
 
 dependencies {
+    implementation 'com.google.zxing:core:3.5.4'
+    implementation 'androidx.media3:media3-exoplayer:1.11.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.11.1'
     implementation fileTree(dir: sdkPlayer, include: ['*.aar'])
     new File(sdkPlayer, 'dependencies.txt').eachLine { coordinate ->
         def artifact = coordinate.startsWith('com.eclipsesource.j2v8:j2v8:') ? coordinate + '@aar' : coordinate

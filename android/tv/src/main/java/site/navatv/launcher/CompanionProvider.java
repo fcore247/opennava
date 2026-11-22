@@ -26,6 +26,11 @@ public final class CompanionProvider extends ContentProvider {
     @Override public Bundle call(String method, String arg, Bundle extras) {
         // call() has no implicit read/write operation. Check the caller before switching threads.
         getContext().enforceCallingOrSelfPermission(Manifest.permission.DUMP, "Companion access requires DUMP");
+        if ("home_get".equals(method) || "home_set".equals(method)) {
+            long caller = android.os.Binder.clearCallingIdentity();
+            try { return HomeLayoutStore.companion(getContext(), method, arg); }
+            finally { android.os.Binder.restoreCallingIdentity(caller); }
+        }
         if ("library_list".equals(method))
             return CompanionLibrary.list(getContext(), onMain(() -> ProgrammeReminders.entries(getContext())));
         if ("library_delete".equals(method) && arg != null && arg.startsWith("recording:"))

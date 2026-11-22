@@ -21,6 +21,13 @@ pub struct CatalogItem {
     pub thumbnail: String,
 }
 
+#[derive(Debug, Default)]
+pub struct CatalogPage {
+    pub items: Vec<CatalogItem>,
+    /// Bit 0 is ARD, bit 1 is ZDF, bit 2 is ARTE.
+    pub remaining: u8,
+}
+
 fn json(url: &str) -> Result<Value, String> {
     let bytes = crate::net::get(url, MAX_JSON_BYTES)?;
     serde_json::from_slice(&bytes)
@@ -181,11 +188,10 @@ fn distinct(items: impl IntoIterator<Item = CatalogItem>) -> Vec<CatalogItem> {
     items
         .into_iter()
         .filter(|i| seen.insert(i.id.clone()))
-        .take(LIMIT)
         .collect()
 }
 
-fn fetch_ard(query: &str) -> Result<Vec<CatalogItem>, String> {
+fn fetch_ard(query: &str, page: u32) -> Result<CatalogPage, String> {
     let url = if query.is_empty() {
         format!("{ARD}/page-gateway/pages/ard/home")
     } else {
@@ -193,8 +199,8 @@ fn fetch_ard(query: &str) -> Result<Vec<CatalogItem>, String> {
             &format!("{ARD}/search-system/search/vods/ard"),
             &[
                 ("query", query),
-                ("pageNumber", "0"),
-                ("pageSize", "36"),
+                ("pageNumber", &page.to_string()),
+                ("pageSize", "30"),
                 ("platform", "MEDIA_THEK"),
                 ("sortingCriteria", "SCORE_DESC"),
             ],
@@ -204,52 +210,82 @@ fn fetch_ard(query: &str) -> Result<Vec<CatalogItem>, String> {
     if !data["teasers"].is_array() && !data["widgets"].is_array() {
         return Err("Das ARD-Katalogformat ist unbekannt.".into());
     }
-    Ok(distinct(
-        rows(&data, "teasers")
-            .chain(rows(&data, "widgets").flat_map(|v| rows(v, "teasers")))
-            .filter_map(ard_item),
-    ))
+    let pagination = &data["pagination"];
+    let size = pagination["pageSize"].as_u64().unwrap_or(0);
+    let total = pagination["totalElements"].as_u64().unwrap_or(0);
+    let has_more =
+        !query.is_empty() && size > 0 && (u64::from(page) + 1).saturating_mul(size) < total;
+    Ok(CatalogPage {
+        remaining: u8::from(has_more),
+        items: distinct(
+            rows(&data, "teasers")
+                .chain(rows(&data, "widgets").flat_map(|v| rows(v, "teasers")))
+                .filter_map(ard_item),
+        ),
+    })
 }
-fn fetch_zdf(query: &str) -> Result<Vec<CatalogItem>, String> {
+fn fetch_zdf(query: &str, page: u32) -> Result<CatalogPage, String> {
     let url = if query.is_empty() {
         format!("{ZDF}/start-page")
     } else {
         query_url(
             &format!("{ZDF}/search"),
-            &[("q", query), ("page", "1"), ("synth", "true")],
+            &[
+                ("q", query),
+                ("page", &(u64::from(page) + 1).to_string()),
+                ("synth", "true"),
+            ],
         )
     };
     let data = json(&url)?;
     if !data["cluster"].is_array() && !data["results"].is_array() {
         return Err("Das ZDF-Katalogformat ist unbekannt.".into());
     }
-    Ok(distinct(
-        rows(&data, "results")
-            .chain(rows(&data, "cluster").flat_map(|v| rows(v, "teaser")))
-            .filter_map(zdf_item),
-    ))
+    let has_more = !query.is_empty() && data["nextPage"].as_bool() == Some(true);
+    Ok(CatalogPage {
+        remaining: if has_more { 2 } else { 0 },
+        items: distinct(
+            rows(&data, "results")
+                .chain(rows(&data, "cluster").flat_map(|v| rows(v, "teaser")))
+                .filter_map(zdf_item),
+        ),
+    })
 }
 
-fn fetch_arte(query: &str) -> Result<Vec<CatalogItem>, String> {
+fn fetch_arte(query: &str, page: u32) -> Result<CatalogPage, String> {
     let url = if query.is_empty() {
         format!("{ARTE}/pages/home?bypassESI=true")
     } else {
         query_url(
             &format!("{ARTE}/search/results"),
-            &[("query", query), ("page", "1")],
+            &[
+                ("query", query),
+                ("page", &(u64::from(page) + 1).to_string()),
+            ],
         )
     };
     let data = json(&url)?;
     let zones = data["zones"]
         .as_array()
         .ok_or("Das ARTE-Katalogformat ist unbekannt.")?;
-    let mut matches: Vec<_> = zones
-        .iter()
+    let requested = u64::from(page) + 1;
+    let current_zones = || {
+        zones
+            .iter()
+            .filter(|z| page == 0 || z["content"]["pagination"]["page"].as_u64() == Some(requested))
+    };
+    let mut matches: Vec<_> = current_zones()
         .flat_map(|z| rows(&z["content"], "data"))
         .filter_map(arte_item)
         .collect();
     if !query.is_empty() || !matches.is_empty() {
-        return Ok(distinct(matches));
+        let has_more = !query.is_empty()
+            && current_zones()
+                .any(|z| z["content"]["pagination"]["pages"].as_u64().unwrap_or(0) > requested);
+        return Ok(CatalogPage {
+            items: distinct(matches),
+            remaining: if has_more { 4 } else { 0 },
+        });
     }
     // On home, editorial zones are lazy-loaded by the broadcaster. Do not request personalised zones.
     let mut zone_error = None;
@@ -285,59 +321,83 @@ fn fetch_arte(query: &str) -> Result<Vec<CatalogItem>, String> {
         return Err(zone_error
             .unwrap_or_else(|| "ARTE liefert aktuell keine abspielbaren Empfehlungen.".into()));
     }
-    Ok(distinct(matches))
+    Ok(CatalogPage {
+        items: distinct(matches),
+        remaining: 0,
+    })
 }
 
-/// An empty query loads the current editorial home of the selected service. Provider 0 mixes all three.
-pub fn fetch(provider: usize, query: &str) -> Result<Vec<CatalogItem>, String> {
+/// Fetch the requested publishers concurrently. Each result is a full provider page so no
+/// available episodes are dropped when the user advances past the visible row.
+pub fn search_page(providers: u8, query: &str, page: u32) -> Result<CatalogPage, String> {
     let query = query.trim();
+    if providers == 0 || providers & !7 != 0 {
+        return Err("Unbekannte Mediathek.".into());
+    }
     if query.chars().count() > 300 {
         return Err("Der Suchbegriff ist zu lang.".into());
     }
-    let one = |p| match p {
-        1 => fetch_ard(query),
-        2 => fetch_zdf(query),
-        3 => fetch_arte(query),
-        _ => Err("Unbekannte Mediathek.".into()),
-    };
-    if provider != 0 {
-        return one(provider);
+    if query.is_empty() && page != 0 {
+        return Ok(CatalogPage::default());
     }
-    let results = std::thread::scope(|s| {
-        let tasks: Vec<_> = (1..=3).map(|p| s.spawn(move || one(p))).collect();
-        tasks
-            .into_iter()
-            .map(|h| {
-                h.join()
+    let results = std::thread::scope(|scope| {
+        let mut jobs = Vec::new();
+        if providers & 1 != 0 {
+            jobs.push(scope.spawn(|| fetch_ard(query, page)));
+        }
+        if providers & 2 != 0 {
+            jobs.push(scope.spawn(|| fetch_zdf(query, page)));
+        }
+        if providers & 4 != 0 {
+            jobs.push(scope.spawn(|| fetch_arte(query, page)));
+        }
+        jobs.into_iter()
+            .map(|job| {
+                job.join()
                     .unwrap_or_else(|_| Err("Der Sender antwortet nicht.".into()))
             })
             .collect::<Vec<_>>()
     });
-    let first_error = results.iter().find_map(|r| r.as_ref().err()).cloned();
-    let mut groups: Vec<_> = results
-        .into_iter()
-        .filter_map(Result::ok)
-        .map(Vec::into_iter)
-        .collect();
-    let mut mixed = Vec::new();
-    while mixed.len() < LIMIT {
-        let count = mixed.len();
-        for group in &mut groups {
-            if let Some(item) = group.next() {
-                mixed.push(item);
+    let mut result = CatalogPage::default();
+    let mut groups = Vec::new();
+    let mut error = None;
+    for response in results {
+        match response {
+            Ok(page) => {
+                result.remaining |= page.remaining;
+                groups.push(page.items.into_iter());
             }
+            Err(reason) => error = Some(reason),
         }
-        if mixed.len() == count {
+    }
+    loop {
+        let before = result.items.len();
+        result
+            .items
+            .extend(groups.iter_mut().filter_map(Iterator::next));
+        if result.items.len() == before {
             break;
         }
     }
-    if mixed.is_empty()
-        && let Some(e) = first_error
+    if result.items.is_empty()
+        && result.remaining == 0
+        && let Some(reason) = error
     {
-        return Err(e);
+        return Err(reason);
     }
-    mixed.truncate(LIMIT);
-    Ok(mixed)
+    Ok(result)
+}
+
+/// The launcher channel tiles show a limited selection from the first page.
+pub fn fetch(provider: usize, query: &str) -> Result<Vec<CatalogItem>, String> {
+    let mask = match provider {
+        0 => 7,
+        1..=3 => 1 << (provider - 1),
+        _ => return Err("Unbekannte Mediathek.".into()),
+    };
+    let mut items = search_page(mask, query, 0)?.items;
+    items.truncate(LIMIT);
+    Ok(items)
 }
 
 fn trusted_stream(provider: usize, url: &str) -> bool {
@@ -510,6 +570,27 @@ mod tests {
         row["type"] = json!("video");
         row["channel"] = json!("ARD");
         assert!(zdf_item(&row).is_none());
+    }
+    #[test]
+    #[ignore = "live broadcaster pagination"]
+    fn live_search_pages_add_distinct_playable_episodes() {
+        for mask in [1, 2] {
+            let first = search_page(mask, "Natur", 0).unwrap();
+            assert_eq!(first.remaining, mask);
+            let initial: HashSet<_> = first.items.iter().map(|i| &i.id).collect();
+            assert!(!initial.is_empty());
+            let mut remaining = first.remaining;
+            // A ZDF page can contain only partner programmes, which are filtered locally.
+            let found = (1..=4).any(|page| {
+                if remaining == 0 {
+                    return false;
+                }
+                let next = search_page(remaining, "Natur", page).unwrap();
+                remaining = next.remaining;
+                next.items.iter().any(|i| !initial.contains(&i.id))
+            });
+            assert!(found, "no new playable episode for provider mask {mask}");
+        }
     }
     #[test]
     #[ignore = "live broadcaster APIs"]

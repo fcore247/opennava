@@ -10,7 +10,10 @@ import android.view.KeyEvent;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.MediaController;
+import android.os.Handler;
+import android.os.Looper;
+import site.navatv.launcher.CompactPlaybackControls;
+import site.navatv.launcher.PlaybackLoadingMark;
 import android.widget.TextView;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
@@ -28,12 +31,22 @@ import com.google.android.exoplayer2.video.VideoListener;
 import java.util.Locale;
 
 /** Same-package native player for authorized HTTPS URLs resolved by the Rust catalogue. */
-public final class StreamActivity extends Activity implements MediaController.MediaPlayerControl {
+public final class StreamActivity extends Activity {
     private static final String TAG = "OpenNavaRustPlayer";
     private SimpleExoPlayer player;
     private FrameLayout screen;
     private SurfaceView surface;
-    private MediaController controls;
+    private CompactPlaybackControls controls;
+    private PlaybackLoadingMark loading;
+    private boolean renderedFrame, failed;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable tick = new Runnable() {
+        @Override public void run() {
+            if (player == null) return;
+            updateControls();
+            handler.postDelayed(this, 500);
+        }
+    };
     private TextView status;
     private Uri uri;
     private long resumeAt;
@@ -63,13 +76,18 @@ public final class StreamActivity extends Activity implements MediaController.Me
         status.setTextColor(Color.WHITE);
         status.setTextSize(20);
         status.setGravity(Gravity.CENTER);
-        status.setText(getIntent().getStringExtra("title"));
+        status.setVisibility(View.GONE);
         screen.addView(status, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER));
+        controls = new CompactPlaybackControls(this, "Mediathek", getIntent().getStringExtra("title"), null,
+                this::togglePlayback, delta -> {
+                    if (player != null) seekTo(player.getCurrentPosition() + delta);
+                }, this::seekTo);
+        screen.addView(controls, new FrameLayout.LayoutParams(-1, -1));
+        loading = new PlaybackLoadingMark(this);
+        screen.addView(loading, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+        status.bringToFront();
+        screen.setOnClickListener(v -> controls.reveal());
         setContentView(screen);
-        controls = new MediaController(this);
-        controls.setAnchorView(screen);
-        controls.setMediaPlayer(this);
-        screen.setOnClickListener(v -> controls.show());
     }
 
     private void fitSurface() {
@@ -86,6 +104,14 @@ public final class StreamActivity extends Activity implements MediaController.Me
     @Override protected void onStart() {
         super.onStart();
         if (isFinishing()) return;
+        prepare();
+    }
+
+    private void prepare() {
+        failed = false;
+        renderedFrame = false;
+        status.setVisibility(View.GONE);
+        loading.setVisibility(shouldPlay ? View.VISIBLE : View.GONE);
         String path = uri.getPath() == null ? "" : uri.getPath().toLowerCase(Locale.ROOT);
         DefaultHttpDataSourceFactory network = new DefaultHttpDataSourceFactory(
                 "OpenNava Rust (Android TV)", null, 15_000, 20_000, false);
@@ -108,8 +134,9 @@ public final class StreamActivity extends Activity implements MediaController.Me
         player.setVideoSurfaceView(surface);
         player.addVideoListener(new VideoListener() {
             @Override public void onRenderedFirstFrame() {
+                renderedFrame = true;
                 Log.i(TAG, "First broadcaster video frame");
-                status.setVisibility(View.GONE);
+                loading.setVisibility(View.GONE);
             }
             @Override public void onVideoSizeChanged(int w, int h, int rotation, float pixelRatio) {
                 if (w <= 0 || h <= 0 || pixelRatio <= 0) return;
@@ -121,6 +148,9 @@ public final class StreamActivity extends Activity implements MediaController.Me
         player.addListener(new Player.EventListener() {
             @Override public void onPlayerStateChanged(boolean play, int state) {
                 surface.setKeepScreenOn(play && (state == Player.STATE_READY || state == Player.STATE_BUFFERING));
+                boolean waiting = state == Player.STATE_BUFFERING || (state == Player.STATE_READY && !renderedFrame);
+                loading.setVisibility(play && !failed && waiting ? View.VISIBLE : View.GONE);
+                updateControls();
                 if (state == Player.STATE_ENDED) finish();
             }
             @Override public void onPlayerError(ExoPlaybackException error) {
@@ -133,16 +163,21 @@ public final class StreamActivity extends Activity implements MediaController.Me
         if (resumeAt > 0) player.seekTo(resumeAt);
         player.prepare(media, resumeAt == 0, true);
         player.setPlayWhenReady(shouldPlay);
+        handler.post(tick);
     }
 
     private void showFailure() {
+        failed = true;
+        loading.setVisibility(View.GONE);
         surface.setKeepScreenOn(false);
+        controls.update(false, false, true, false, false, 0, 0, 0);
+        controls.reveal();
         status.setText("Dieses Video ist gerade nicht verfügbar. Zurück führt zur Mediathek.");
         status.setVisibility(View.VISIBLE);
     }
 
     @Override protected void onStop() {
-        if (controls != null) controls.hide();
+        handler.removeCallbacks(tick);
         if (player != null) {
             resumeAt = player.getCurrentPosition();
             shouldPlay = player.getPlayWhenReady();
@@ -150,6 +185,7 @@ public final class StreamActivity extends Activity implements MediaController.Me
             player = null;
         }
         if (surface != null) surface.setKeepScreenOn(false);
+        if (loading != null) loading.setVisibility(View.GONE);
         super.onStop();
     }
 
@@ -159,37 +195,48 @@ public final class StreamActivity extends Activity implements MediaController.Me
         state.putBoolean("playing", player == null ? shouldPlay : player.getPlayWhenReady());
     }
 
-    @Override public boolean onKeyDown(int key, KeyEvent event) {
-        if (key == KeyEvent.KEYCODE_BACK) { finish(); return true; }
-        if (player == null) return super.onKeyDown(key, event);
-        switch (key) {
-            case KeyEvent.KEYCODE_DPAD_CENTER:
-            case KeyEvent.KEYCODE_ENTER:
-            case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
-                if (event.getRepeatCount() == 0) player.setPlayWhenReady(!player.getPlayWhenReady());
-                break;
-            case KeyEvent.KEYCODE_MEDIA_PLAY: start(); break;
-            case KeyEvent.KEYCODE_MEDIA_PAUSE: pause(); break;
-            case KeyEvent.KEYCODE_DPAD_LEFT: seekTo(Math.max(0, getCurrentPosition() - 10_000)); break;
-            case KeyEvent.KEYCODE_DPAD_RIGHT: seekTo(getCurrentPosition() + 10_000); break;
-            default: return super.onKeyDown(key, event);
-        }
-        controls.show();
-        return true;
+    private void updateControls() {
+        if (player == null) return;
+        boolean ready = player.getPlaybackState() == Player.STATE_READY;
+        boolean playing = player.getPlayWhenReady() && !failed;
+        controls.update(playing, ready && renderedFrame && playing, failed,
+                !failed && ready && player.isCurrentWindowSeekable(), false,
+                player.getCurrentPosition(), player.getBufferedPosition(), player.getDuration());
     }
 
-    @Override public int getDuration() {
-        long duration = player == null ? 0 : player.getDuration();
-        return duration <= 0 ? 0 : (int)Math.min(Integer.MAX_VALUE, duration);
+    private void togglePlayback() {
+        if (failed) {
+            handler.removeCallbacks(tick);
+            if (player != null) { resumeAt = player.getCurrentPosition(); player.release(); player = null; }
+            shouldPlay = true;
+            prepare();
+        } else if (player != null) player.setPlayWhenReady(!player.getPlayWhenReady());
     }
-    @Override public int getCurrentPosition() { return player == null ? 0 : (int)player.getCurrentPosition(); }
-    @Override public boolean isPlaying() { return player != null && player.getPlayWhenReady(); }
-    @Override public boolean canPause() { return true; }
-    @Override public boolean canSeekBackward() { return player != null && player.isCurrentWindowSeekable(); }
-    @Override public boolean canSeekForward() { return canSeekBackward(); }
-    @Override public void start() { if (player != null) player.setPlayWhenReady(true); }
-    @Override public void pause() { if (player != null) player.setPlayWhenReady(false); }
-    @Override public void seekTo(int position) { if (canSeekForward()) player.seekTo(Math.max(0, position)); }
-    @Override public int getBufferPercentage() { return player == null ? 0 : player.getBufferedPercentage(); }
-    @Override public int getAudioSessionId() { return player == null ? 0 : player.getAudioSessionId(); }
+
+    private void seekTo(long ms) {
+        if (player == null || failed || !player.isCurrentWindowSeekable()) return;
+        long duration = player.getDuration();
+        player.seekTo(Math.max(0, duration > 0 ? Math.min(duration - 1, ms) : ms));
+        updateControls();
+    }
+
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        if (controls != null && controls.handleNavigation(event)) return true;
+        if (player == null) return super.dispatchKeyEvent(event);
+        int code = event.getKeyCode();
+        if (code != KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE && code != KeyEvent.KEYCODE_MEDIA_PLAY
+                && code != KeyEvent.KEYCODE_MEDIA_PAUSE && code != KeyEvent.KEYCODE_MEDIA_REWIND
+                && code != KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) return super.dispatchKeyEvent(event);
+        if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+            switch (code) {
+                case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: togglePlayback(); break;
+                case KeyEvent.KEYCODE_MEDIA_PLAY: if (failed) togglePlayback(); else player.setPlayWhenReady(true); break;
+                case KeyEvent.KEYCODE_MEDIA_PAUSE: player.setPlayWhenReady(false); break;
+                case KeyEvent.KEYCODE_MEDIA_REWIND: seekTo(player.getCurrentPosition() - 10000); break;
+                case KeyEvent.KEYCODE_MEDIA_FAST_FORWARD: seekTo(player.getCurrentPosition() + 10000); break;
+            }
+            controls.reveal();
+        }
+        return true;
+    }
 }

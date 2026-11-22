@@ -54,6 +54,13 @@ if (window.NavaTV) {
     updates.textContent = 'Software updates';
     updates.addEventListener('click', () => window.NavaTV.openUpdates());
     section.after(updates);
+    if (typeof NavaTV.openHomePersonalization === 'function') {
+      const personalize = document.createElement('button');
+      personalize.className = 'native-home-toggle';
+      personalize.textContent = navigator.language.startsWith('de') ? 'Personalisierung' : 'Personalization';
+      personalize.addEventListener('click', () => NavaTV.openHomePersonalization());
+      updates.before(personalize);
+    }
     const back = document.createElement('button');
     back.className = 'visitor-return-panel';
     back.dataset.action = 'return-senior';
