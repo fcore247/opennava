@@ -2,15 +2,21 @@
 
 A separate native TV app for Android TV, Google TV and Fire TV with Fire OS, on Android API 26 or later. The public APK is `OpenNava-Rust-TV.apk` (`site.navatv.rustpreview`) and supports 32-bit and 64-bit ARM.
 
-## Try it and return
+## Choose your home screen
 
-In classic OpenNava, open **Software updates** and select the Rust preview. Android asks for confirmation when installing it for the first time. In the classic full profile on OpenNava 1.1.1 or later, choose **Open Rust preview** for a single session or **Use Rust as my launcher** to remember the switch. You can also open the installed preview from the TV's Apps screen.
+Open **Software updates** in Classic to install the Rust preview, or open **OpenNava Rust** from your TV’s Apps screen. With OpenNava 1.1.4 and Rust 0.2.6 installed, all three views offer the same choice:
 
-Choose **Einstellungen → Zur klassischen Ansicht** to return. This action is also available from the exit screen when pressing Back on the preview home. A preview launched by classic OpenNava returns to the same TV session and profile. From a standalone launch it opens the official classic launcher, including older versions. **Vorschau schließen** closes the preview. Its watchlist and preferences are stored in its own application directory. Android's Home setting remains independent of both launch paths.
+- **Rust** — **Einstellungen → Startoberfläche wählen**.
+- **Classic** — **Quick settings → Choose home screen**.
+- **Senior** — **Switch view → Choose home screen**.
+
+Select **Neuer Launcher**, **Classic** or **Seniorenansicht** with the remote. The TV saves the selection and opens it immediately. The Home command in the phone companion also uses this selection, including older companions that open the classic OpenNava app directly. Earlier senior, full-launcher and Rust preferences carry forward. To try Rust for one session, use **Open Rust preview** in Classic. Rust keeps its own watchlist and settings.
 
 ### Home on Fire TV
 
-On a Fire TV Stick 4K Max, enable the optional Android accessibility service **OpenNava als Fire-TV-Startseite** to open the Rust home when Fire OS shows its own Home activity. With the matching OpenNava Fire Keys helper (1.0.1 or later) installed and granted Android’s READ_LOGS permission, press Home once for OpenNava or twice quickly for the Amazon home. The helper recognizes the Fire OS Home events locally. After setup, **Einstellungen → Home-Taste** switches between OpenNava and Amazon. Android TV devices that support choosing a default Home app can select OpenNava Rust directly in system settings.
+On a supported Fire TV Stick, enable **OpenNava als Fire-TV-Startseite** in the TV’s accessibility settings. A single Home press opens your selected OpenNava view. For the double-press shortcut on the Fire TV Stick 4K Max, install the matching **OpenNava Fire Keys 1.0.1** or later and grant the helper Android’s `READ_LOGS` permission. Two quick Home presses open Amazon Home. Under **Einstellungen → Home-Taste** in Rust, select **Amazon** to use Amazon Home on a single press again.
+
+On Android TV devices that offer a default Home app, choose OpenNava in system settings.
 
 ## Included
 
@@ -20,7 +26,7 @@ On a Fire TV Stick 4K Max, enable the optional Android accessibility service **O
 - ARD, ZDF and ARTE browsing, search, episode details and native in-app playback, subject to provider availability.
 - YouTube videos open in the native player with a single press. Search from the YouTube screen or the launcher's main search. **Alle** includes videos alongside broadcaster results, and **YouTube** narrows the search. Move right from the last visible result to keep browsing. Back from playback returns to the selected video.
 - Pair your account under **Einstellungen → YouTube-Konto verwalten** or **YouTube → YouTube-Konto**. Scan the QR with a phone and approve the connection on Google's screen. Both search entry points and the player share the account on this TV. Guests can browse selected public channels. Sign out from either account entry.
-- Live TV plays inside the preview. Select **Live-TV** on the home screen to watch and change channels with the remote. The player’s compact controls hide while watching. External TV apps remain available under **Apps → Weitere TV-Apps**.
+- Select **Live-TV** to open the senior launcher’s native player. Press Up or Down to change channels, hold Up for the programme guide, or hold Down for the channel list. When the installed classic launcher provides its signed Live TV entry, the player uses its channel preferences, reminders and recordings. Standalone playback stores them with the Rust app. Back returns to the Rust home after closing any open controls. External TV apps remain available under **Apps → Weitere TV-Apps**.
 
 The TV interface and renderer run in Rust with Android's NativeActivity, tiny-skia and fontdue. Android draws the resulting native surface at the TV's display size. The bundled native Android player activities handle playback. The preview currently stores its watchlist on the TV and has no Luna synchronization.
 

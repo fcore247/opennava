@@ -114,7 +114,7 @@ public final class LiveTvActivity extends Activity {
     }
 
     private static int stationIndex(String channelId) {
-        List<LiveGuide.Channel> stations = LiveGuide.channels(BuildConfig.RTL_ENABLED);
+        List<LiveGuide.Channel> stations = LiveGuide.channels();
         for (int i = 0; i < stations.size(); i++) {
             if (stations.get(i).id.equals(channelId)) return i;
         }
@@ -175,12 +175,12 @@ public final class LiveTvActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        ((StartupSignals) getApplication()).playerOpened();
+        SeniorPlaybackHost.playback(this, true);
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN);
-        channels = LiveGuide.channels(BuildConfig.RTL_ENABLED);
+        channels = LiveGuide.channels();
         if (channels.isEmpty()) { finish(); return; }
         String selected = getIntent().getStringExtra("channel");
         resumeProgramme = getIntent().getLongExtra("programmeStart", -1);
@@ -1436,7 +1436,7 @@ public final class LiveTvActivity extends Activity {
     private static void cancel(Future<?> task) { if (task != null) task.cancel(true); }
 
     @Override protected void onDestroy() {
-        ((StartupSignals) getApplication()).playerClosed();
+        SeniorPlaybackHost.playback(this, false);
         network.shutdownNow();
         guides.shutdownNow();
         listPool.shutdownNow();

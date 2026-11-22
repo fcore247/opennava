@@ -12,30 +12,27 @@ import android.view.KeyEvent;
 import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityEvent;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public final class FireHomeService extends AccessibilityService {
     private static final String AMAZON_LAUNCHER = "com.amazon.tv.launcher";
     private static final String AMAZON_HOME = "com.amazon.tv.launcher.ui.HomeActivity_vNext";
     private static final long DOUBLE_PRESS_MS = 550;
     private static final long HOME_SETTLE_MS = 200;
-    private static final AtomicBoolean pendingHome = new AtomicBoolean();
 
     private final Handler main = new Handler(Looper.getMainLooper());
     private boolean redirectScheduled;
     private FireHomeSignals signals;
     private long firstPhysical;
     private final Runnable singlePhysicalHome = () -> {
-        if (this.amazonEntered == 0 && isRedirectEnabled(this)) openRust();
+        if (this.amazonEntered == 0 && isRedirectEnabled(this)) HomeEntryActivity.openHome(this);
     };
     private final Runnable settledHome = () -> {
         redirectScheduled = false;
-        if (this.amazonEntered == 0 && isRedirectEnabled(this)) openRust();
+        if (this.amazonEntered == 0 && isRedirectEnabled(this)) HomeEntryActivity.openHome(this);
     };
 
     private long firstKeyUp, lastRawKey, firstWindow, lastRedirect, amazonEntered;
     private int lastWindow = -1;
-    private boolean secondDown, returnDown, sawRustWindow;
+    private boolean secondDown, returnDown, sawLauncherWindow;
 
     public static boolean isRedirectEnabled(Context context) {
         return context.getSharedPreferences("fire-home", MODE_PRIVATE).getBoolean("redirect", true);
@@ -43,10 +40,6 @@ public final class FireHomeService extends AccessibilityService {
 
     public static void setRedirectEnabled(Context context, boolean enabled) {
         context.getSharedPreferences("fire-home", MODE_PRIVATE).edit().putBoolean("redirect", enabled).apply();
-    }
-
-    public static boolean consumeHomeRequest() {
-        return pendingHome.getAndSet(false);
     }
 
     @Override protected void onServiceConnected() {
@@ -101,7 +94,7 @@ public final class FireHomeService extends AccessibilityService {
         if (!event.isCanceled() && event.getEventTime() - event.getDownTime() < ViewConfiguration.getLongPressTimeout()) {
             if (returnDown) {
                 amazonEntered = 0;
-                openRust();
+                HomeEntryActivity.openHome(this);
             } else if (secondDown) {
                 cancelRedirect();
                 firstWindow = 0;
@@ -124,9 +117,10 @@ public final class FireHomeService extends AccessibilityService {
             if (!AMAZON_LAUNCHER.equals(event.getPackageName()) || className.startsWith(AMAZON_LAUNCHER + ".")) {
                 cancelRedirect();
             }
-            if (getPackageName().equals(event.getPackageName()) && NativeActivity.class.getName().equals(className)) {
-                sawRustWindow = true;
-            }
+            boolean rustHome = getPackageName().equals(event.getPackageName()) && NativeActivity.class.getName().equals(className);
+            boolean classicHome = "site.navatv.launcher".equals(event.getPackageName())
+                    && ("site.navatv.full.MainActivity".equals(className) || "site.navatv.launcher.MainActivity".equals(className));
+            if (rustHome || classicHome) sawLauncherWindow = true;
             return;
         }
         long now = SystemClock.uptimeMillis();
@@ -142,19 +136,19 @@ public final class FireHomeService extends AccessibilityService {
             amazonEntered = 0;
         } else if (lastRawKey == 0 || now - lastRawKey > 900) {
             // On some remotes Fire OS hides HOME key events. Count only a second trip
-            // from our native activity to Amazon, never duplicates from the same visit.
-            if (sawRustWindow && firstWindow != 0 && now - firstWindow <= 1100) {
+            // from an OpenNava home to Amazon, never duplicates from the same visit.
+            if (sawLauncherWindow && firstWindow != 0 && now - firstWindow <= 1100) {
                 firstWindow = 0;
                 amazonEntered = now;
-                sawRustWindow = false;
+                sawLauncherWindow = false;
                 return;
             }
-            if (!sawRustWindow && window == lastWindow && now - lastRedirect < 600) return;
+            if (!sawLauncherWindow && window == lastWindow && now - lastRedirect < 600) return;
             firstWindow = now;
-        } else if (window == lastWindow && now - lastRedirect < 600 && !sawRustWindow) {
+        } else if (window == lastWindow && now - lastRedirect < 600 && !sawLauncherWindow) {
             return;
         }
-        sawRustWindow = false;
+        sawLauncherWindow = false;
         lastWindow = window;
         lastRedirect = now;
         if (!redirectScheduled) {
@@ -169,20 +163,6 @@ public final class FireHomeService extends AccessibilityService {
             redirectScheduled = false;
             firstWindow = 0;
             lastWindow = -1;
-        }
-    }
-
-    private void openRust() {
-        Intent intent = new Intent(Intent.ACTION_MAIN).setClass(this, NativeActivity.class)
-                .addCategory(Intent.CATEGORY_HOME)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
-                        | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        pendingHome.set(true);
-        try {
-            startActivity(intent);
-        } catch (RuntimeException error) {
-            pendingHome.set(false);
-            Log.w("OpenNavaHome", "Could not open the TV home", error);
         }
     }
 

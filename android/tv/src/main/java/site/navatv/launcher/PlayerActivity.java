@@ -78,7 +78,7 @@ public final class PlayerActivity extends Activity {
 
     @Override protected void onCreate(Bundle saved) {
         super.onCreate(saved);
-        ((StartupSignals)getApplication()).playerOpened();
+        SeniorPlaybackHost.playback(this, true);
         MediathekService.initialize(getApplicationContext());
         itemId = getIntent().getStringExtra("id");
         // Keep the original programme reference in the activity intent for process restoration.
@@ -529,7 +529,7 @@ public final class PlayerActivity extends Activity {
         super.onStop();
     }
     @Override protected void onDestroy() {
-        ((StartupSignals)getApplication()).playerClosed();
+        SeniorPlaybackHost.playback(this, false);
         resolver.shutdownNow();
         if (recordingId != null) Recordings.playing(this,null);
         super.onDestroy();

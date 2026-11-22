@@ -1,7 +1,6 @@
 package site.navatv.launcher;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -22,7 +21,7 @@ final class IdleTimer {
     void pause() { resumed = false; cancel(); }
     void interaction() { cancel(); refresh(); }
     private boolean canArm() {
-        if (!resumed || !owner.hasWindowFocus() || owner.isFinishing() || owner.isDestroyed() || !eligible.getAsBoolean()) return false;
+        if (!(owner.getApplication() instanceof SeniorPlaybackHost) || !resumed || !owner.hasWindowFocus() || owner.isFinishing() || owner.isDestroyed() || !eligible.getAsBoolean()) return false;
         PowerManager power = owner.getSystemService(PowerManager.class);
         return power == null || power.isInteractive();
     }
@@ -35,10 +34,9 @@ final class IdleTimer {
     private void cancel() { handler.removeCallbacks(expire); armed = false; }
     private void showAmbient() {
         armed = false;
-        if (!canArm() || VisitorMode.isVisitor(owner)) return;
+        if (!canArm()) return;
         try {
-            owner.startActivity(new Intent(owner, AmbientActivity.class));
-            Log.i("Libraries", "Screensaver started after three minutes");
+            ((SeniorPlaybackHost) owner.getApplication()).showAmbient(owner);
         } catch (RuntimeException failure) {
             Log.w("Libraries", "Could not open the screensaver", failure);
             refresh();

@@ -29,9 +29,8 @@ final class VisitorMode {
     }
 
     private static boolean setMode(Context context, String destination) {
-        SharedPreferences preferences = preferences(context);
-        if (destination.equals(preferences.getString(MODE, initialMode(context)))) return true;
-        return preferences.edit().putString(MODE, destination).commit();
+        return site.navatv.updates.LauncherProfile.save(context, PERSONAL.equals(destination)
+                ? site.navatv.updates.LauncherProfile.SENIOR : site.navatv.updates.LauncherProfile.CLASSIC);
     }
 
     static boolean selectFull(Context context) { return setMode(context, VISITOR); }
@@ -81,6 +80,9 @@ final class VisitorMode {
     }
 
     static boolean launchIfSelected(Context context, boolean normalHome) {
+        // The first regular Home after a classic update may precede the Rust activity.
+        // Migrate the actual old Home destination before interpreting its stale PERSONAL/VISITOR flag.
+        if (normalHome) LauncherChoice.selected(context);
         if (!isVisitor(context)) return false;
         if (normalHome && site.navatv.updates.RustHome.launchIfPreferred(context)) return true;
         if (available(context) && launchClassic(context, normalHome)) return true;

@@ -9,7 +9,7 @@ import android.os.PowerManager;
 import java.lang.ref.WeakReference;
 
 /** Screen transitions and cold entry are process-wide. All calls run on the main thread. */
-public class StartupSignals extends Application {
+public class StartupSignals extends Application implements SeniorPlaybackHost {
     private boolean pending = true;
     private boolean interactive;
     private boolean playerOpen;
@@ -52,6 +52,11 @@ public class StartupSignals extends Application {
         return true;
     }
     void clear() { pending = false; }
-    void playerOpened() { playerOpen = true; clear(); }
-    void playerClosed() { playerOpen = false; }
+    @Override public void setPlayerOpen(boolean open) {
+        playerOpen = open;
+        if (open) clear();
+    }
+    @Override public void showAmbient(android.app.Activity owner) {
+        if (!VisitorMode.isVisitor(owner)) owner.startActivity(new Intent(owner, AmbientActivity.class));
+    }
 }

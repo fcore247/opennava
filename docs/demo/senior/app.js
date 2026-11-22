@@ -442,6 +442,11 @@
   function openChoice() {
     if (current.provider || el('view-choice').open) return;
     el('visitor-message').textContent = '';
+    const choice = el('view-choice').querySelector('[data-command="visitor"]');
+    if (choice && typeof window.NavaTV?.openLauncherChoice === 'function') {
+      choice.dataset.command = 'launcher-choice';
+      choice.textContent = navigator.language.startsWith('de') ? 'Startansicht wählen' : 'Choose home screen';
+    }
     el('change-view').setAttribute('aria-expanded','true');
     el('view-choice').showModal();
     window.NavaTV?.setHomeShortcuts?.(false);
@@ -589,6 +594,10 @@
       case 'change-view':openChoice();break;
       case 'stay':closeChoice();break;
       case 'visitor':openVisitor();break;
+      case 'launcher-choice':
+        closeChoice();
+        window.NavaTV.openLauncherChoice();
+        break;
       case 'back':leaveStation();break;
       case 'station-home':if (current.provider) goPage('home');break;
       case 'keyboard':setKeyboard(!current.keyboard);break;

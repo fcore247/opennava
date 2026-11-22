@@ -21,7 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /** Reminder deadlines are checked whenever our television UI is visible, including during playback. */
-final class ProgrammeReminders implements Application.ActivityLifecycleCallbacks {
+public final class ProgrammeReminders implements Application.ActivityLifecycleCallbacks {
     static final class Entry {
         final String channel, title, event;
         final long start, end;
@@ -51,7 +51,7 @@ final class ProgrammeReminders implements Application.ActivityLifecycleCallbacks
     /** Only read on the main thread. Cleared on pause, including external TV activities. */
     static Activity foreground() { return instance == null ? null : instance.visible; }
 
-    static void install(Application app) {
+    public static void install(Application app) {
         if (instance != null) return;
         instance = new ProgrammeReminders();
         app.registerActivityLifecycleCallbacks(instance);
@@ -105,7 +105,7 @@ final class ProgrammeReminders implements Application.ActivityLifecycleCallbacks
     }
 
     static String channelName(String id) {
-        for (LiveGuide.Channel channel : LiveGuide.channels(BuildConfig.RTL_ENABLED)) if (channel.id.equals(id)) return channel.name;
+        for (LiveGuide.Channel channel : LiveGuide.channels()) if (channel.id.equals(id)) return channel.name;
         return id;
     }
 

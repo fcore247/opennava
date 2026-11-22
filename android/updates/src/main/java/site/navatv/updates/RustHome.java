@@ -31,16 +31,17 @@ public final class RustHome {
     }
 
     static boolean preferred(Context c) {
-        return Updates.prefs(c).getBoolean(PREFERRED, false);
+        String choice = LauncherProfile.get(c);
+        return choice.isEmpty() ? Updates.prefs(c).getBoolean(PREFERRED, false) : LauncherProfile.RUST.equals(choice);
     }
 
     public static boolean useClassic(Context c) {
-        return !preferred(c) || Updates.prefs(c).edit().remove(PREFERRED).commit();
+        return !preferred(c) || LauncherProfile.save(c, LauncherProfile.CLASSIC);
     }
 
     static void choose(Context c) throws Exception {
         if (installed(c) == null) throw new IllegalStateException("Install Rust first.");
-        if (!Updates.prefs(c).edit().putBoolean(PREFERRED, true).commit())
+        if (!LauncherProfile.save(c, LauncherProfile.RUST))
             throw new IllegalStateException("Your TV could not save the launcher selection.");
         try {
             start(c);
@@ -68,7 +69,9 @@ public final class RustHome {
     private static void start(Context c) {
         // Omit the one-off preview's fromClassic extra. Rust then sends OPEN_CLASSIC when
         // the person explicitly returns, including after classic's process has restarted.
-        c.startActivity(intent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
+        Intent home = new Intent(Intent.ACTION_MAIN).setClassName(ReleaseFeed.PREVIEW, ReleaseFeed.PREVIEW + ".HomeEntryActivity");
+        if (c.getPackageManager().resolveActivity(home, 0) == null) home = intent();
+        c.startActivity(home.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_SINGLE_TOP));
     }
 }

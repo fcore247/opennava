@@ -176,7 +176,7 @@ final class Recordings {
     }
 
     static LiveGuide.Channel channel(JSONObject row) {
-        for (LiveGuide.Channel ch : LiveGuide.channels(BuildConfig.RTL_ENABLED))
+        for (LiveGuide.Channel ch : LiveGuide.channels())
             if (ch.id.equals(row.optString("channel"))) return ch;
         return null;
     }

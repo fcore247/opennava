@@ -429,7 +429,7 @@ fn consume_home_request(app: &AndroidApp) -> JniResult<bool> {
     JavaVM::singleton()?.attach_current_thread(|env| {
         let raw = app.activity_as_ptr().cast();
         let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
-        let class = app_class(env, &activity, "site.navatv.rustpreview.FireHomeService")?;
+        let class = app_class(env, &activity, "site.navatv.rustpreview.HomeEntryActivity")?;
         env.call_static_method(&class, jni_str!("consumeHomeRequest"), jni_sig!("()Z"), &[])?
             .z()
     })
@@ -629,6 +629,15 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
                 .v()?;
                 Ok(true)
             }
+            Action::ChooseLauncher => {
+                internal_player(
+                    env,
+                    activity,
+                    "site.navatv.launcher.LauncherChoiceActivity",
+                    &[],
+                )?;
+                Ok(true)
+            }
             Action::ConnectPhone => {
                 internal_player(env, activity, "site.navatv.launcher.PhoneLinkActivity", &[])?;
                 Ok(true)
@@ -644,7 +653,14 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
             }
             Action::LaunchApp(package) => launch_packages(env, activity, &[package.as_str()]),
             Action::LiveTv => {
-                internal_player(env, activity, "site.navatv.launcher.LiveTvActivity", &[])?;
+                let class = app_class(env, activity, "site.navatv.rustpreview.SeniorLive")?;
+                env.call_static_method(
+                    &class,
+                    jni_str!("open"),
+                    jni_sig!("(Landroid/app/Activity;)V"),
+                    &[JValue::Object(activity)],
+                )?
+                .v()?;
                 Ok(true)
             }
             Action::YoutubeAccount => {

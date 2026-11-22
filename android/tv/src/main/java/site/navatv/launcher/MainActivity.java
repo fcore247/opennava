@@ -115,6 +115,15 @@ public class MainActivity extends Activity {
         });
     }
     private final class Bridge {
+        @JavascriptInterface public void openLauncherChoice() {
+            runOnUiThread(() -> {
+                if (canCallPage() && resumed) {
+                    startActivity(new Intent(MainActivity.this, site.navatv.launcher.LauncherChoiceActivity.class)
+                            .putExtra("current", "senior"));
+                }
+            });
+        }
+
         @android.webkit.JavascriptInterface public void openUpdates() {
             runOnUiThread(() -> site.navatv.updates.Updates.open(MainActivity.this));
         }
@@ -254,7 +263,7 @@ public class MainActivity extends Activity {
             return false;
         }
         if ("site.opennava.action.OPEN_CLASSIC".equals(intent.getAction())) {
-            site.navatv.updates.RustHome.useClassic(this);
+            VisitorMode.selectFull(this);
             if (VisitorMode.launchIfSelected(this, false)) { finish(); return true; }
             pendingHome = true;
             return false;

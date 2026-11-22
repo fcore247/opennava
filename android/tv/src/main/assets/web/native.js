@@ -69,7 +69,13 @@ if (window.NavaTV) {
     launcher.setAttribute('role', 'switch');
     launcher.innerHTML = '<span><strong>OpenNava as your home screen</strong><small>Restore the original Home button at any time</small></span><span class="quick-switch" aria-hidden="true"><span></span></span>';
     section.after(launcher);
-    if (NavaTV.hasPersonalView?.()) {
+    if (typeof NavaTV.openLauncherChoice === 'function') {
+      const choice = document.createElement('button');
+      choice.className = 'native-home-toggle';
+      choice.textContent = navigator.language.startsWith('de') ? 'Startansicht wählen' : 'Choose home screen';
+      choice.addEventListener('click', () => NavaTV.openLauncherChoice());
+      launcher.after(choice);
+    } else if (NavaTV.hasPersonalView?.()) {
       const personal = document.createElement('button');
       personal.className = 'native-home-toggle';
       personal.textContent = 'Senior view';

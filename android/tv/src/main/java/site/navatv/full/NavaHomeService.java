@@ -22,6 +22,7 @@ public final class NavaHomeService extends AccessibilityService {
     @Override protected boolean onKeyEvent(android.view.KeyEvent event) {
         if (event.getKeyCode() != android.view.KeyEvent.KEYCODE_HOME || !(getApplication() instanceof ProgrammeShortcut)
                 || !LauncherState.isRequested(this) || LauncherState.isBypassed(this)) return false;
+        if (site.navatv.launcher.LauncherChoice.rustHandlesFireHome(this)) return false;
         return ((ProgrammeShortcut)getApplication()).onHomeKey(event);
     }
 
@@ -45,6 +46,7 @@ public final class NavaHomeService extends AccessibilityService {
         }
         if (!AMAZON_PACKAGE.equals(packageName) || !AMAZON_HOME.equals(className))
             return;
+        if (site.navatv.launcher.LauncherChoice.rustHandlesFireHome(this)) return;
         if (!LauncherState.isRequested(this) || LauncherState.isBypassed(this)) {
             Log.i("OpenNava", "Amazon Home allowed; requested=" + LauncherState.isRequested(this)
                     + "; bypass=" + LauncherState.isBypassed(this));

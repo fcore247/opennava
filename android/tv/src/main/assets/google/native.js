@@ -65,8 +65,13 @@ if (window.NavaTV) {
     }
     const back = document.createElement('button');
     back.className = 'visitor-return-panel';
-    back.dataset.action = 'return-senior';
-    back.textContent = 'Senior view';
+    if (typeof NavaTV.openLauncherChoice === 'function') {
+      back.textContent = navigator.language.startsWith('de') ? 'Startansicht wählen' : 'Choose home screen';
+      back.addEventListener('click', () => NavaTV.openLauncherChoice());
+    } else {
+      back.dataset.action = 'return-senior';
+      back.textContent = 'Senior view';
+    }
     section.after(back);
     requestAnimationFrame(() => panel.querySelector('#quick-device')?.focus());
     panel.querySelector('.quick-footer').innerHTML = '<span>☰ Quick settings</span><span>↩ Back</span>';

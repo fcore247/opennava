@@ -22,6 +22,7 @@ public final class YoutubeSession extends Application {
 
     @Override public void onCreate() {
         super.onCreate();
+        site.navatv.launcher.ProgrammeReminders.install(this);
         GlobalPreferences.instance(this);
         // Complete the SDK's local restore before a cold launch can reach search or playback.
         YouTubeAccountManager.instance(service()).init();

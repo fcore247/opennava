@@ -81,7 +81,7 @@ final class FireButtonConnection {
                 main.removeCallbacks(personalHome);
                 main.postDelayed(personalHome, 150);
             } else if ("home".equals(kind)) {
-                if (VisitorMode.isVisitor(service) || !site.navatv.full.NavaHomeService.redirectAllowed(service)) { firstHome = 0; return; }
+                if (LauncherChoice.rustHandlesFireHome(service) || VisitorMode.isVisitor(service) || !site.navatv.full.NavaHomeService.redirectAllowed(service)) { firstHome = 0; return; }
                 if (firstHome != 0 && time >= firstHome && time - firstHome <= 650) {
                     firstHome = 0;
                     HomeProgrammeShortcut.markOpening();

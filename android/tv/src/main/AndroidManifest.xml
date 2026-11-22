@@ -60,6 +60,7 @@
         <provider android:name=".CompanionProvider" android:authorities="site.navatv.launcher.companion"
             android:exported="true" android:permission="android.permission.DUMP" />
         <activity android:name=".PhoneLinkActivity" android:exported="false" android:screenOrientation="landscape" />
+        <activity android:name=".LauncherChoiceActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name=".HomePersonalizationActivity" android:exported="false" android:screenOrientation="landscape" />
         <provider android:name=".HomeLayoutProvider" android:authorities="site.navatv.launcher.homelayout"
             android:exported="true" android:permission="site.navatv.launcher.permission.HOME_LAYOUT"/>
@@ -73,7 +74,8 @@
         <service android:name=".RecordingArchiveJob" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE" />
         <activity android:name=".TvProgrammeActivity" android:exported="false" android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode" />
-        <activity android:name=".LiveTvActivity" android:exported="false" android:screenOrientation="landscape"
+        <activity android:name=".LiveTvActivity" android:exported="true"
+            android:permission="site.navatv.launcher.permission.HOME_LAYOUT" android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode" />
         <activity android:name=".LiveLibraryActivity" android:exported="false" android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|keyboard|navigation|uiMode" />

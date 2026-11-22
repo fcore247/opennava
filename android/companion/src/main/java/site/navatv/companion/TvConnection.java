@@ -1,5 +1,6 @@
 package site.navatv.companion;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.net.Uri;
@@ -24,6 +25,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /** A controller instance belongs to one phone. Network and package operations run off the UI thread. */
 public final class TvConnection {
     public static final String TV_PACKAGE = "site.navatv.launcher";
+    private static final String RUST_TV = "site.navatv.rustpreview";
     private static final String OLD_NavaTV = "site.navatv.full";
     private static final int MIN_COMPANION_TV_VERSION = 100;
     static final int FIRST_TV_WITH_STARTUP_UPDATES = 112;
@@ -325,17 +327,47 @@ public final class TvConnection {
         return found.find() ? Integer.parseInt(found.group(1)) : -1;
     }
 
+    private boolean usesNativeHomeRoute(AdbConnection session) throws Exception {
+        String resolved = shell(session, "cmd package resolve-activity --brief --user current"
+                + " -a android.intent.action.MAIN -c android.intent.category.HOME 2>/dev/null | tail -n 1").trim();
+        ComponentName home = ComponentName.unflattenFromString(resolved);
+        if (home == null) return false;
+        if (RUST_TV.equals(home.getPackageName())) return true;
+        if (!"com.amazon.tv.launcher".equals(home.getPackageName())) return false;
+
+        String settings = shell(session, "settings --user current get secure accessibility_enabled;"
+                + " settings --user current get secure enabled_accessibility_services");
+        String[] values = settings.trim().split("\\r?\\n", 2);
+        if (values.length != 2 || !"1".equals(values[0])) return false;
+        ComponentName rustHomeService = new ComponentName(RUST_TV, RUST_TV + ".FireHomeService");
+        for (String entry : values[1].trim().split(":")) {
+            if (rustHomeService.equals(ComponentName.unflattenFromString(entry))) return true;
+        }
+        return false;
+    }
+
     /** Open the selected launcher profile on this TV, including when another app owns the Home key. */
     public void openHome() throws Exception {
         AdbConnection session = active();
+        if (usesNativeHomeRoute(session)) {
+            // Fire OS routes this single press according to the OpenNava/Amazon setting on the TV.
+            shell(session, "input keyevent 3");
+            return;
+        }
         String otherLauncher = "de.flori.aura.mediatheken";
         String otherFull = "de.flori.aura.tv";
-        String candidates = TV_PACKAGE + " " + otherLauncher + " " + OLD_NavaTV + " " + otherFull;
+        String candidates = TV_PACKAGE + " " + otherLauncher + " " + OLD_NavaTV + " " + otherFull + " " + RUST_TV;
         String pkg = shell(session, "for p in " + candidates + "; do "
                 + "if pm path --user current \"$p\" 2>/dev/null | grep -q '^package:'; then echo \"$p\"; break; fi; done").trim();
         String action;
-        if (TV_PACKAGE.equals(pkg) || otherLauncher.equals(pkg)) {
-            // The unified entry forwards to the saved profile; a synthetic HOME key may open the vendor launcher or guide.
+        String component = pkg + "/.MainActivity";
+        if (RUST_TV.equals(pkg)) {
+            String entry = RUST_TV + "/.HomeEntryActivity";
+            String resolved = shell(session, "cmd package resolve-activity --brief --user current -n " + entry).trim();
+            component = resolved.endsWith(entry) || resolved.endsWith(RUST_TV + "/" + RUST_TV + ".HomeEntryActivity")
+                    ? entry : RUST_TV + "/android.app.NativeActivity";
+        }
+        if (RUST_TV.equals(pkg) || TV_PACKAGE.equals(pkg) || otherLauncher.equals(pkg)) {
             action = "-a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER";
         } else if (OLD_NavaTV.equals(pkg) || otherFull.equals(pkg)) {
             action = "-a " + pkg + ".VISIT_HOME";
@@ -343,7 +375,7 @@ public final class TvConnection {
             throw new IOException("Install OpenNava on the connected TV to open its home screen.");
         }
         String result = shell(session, "am start -W --user current --activity-clear-top --activity-single-top "
-                + action + " -n " + pkg + "/.MainActivity");
+                + action + " -n " + component);
         if (result.contains("Error") || result.contains("Exception") || !result.contains("Status: ok"))
             throw new IOException("The TV could not open the launcher home screen.");
     }

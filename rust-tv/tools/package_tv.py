@@ -117,7 +117,7 @@ def verify_package(apk, rust_libraries, tools, env, expected_signer):
         if any(name.startswith(('assets/web/', 'assets/full/', 'assets/senior/')) for name in names):
             raise ValueError('Unexpected legacy browser interface assets.')
         for name in ('player/SmartTube-MIT.txt', 'player/Regex-1.1.11-source.zip', 'player/J2V8-License.txt',
-                     'rust/index.json', 'fonts/OFL.txt', 'fonts/OFL-ReenieBeanie.txt', 'ASSETS.md'):
+                     'rust/index.json', 'fonts/OFL.txt', 'fonts/OFL-ReenieBeanie.txt', 'fonts/OFL-InstrumentSerif.txt', 'ASSETS.md'):
             if 'assets/licenses/' + name not in names:
                 raise ValueError('Missing packaged notice: ' + name)
     xml = subprocess.check_output([tools / 'aapt', 'dump', 'xmltree', apk, 'AndroidManifest.xml'],
@@ -125,7 +125,9 @@ def verify_package(apk, rust_libraries, tools, env, expected_signer):
     for value in (PACKAGE, 'android:banner', 'android.app.NativeActivity', 'site.navatv.launcher',
                   'android.intent.category.LEANBACK_LAUNCHER', 'site.navatv.full.NavaPlayerActivity',
                   PACKAGE + '.StreamActivity', PACKAGE + '.YoutubeAccountActivity',
-                  'site.navatv.launcher.LiveTvActivity', 'site.navatv.launcher.PhoneLinkActivity',
+                  'site.navatv.launcher.LiveTvActivity', 'site.navatv.launcher.TvProgrammeActivity',
+                  'site.navatv.launcher.RecordingsActivity', 'site.navatv.launcher.RecordingService',
+                  'site.navatv.launcher.RecordingArchiveJob', 'site.navatv.launcher.PhoneLinkActivity',
                   'site.navatv.updates.UpdateActivity',
                   'site.navatv.updates.UpdateJob', 'site.navatv.updates.InstallResult',
                   'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.RECEIVE_BOOT_COMPLETED'):

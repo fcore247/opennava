@@ -42,6 +42,7 @@ pub enum Action {
     LaunchApp(String),
     Personalization,
     ConnectPhone,
+    ChooseLauncher,
     Updates,
     SetFireHome(bool),
     YoutubeCatalog {
@@ -115,6 +116,7 @@ enum Command {
     LaunchApp(String),
     Personalization,
     ConnectPhone,
+    ChooseLauncher,
     Updates,
     SetFireHome(bool),
     Provider(usize),
@@ -388,6 +390,7 @@ impl Ui {
             Command::LaunchApp(package) => return Action::LaunchApp(package),
             Command::Personalization => return Action::Personalization,
             Command::ConnectPhone => return Action::ConnectPhone,
+            Command::ChooseLauncher => return Action::ChooseLauncher,
             Command::Updates => return Action::Updates,
             Command::SetFireHome(enabled) => return Action::SetFireHome(enabled),
             Command::CloseFolder(i) => self.close_folder(i),
@@ -1197,11 +1200,19 @@ impl Ui {
                     Command::ConnectPhone,
                     false,
                 );
+                self.button(
+                    &mut c,
+                    8,
+                    "Startoberfläche wählen",
+                    [585., row(1.)[1], 430., 58.],
+                    Command::ChooseLauncher,
+                    false,
+                );
                 self.text(
                     &mut c,
                     "Ein eigener Platz zum Ausprobieren.",
                     585.,
-                    252.,
+                    322.,
                     29,
                     WHITE,
                     true,
@@ -1219,7 +1230,7 @@ impl Ui {
                 .iter()
                 .enumerate()
                 {
-                    self.text(&mut c, text, 585., 307. + row as f32 * 39., 19, SOFT, false);
+                    self.text(&mut c, text, 585., 377. + row as f32 * 39., 19, SOFT, false);
                 }
             }
             Page::Exit => {
@@ -1494,6 +1505,8 @@ mod tests {
         assert!(matches!(ui.key(Key::Select), Action::Personalization));
         ui.key(Key::Right);
         assert!(matches!(ui.key(Key::Select), Action::ConnectPhone));
+        ui.key(Key::Down);
+        assert!(matches!(ui.key(Key::Select), Action::ChooseLauncher));
     }
 
     #[test]

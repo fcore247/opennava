@@ -72,6 +72,16 @@ public final class MainActivity extends Activity {
                 (intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0 &&
                 (intent.getBooleanExtra("opennava.normalHome", false) || intent.getBooleanExtra(EXTRA_FROM_HOME, false));
     }
+    // Android may deliver an already queued normal Home after another activity saved a new choice.
+    private boolean forwardStaleHome(Intent intent) {
+        if (!normalFullHome(intent)) return false;
+        String mode = site.navatv.launcher.LauncherChoice.selected(this);
+        if (!site.navatv.updates.LauncherProfile.RUST.equals(mode)
+                && !site.navatv.updates.LauncherProfile.SENIOR.equals(mode)) return false;
+        if (!site.navatv.launcher.LauncherChoice.openSelected(this)) return false;
+        finish();
+        return true;
+    }
     private volatile boolean editingText;
     private NavaYouTube youtube;
     private MediathekService mediathek;
@@ -80,6 +90,7 @@ public final class MainActivity extends Activity {
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override public void onCreate(Bundle savedState) {
         super.onCreate(savedState);
+        if (savedState == null && forwardStaleHome(getIntent())) return;
         if (savedState == null && normalFullHome(getIntent()))
             site.navatv.updates.Updates.home(this, () -> site.navatv.updates.Updates.openFullSettings(this), null);
         pendingHomeNavigation = homeNavigation(getIntent());
@@ -166,6 +177,7 @@ public final class MainActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if (forwardStaleHome(intent)) return;
         pendingPreviewHint = normalFullHome(intent);
         if (homeNavigation(intent)) pendingHomeNavigation = true;
         LauncherState.clearBypass(this);
@@ -537,6 +549,15 @@ public final class MainActivity extends Activity {
     }
 
     private final class NativeBridge {
+        @JavascriptInterface public void openLauncherChoice() {
+            runOnUiThread(() -> {
+                if (pageReady && webView != null && webView.getUrl() != null && trusted(Uri.parse(webView.getUrl()))) {
+                    startActivity(new Intent(MainActivity.this, site.navatv.launcher.LauncherChoiceActivity.class)
+                            .putExtra("current", "classic"));
+                }
+            });
+        }
+
         @android.webkit.JavascriptInterface public void openUpdates() {
             runOnUiThread(() -> site.navatv.updates.Updates.openFullSettings(MainActivity.this));
         }

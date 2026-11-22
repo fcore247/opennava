@@ -10,9 +10,13 @@ def collectSources = tasks.register('collectPlayerSources', Sync) {
         into 'site/navatv/full'
     }
     from('../../android/tv/src/main/java/site/navatv/launcher') {
-        include 'HomeLayoutStore.java', 'HomeLayoutProvider.java', 'PhoneLinkActivity.java', 'PhoneLinkAddress.java'
+        include 'HomeLayoutStore.java', 'HomeLayoutProvider.java', 'LauncherChoice.java', 'LauncherChoiceActivity.java', 'PhoneLinkActivity.java', 'PhoneLinkAddress.java'
         include 'PlayerChrome.java', 'CompactPlaybackControls.java', 'HomePersonalizationActivity.java', 'PlaybackLoadingMark.java',
                 'LiveGuide.java', 'ArteCatalog.java', 'MediathekService.java'
+        include 'LiveTvActivity.java', 'LiveTvControls.java', 'LiveTvMediaSession.java',
+                'TvProgrammeActivity.java', 'ProgrammeReminders.java', 'RecordingsActivity.java',
+                'Recordings.java', 'RecordingHls.java', 'RecordingService.java', 'RecordingArchiveJob.java',
+                'PlayerActivity.java', 'DirectionShortcut.java', 'IdleTimer.java', 'SeniorPlaybackHost.java'
         into 'site/navatv/launcher'
     }
     into playerSources
@@ -28,8 +32,15 @@ def collectNotices = tasks.register('collectNotices', Sync) {
     from('../../android/NOTICE.md') { into 'licenses/player' }
     from('../assets') { include 'OFL*.txt'; into 'licenses/fonts' }
     from('../../android/tv/src/main/assets/assets/fonts') {
-        include 'Manrope.ttf'
+        include 'Manrope.ttf', 'InstrumentSerif-Regular.ttf'
         into 'assets/fonts'
+    }
+    from('../../android/tv/src/main/assets/assets/landschaften') {
+        include 'night.jpg', 'dawn.jpg', 'day.jpg', 'evening.jpg'
+        into 'assets/landschaften'
+    }
+    from('../../android/tv/src/main/assets/assets/fonts/OFL-InstrumentSerif.txt') {
+        into 'licenses/fonts'
     }
     from('../ASSETS.md') { into 'licenses' }
     from(providers.gradleProperty('rustNotices')) { into 'licenses/rust' }
@@ -44,8 +55,8 @@ android {
         applicationId 'site.navatv.rustpreview'
         minSdk 26
         targetSdk 34
-        versionCode 11
-        versionName '0.2.5'
+        versionCode 12
+        versionName '0.2.6'
         ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
     }
     sourceSets.main {

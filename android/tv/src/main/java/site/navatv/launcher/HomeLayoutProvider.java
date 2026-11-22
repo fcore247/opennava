@@ -18,6 +18,13 @@ public final class HomeLayoutProvider extends ContentProvider {
         getContext().enforceCallingOrSelfPermission(permission, "Home layout access");
         long caller = Binder.clearCallingIdentity();
         try {
+            if (classic && ("launcher_get".equals(method) || "launcher_set".equals(method) || "launcher_adopt_rust".equals(method))) {
+                Bundle result = new Bundle();
+                if ("launcher_adopt_rust".equals(method)) site.navatv.updates.LauncherProfile.adoptRust(getContext());
+                if ("launcher_set".equals(method)) result.putBoolean("saved", site.navatv.updates.LauncherProfile.save(getContext(), arg));
+                result.putString("launcher", site.navatv.updates.LauncherProfile.get(getContext()));
+                return result;
+            }
             if (!classic) return HomeLayoutStore.companion(getContext(), method, arg);
             if ("read".equals(method)) return HomeLayoutStore.read(getContext());
             if ("write".equals(method) || "adopt".equals(method)) return HomeLayoutStore.write(getContext(), arg, "adopt".equals(method));
