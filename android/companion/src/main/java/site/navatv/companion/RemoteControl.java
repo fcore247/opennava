@@ -6,8 +6,6 @@ import android.graphics.*;
 import android.view.*;
 import android.widget.*;
 
-import site.navatv.launcher.PhoneGuide;
-import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 
 final class RemoteControl {
@@ -19,70 +17,11 @@ final class RemoteControl {
         this.key = key;
     }
 
-    void buildLive(LinearLayout body, TvConnection.LiveState state, boolean hasRtl, Consumer<String> control) {
-        String station = state.channel;
-        for (PhoneGuide.Channel channel : PhoneGuide.channels(hasRtl)) {
-            if (channel.id.equals(state.channel)) { station = channel.name; break; }
-        }
-        u.space(body, 15);
-        LinearLayout card = u.column();
-        card.setBackground(u.shape(GREEN, 26, 0));
-        u.pad(card, 18, 17, 18, 17);
-        LinearLayout label = u.row();
-        label.addView(new Art(u.context, "onair", APRICOT), u.lp(20, 20));
-        u.gap(label, 7);
-        label.addView(u.text(state.paused ? "Live TV · Paused" : "Live TV", 14, WHITE, 660));
-        card.addView(label);
-        u.space(card, 7);
-        card.addView(u.title(station, 38, WHITE));
-        u.space(card, 15);
-        LinearLayout channels = u.row();
-        channels.addView(u.button("Channel −", "left", false, () -> control.accept("previous")), u.weight(52));
-        u.gap(channels, 8);
-        channels.addView(u.button("Channel +", "right", false, () -> control.accept("next")), u.weight(52));
-        channels.getChildAt(0).setContentDescription("Previous channel");
-        channels.getChildAt(2).setContentDescription("Next channel");
-        card.addView(channels);
-        body.addView(card);
-        u.space(body, 15);
-        LinearLayout transport = u.row();
-        seekButton(transport, "rewind", "Rewind", state.seekable, () -> control.accept("rewind"));
-        u.gap(transport, 7);
-        transport.addView(u.button(state.paused ? "Resume" : "Pause", state.paused ? "resume" : "pause", true,
-                () -> control.accept("pause")), new LinearLayout.LayoutParams(0, u.d(58), 1.8f));
-        u.gap(transport, 7);
-        seekButton(transport, "forward", "Fast forward", state.seekable, () -> control.accept("forward"));
-        body.addView(transport);
-        u.space(body, 10);
-        LinearLayout options = u.row();
-        options.addView(u.button("TV guide", "library", false, () -> control.accept("guide")), u.weight(53));
-        u.gap(options, 8);
-        options.addView(u.button("Record", "record", false, () -> control.accept("record")), u.weight(53));
-        body.addView(options);
-        u.space(body, 17);
-        LinearLayout system = u.row();
-        system.setBackground(u.shape(WHITE, 18, LINE));
-        quick(system, "back", "Back", 4);
-        quick(system, "minus", "Volume down", 25);
-        quick(system, "plus", "Volume up", 24);
-        body.addView(system);
-    }
-
-    private void seekButton(LinearLayout row, String icon, String label, boolean enabled, Runnable action) {
-        FrameLayout button = new FrameLayout(u.context);
-        button.addView(new Art(u.context, icon, INK), new FrameLayout.LayoutParams(u.d(22), u.d(22), Gravity.CENTER));
-        u.action(button, WHITE, 16, LINE, action);
-        button.setContentDescription(label);
-        button.setEnabled(enabled);
-        button.setAlpha(enabled ? 1f : .4f);
-        row.addView(button, u.weight(58));
-    }
-
-    void build(LinearLayout body, Runnable sendText) {
+    void build(LinearLayout body, Runnable sendText, Runnable tvHome) {
         u.space(body, 16);
         LinearLayout panel = u.column();
         panel.setGravity(Gravity.CENTER_HORIZONTAL);
-        panel.setBackground(u.shape(0xffe9ebe1, 30, LINE));
+        panel.setBackground(u.shape(CARD, 30, LINE));
         u.pad(panel, 14, 13, 14, 11);
         LinearLayout header = u.row();
         header.addView(u.text("Navigation", 14, MUTED, 650), u.weight(-2));
@@ -101,6 +40,14 @@ final class RemoteControl {
         u.space(panel, 9);
         LinearLayout shortcuts = u.row();
         quick(shortcuts, "back", "Back", 4);
+        LinearLayout home = u.column();
+        home.setGravity(Gravity.CENTER);
+        home.addView(new Art(u.context, "home", INK), u.lp(21, 21));
+        u.space(home, 4);
+        home.addView(u.text("TV home", 11, INK, 650), u.lp(WRAP, WRAP));
+        u.action(home, 0, 14, 0, tvHome);
+        home.setContentDescription("Open the TV home screen");
+        shortcuts.addView(home, u.weight(59));
         quick(shortcuts, "menu", "Menu", 82);
         panel.addView(shortcuts, u.lp(MATCH, 59));
         body.addView(panel);
@@ -151,7 +98,7 @@ final class RemoteControl {
 
     private void media(LinearLayout bar, String icon, String title, int code) {
         FrameLayout b = iconButton(icon, title, code);
-        u.action(b, WHITE, 17, LINE, () -> key.accept(code));
+        u.action(b, CARD, 17, LINE, () -> key.accept(code));
         bar.addView(b, u.weight(52));
     }
 
@@ -179,14 +126,14 @@ final class RemoteControl {
                     b.addView(sign, new FrameLayout.LayoutParams(-1, -1));
                 } else
                     b.addView(
-                            new Art(u.context, icons[i], 0xfff1f0df),
+                            new Art(u.context, icons[i], 0xfff4f3f9),
                             new FrameLayout.LayoutParams(u.d(22), u.d(22), Gravity.CENTER));
                 final int keyCode = codes[i];
                 u.action(
                         b,
-                        ok ? 0xff49634e : 0,
+                        ok ? 0xff5a4d96 : 0,
                         length,
-                        ok ? 0xff687a65 : 0,
+                        ok ? 0xff8676c9 : 0,
                         () -> {
                             b.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
                             key.accept(keyCode);
@@ -204,18 +151,18 @@ final class RemoteControl {
             super.onDraw(c);
             float s = getWidth(), center = s * .5f;
             brush.setShader(
-                    new LinearGradient(0, 0, s, s, 0xff334d3d, 0xff233a2f, Shader.TileMode.CLAMP));
+                    new LinearGradient(0, 0, s, s, 0xff2a2f42, 0xff1b1f2c, Shader.TileMode.CLAMP));
             brush.setStyle(Paint.Style.FILL);
             c.drawCircle(center, center, center - 1, brush);
             brush.setShader(null);
             brush.setStyle(Paint.Style.STROKE);
             brush.setStrokeWidth(u.d(1));
-            brush.setColor(0xff5b6d59);
+            brush.setColor(0xff3b4258);
             c.drawCircle(center, center, center - u.d(4), brush);
-            brush.setColor(0xff273f31);
+            brush.setColor(0xff12151e);
             brush.setStrokeWidth(u.d(3));
             c.drawCircle(center, center, s * .195f, brush);
-            brush.setColor(0x706b7a69);
+            brush.setColor(0x70596077);
             brush.setStrokeWidth(u.d(1));
             for (int i = 0; i < 4; i++) {
                 c.save();

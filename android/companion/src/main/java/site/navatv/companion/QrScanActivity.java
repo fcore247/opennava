@@ -18,10 +18,10 @@ public final class QrScanActivity extends CaptureActivity {
         FrameLayout preview = new FrameLayout(this);
         getLayoutInflater().inflate(R.layout.zxing_capture, preview, true);
         page.addView(preview, new LinearLayout.LayoutParams(Surface.MATCH, 0, 1));
-        ui.addHomeBar(page, () -> {
+        page.addView(ui.button("Close", "close", false, () -> {
             setResult(RESULT_CANCELED, new Intent().putExtra(EXTRA_HOME, true));
             finish();
-        });
+        }), ui.lp(Surface.MATCH, 56));
         setContentView(page);
         return preview.findViewById(R.id.zxing_barcode_scanner);
     }

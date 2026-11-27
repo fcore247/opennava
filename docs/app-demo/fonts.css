@@ -1,0 +1,5 @@
+/* The demo's fonts have to be declared on the page itself, outside its shadow root. */
+@font-face { font-family: Manrope; src: url(./assets/fonts/Manrope.ttf); font-weight: 200 800; font-display: swap; }
+@font-face { font-family: Instrument; src: url(./assets/fonts/InstrumentSerif-Regular.ttf); font-display: swap; }
+@font-face { font-family: Script; src: url(./assets/fonts/ReenieBeanie.ttf); font-display: swap; }
+#app-demo { margin-top: 8px; min-height: 320px; }

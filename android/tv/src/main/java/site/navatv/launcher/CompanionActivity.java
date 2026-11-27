@@ -26,17 +26,13 @@ public final class CompanionActivity extends Activity {
                 return;
             }
             if (!("ard".equals(provider) || "zdf".equals(provider) || "arte".equals(provider))) return;
-            Intent next;
             if ("play".equals(operation)) {
-                next = new Intent(this, PlayerActivity.class).putExtra("provider", provider)
-                        .putExtra("programme", value).putExtra("title", request.getStringExtra("title"));
-            } else {
-                if (!("open".equals(operation) || "search".equals(operation) || "live".equals(operation)) ||
-                        (value != null && value.length() > 300)) return;
-                next = new Intent("site.navatv.launcher.SHOW_SELECTION").setClassName(this, getPackageName() + ".ShowSelection")
-                        .putExtra("provider", provider).putExtra("operation", operation).putExtra("value", value);
+                startActivity(new Intent(this, PlayerActivity.class).putExtra("provider", provider)
+                        .putExtra("programme", value).putExtra("title", request.getStringExtra("title")));
+            } else if ("live".equals(operation)) {
+                Intent live = LiveTvActivity.companionTuneIntent(this, "ard".equals(provider) ? "daserste" : provider);
+                if (live != null) startActivity(live);
             }
-            startActivity(next);
         } finally { finish(); }
     }
 }

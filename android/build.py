@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and sign the TV launcher and companion from this checkout."""
+"""Build and sign the phone companion, which carries the signed native TV app."""
 import argparse
 import hashlib
 import json
@@ -101,6 +101,7 @@ def main():
     parser.add_argument('--keystore', type=Path, required=True, help='Existing RSA release or development signing keystore')
     parser.add_argument('--alias', default='navatv')
     parser.add_argument('--password-file', type=Path, required=True, help='File containing the keystore and key password')
+    parser.add_argument('--tv-apk', type=Path, help='The signed native TV app (rust-tv/tools/package_tv.py) to bundle')
     parser.add_argument('--only-fire-keys', action='store_true',
                         help='Build only the optional Fire TV shortcut helper; use the same key as the launcher.')
     args = parser.parse_args()
@@ -111,8 +112,6 @@ def main():
     sdk_tools = sdk / 'build-tools/36.0.0'
     required = [sdk / 'platforms/android-36/android.jar', sdk_tools / 'apksigner',
                 sdk_tools / 'aapt2', sdk_tools / 'zipalign']
-    if not args.only_fire_keys:
-        required.append(sdk / 'platforms/android-34/android.jar')
     for path in required:
         if not path.is_file():
             parser.error('Android SDK component unavailable: ' + str(path))
@@ -125,24 +124,18 @@ def main():
         sign(ANDROID / 'fire-keys/build/outputs/apk/release/fire-keys-release-unsigned.apk',
              output / 'OpenNava-Fire-Keys.apk', 28, sdk_tools, key, args.alias, password, env)
         return
-    libraries = PLAYER / 'build/export'
-    player_env = dict(env, NAVATV_PLAYER_SOURCE=str(upstream()), TV_PLAYER_LIBS=str(libraries))
-    if env.get('NAVATV_LEGACY_GRADLE_HOME'):
-        player_env['GRADLE_USER_HOME'] = env['NAVATV_LEGACY_GRADLE_HOME']
-    run(gradle('7.5'), '--no-daemon', '-p', PLAYER, '-I', PLAYER / 'export.gradle',
-        '-Pandroid.aapt2FromMavenOverride=' + str(sdk_tools / 'aapt2'), ':app:exportPlayerLibraries', env=player_env)
+    if not args.tv_apk:
+        parser.error('Build the TV app first (rust-tv/tools/package_tv.py) and pass it with --tv-apk.')
+    tv = args.tv_apk.resolve(strict=True)
     modern = gradle('8.13')
-    run(modern, '-p', ANDROID, ':tv:assembleRelease', env=env)
-    tv = output / 'OpenNava.apk'
-    sign(ANDROID / 'tv/build/outputs/apk/release/tv-release-unsigned.apk', tv, 26, sdk_tools, key, args.alias, password, env)
-    payload = ANDROID / 'build/payload/OpenNava.apk'
+    payload = ANDROID / 'build/payload/OpenNava-TV.apk'
     payload.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(tv, payload)
-    run(modern, '-p', ANDROID, ':companion:assembleRelease', env=env)
+    run(modern, '-p', ANDROID, '--configure-on-demand', ':companion:assembleRelease', env=env)
     phone = output / 'OpenNava-Companion.apk'
     sign(ANDROID / 'companion/build/outputs/apk/release/companion-release-unsigned.apk',
          phone, 30, sdk_tools, key, args.alias, password, env)
-    with ZipFile(phone) as apk, apk.open('assets/OpenNava.apk') as embedded:
+    with ZipFile(phone) as apk, apk.open('assets/OpenNava-TV.apk') as embedded:
         if hashlib.sha256(embedded.read()).hexdigest() != sha256(tv):
             raise SystemExit('Bundled TV payload differs from the signed launcher.')
 

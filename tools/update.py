@@ -7,7 +7,7 @@ import sys
 import tempfile
 
 import timer
-from navatv import (APPS, Failure, active_user, apk, command, device_map, find_tool,
+from navatv import (APPS, Failure, active_user, apk, command, device_map, entry, find_tool,
                     install, metadata, shell, target, verify_signer_and_package, version_code)
 
 
@@ -84,7 +84,7 @@ def main():
     manifest = metadata(latest=True)
     with tempfile.TemporaryDirectory(prefix='opennava-update-') as directory:
         for kind, (serial, user, code) in ready.items():
-            item = manifest['apps'][kind]
+            item = entry(manifest, kind)
             print(f'{serial}: installed {code}, latest {item["versionCode"]}.')
             if args.check or code >= item['versionCode']:
                 continue

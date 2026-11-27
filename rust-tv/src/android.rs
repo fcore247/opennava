@@ -321,85 +321,6 @@ fn launch_packages(env: &mut Env, activity: &JObject, packages: &[&str]) -> JniR
     Ok(false)
 }
 
-fn return_classic(env: &mut Env, activity: &JObject) -> JniResult<bool> {
-    // Android provides the caller for startActivityForResult. The launch extra alone
-    // is insufficient: an independently opened preview must find the classic app.
-    let caller = env
-        .call_method(
-            activity,
-            jni_str!("getCallingPackage"),
-            jni_sig!("()Ljava/lang/String;"),
-            &[],
-        )?
-        .l()?;
-    let launch = env
-        .call_method(
-            activity,
-            jni_str!("getIntent"),
-            jni_sig!("()Landroid/content/Intent;"),
-            &[],
-        )?
-        .l()?;
-    const CLASSIC_PACKAGE: &str = "site.navatv.launcher";
-    let official = env.new_string(CLASSIC_PACKAGE)?;
-    let extra = env.new_string("opennava.fromClassic")?;
-    let from_classic = env
-        .call_method(
-            &official,
-            jni_str!("equals"),
-            jni_sig!("(Ljava/lang/Object;)Z"),
-            &[JValue::Object(&caller)],
-        )?
-        .z()?
-        && !launch.is_null()
-        && env
-            .call_method(
-                &launch,
-                jni_str!("getBooleanExtra"),
-                jni_sig!("(Ljava/lang/String;Z)Z"),
-                &[JValue::Object(&extra), JValue::Bool(false)],
-            )?
-            .z()?;
-    if !from_classic {
-        let action = env.new_string("site.opennava.action.OPEN_CLASSIC")?;
-        let intent = env.new_object(
-            jni_str!("android/content/Intent"),
-            jni_sig!("(Ljava/lang/String;)V"),
-            &[JValue::Object(&action)],
-        )?;
-        env.call_method(
-            &intent,
-            jni_str!("setPackage"),
-            jni_sig!("(Ljava/lang/String;)Landroid/content/Intent;"),
-            &[JValue::Object(&official)],
-        )?;
-        let manager = env
-            .call_method(
-                activity,
-                jni_str!("getPackageManager"),
-                jni_sig!("()Landroid/content/pm/PackageManager;"),
-                &[],
-            )?
-            .l()?;
-        let component = env
-            .call_method(
-                &intent,
-                jni_str!("resolveActivity"),
-                jni_sig!("(Landroid/content/pm/PackageManager;)Landroid/content/ComponentName;"),
-                &[JValue::Object(&manager)],
-            )?
-            .l()?;
-        if !component.is_null() {
-            start_intent(env, activity, &intent)?;
-        } else if !launch_packages(env, activity, &[CLASSIC_PACKAGE])? {
-            return Ok(false);
-        }
-    }
-    env.call_method(activity, jni_str!("finish"), jni_sig!("()V"), &[])?
-        .v()?;
-    Ok(true)
-}
-
 fn app_class<'local>(
     env: &mut Env<'local>,
     activity: &JObject,
@@ -423,6 +344,42 @@ fn app_class<'local>(
         )?
         .l()?;
     env.cast_local::<JClass>(class)
+}
+
+fn account_revision(app: &AndroidApp) -> JniResult<i64> {
+    JavaVM::singleton()?.attach_current_thread(|env| {
+        let raw = app.activity_as_ptr().cast();
+        let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+        let class = app_class(env, &activity, "site.navatv.rustpreview.YoutubeSession")?;
+        env.call_static_method(&class, jni_str!("accountRevision"), jni_sig!("()J"), &[])?
+            .j()
+    })
+}
+
+fn consume_navatube_request(app: &AndroidApp) -> JniResult<bool> {
+    JavaVM::singleton()?.attach_current_thread(|env| {
+        let raw = app.activity_as_ptr().cast();
+        let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+        let class = app_class(env, &activity, "site.navatv.rustpreview.HomeEntryActivity")?;
+        env.call_static_method(&class, jni_str!("consumeNavaTubeRequest"), jni_sig!("()Z"), &[])?
+            .z()
+    })
+}
+
+/// Opens the first-time setup while it has not been finished, for example right after a reset.
+fn require_setup(app: &AndroidApp) -> JniResult<()> {
+    JavaVM::singleton()?.attach_current_thread(|env| {
+        let raw = app.activity_as_ptr().cast();
+        let activity = unsafe { env.as_cast_raw::<Global<JObject>>(&raw)? };
+        let class = app_class(env, &activity, "site.navatv.rustpreview.HomeEntryActivity")?;
+        env.call_static_method(
+            &class,
+            jni_str!("requireSetup"),
+            jni_sig!("(Landroid/app/Activity;)V"),
+            &[JValue::Object(&activity)],
+        )?
+        .v()
+    })
 }
 
 fn consume_home_request(app: &AndroidApp) -> JniResult<bool> {
@@ -629,17 +586,16 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
                 .v()?;
                 Ok(true)
             }
-            Action::ChooseLauncher => {
-                internal_player(
-                    env,
-                    activity,
-                    "site.navatv.launcher.LauncherChoiceActivity",
-                    &[],
-                )?;
-                Ok(true)
-            }
             Action::ConnectPhone => {
                 internal_player(env, activity, "site.navatv.launcher.PhoneLinkActivity", &[])?;
+                Ok(true)
+            }
+            Action::Reset => {
+                internal_player(env, activity, "site.navatv.rustpreview.ResetActivity", &[])?;
+                Ok(true)
+            }
+            Action::Setup => {
+                internal_player(env, activity, "site.navatv.rustpreview.SetupActivity", &[])?;
                 Ok(true)
             }
             Action::Personalization => {
@@ -653,7 +609,7 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
             }
             Action::LaunchApp(package) => launch_packages(env, activity, &[package.as_str()]),
             Action::LiveTv => {
-                let class = app_class(env, activity, "site.navatv.rustpreview.SeniorLive")?;
+                let class = app_class(env, activity, "site.navatv.rustpreview.NativeLive")?;
                 env.call_static_method(
                     &class,
                     jni_str!("open"),
@@ -685,7 +641,7 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
                 Ok(true)
             }
             Action::MediaPlay { url, title } => {
-                if !url.starts_with("https://") {
+                if !url.starts_with("https://") && !url.starts_with("http://") {
                     return Ok(false);
                 }
                 internal_player(
@@ -703,8 +659,8 @@ fn platform_action(app: &AndroidApp, action: &Action) -> JniResult<bool> {
             | Action::YoutubeMore { .. }
             | Action::YoutubeSearch { .. }
             | Action::Catalog { .. }
-            | Action::CatalogPlay { .. } => Ok(false),
-            Action::ReturnClassic => return_classic(env, activity),
+            | Action::CatalogPlay { .. }
+            | Action::OwnCatalog { .. } => Ok(false),
             Action::Exit => {
                 env.call_method(activity, jni_str!("finish"), jni_sig!("()V"), &[])?
                     .v()?;
@@ -756,6 +712,8 @@ pub fn run(app: AndroidApp) {
     let mut worker = Worker::new(app.clone());
     let mut refresh_youtube_on_resume = false;
     log::info!("NativeActivity gestartet");
+    let mut reported_screen = String::new();
+    let mut seen_account = 0;
     let mut next_home_check = Instant::now();
     let mut next_update_refresh = Instant::now();
     let mut home_started = false;
@@ -769,7 +727,10 @@ pub fn run(app: AndroidApp) {
             let until_clock = Duration::from_millis(60_000 - (now.as_millis() % 60_000) as u64);
             let now = Instant::now();
             let mut timeout = until_clock.min(next_update_refresh.saturating_duration_since(now));
-            if ui.watches_home() {
+            if let Some(next_photo) = ui.background_wait() {
+                timeout = timeout.min(next_photo);
+            }
+            if ui.watches_home() || ui.in_settings() || ui.in_youtube() {
                 timeout = timeout.min(next_home_check.saturating_duration_since(now));
             }
             timeout
@@ -777,6 +738,7 @@ pub fn run(app: AndroidApp) {
         app.poll_events(timeout, |event| {
             let mut redraw = false;
             let mut actions = Vec::new();
+            let event_was_timeout = matches!(&event, PollEvent::Timeout);
             if matches!(
                 &event,
                 PollEvent::Main(MainEvent::Resume { .. } | MainEvent::GainedFocus)
@@ -787,6 +749,15 @@ pub fn run(app: AndroidApp) {
                         refresh_youtube_on_resume = false;
                     }
                     Err(error) => log::warn!("Home-Anfrage konnte nicht gelesen werden: {error}"),
+                    Ok(false) => {}
+                }
+                match consume_navatube_request(&app) {
+                    Ok(true) => {
+                        actions.push(ui.open_navatube());
+                        refresh_youtube_on_resume = false;
+                        redraw = true;
+                    }
+                    Err(error) => log::warn!("NavaTube-Anfrage konnte nicht gelesen werden: {error}"),
                     Ok(false) => {}
                 }
             }
@@ -821,11 +792,17 @@ pub fn run(app: AndroidApp) {
                     redraw = true;
                 }
                 PollEvent::Main(MainEvent::Resume { .. }) => {
+                    if let Err(error) = require_setup(&app) {
+                        log::warn!("Einrichtung konnte nicht geöffnet werden: {error}");
+                    }
                     if !home_started {
                         home_started = true;
                         check_home_updates(&app);
                     }
                     ui.set_fire_home_enabled(fire_home_setting(&app).unwrap_or(None));
+                    ui.reload_locale();
+                    ui.reload_libraries();
+                    ui.refresh_backgrounds();
                     next_update_refresh = Instant::now();
                     if std::mem::take(&mut refresh_youtube_on_resume) {
                         actions.push(ui.request_page());
@@ -898,7 +875,27 @@ pub fn run(app: AndroidApp) {
                 }
                 next_update_refresh = Instant::now() + Duration::from_secs(5);
             }
-            if resumed && ui.watches_home() && Instant::now() >= next_home_check {
+            // A photo that is due.
+            if event_was_timeout && resumed {
+                redraw |= ui.refresh_backgrounds();
+            }
+            // Signed in or out on the phone: show the matching videos.
+            if resumed && ui.in_youtube() && Instant::now() >= next_home_check {
+                match account_revision(&app) {
+                    Ok(revision) if revision != seen_account => {
+                        seen_account = revision;
+                        actions.push(ui.request_page());
+                        redraw = true;
+                    }
+                    Err(error) => log::warn!("Kontostand konnte nicht gelesen werden: {error}"),
+                    Ok(_) => {}
+                }
+                next_home_check = Instant::now() + Duration::from_secs(2);
+            }
+            if resumed && (ui.watches_home() || ui.in_settings()) && Instant::now() >= next_home_check {
+                redraw |= ui.reload_locale();
+                redraw |= ui.reload_libraries();
+                redraw |= ui.refresh_backgrounds();
                 worker.refresh_home(false);
                 next_home_check = Instant::now() + Duration::from_secs(2);
             }
@@ -1024,6 +1021,10 @@ pub fn run(app: AndroidApp) {
                         });
                         continue;
                     }
+                    Action::OwnCatalog { request, library } => {
+                        worker.submit(Job::OwnCatalog { request, library });
+                        continue;
+                    }
                     Action::CatalogPlay { request, item } => {
                         worker.submit(Job::Resolve { request, item });
                         continue;
@@ -1043,7 +1044,6 @@ pub fn run(app: AndroidApp) {
                         log::warn!("Android-Intent fehlgeschlagen: {error}");
                     }
                     ui.notice(match action {
-                        Action::ReturnClassic => "Die klassische OpenNava-App ist nicht verfügbar.",
                         Action::Launch(_) | Action::LaunchApp(_) => {
                             "Diese App ist auf diesem Fernseher nicht verfügbar."
                         }
@@ -1053,6 +1053,14 @@ pub fn run(app: AndroidApp) {
             }
             if resumed && surface.is_some() {
                 worker.request_images(&ui);
+            }
+            if redraw && let Some(dir) = app.internal_data_path() {
+                let screen = ui.screen_report();
+                if screen != reported_screen
+                    && std::fs::write(dir.join("screen.json"), &screen).is_ok()
+                {
+                    reported_screen = screen;
+                }
             }
             if redraw
                 && let Some(surface) = surface.as_mut()

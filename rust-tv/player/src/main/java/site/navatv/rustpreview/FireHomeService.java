@@ -118,9 +118,7 @@ public final class FireHomeService extends AccessibilityService {
                 cancelRedirect();
             }
             boolean rustHome = getPackageName().equals(event.getPackageName()) && NativeActivity.class.getName().equals(className);
-            boolean classicHome = "site.navatv.launcher".equals(event.getPackageName())
-                    && ("site.navatv.full.MainActivity".equals(className) || "site.navatv.launcher.MainActivity".equals(className));
-            if (rustHome || classicHome) sawLauncherWindow = true;
+            if (rustHome) sawLauncherWindow = true;
             return;
         }
         long now = SystemClock.uptimeMillis();

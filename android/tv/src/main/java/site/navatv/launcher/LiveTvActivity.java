@@ -38,6 +38,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public final class LiveTvActivity extends Activity {
+    private static final int MANAGE_STREAMS = -1;
     private static LiveTvActivity resumedPlayer;
     private static final String TUNE_LIVE = "site.navatv.launcher.TUNE_LIVE";
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm", Locale.UK)
@@ -75,6 +76,7 @@ public final class LiveTvActivity extends Activity {
     private Future<?> streamTask, guideTask, replayTask;
     private long nextGuideUpdate;
     private long bookmarkUnavailable = -1;
+    private boolean guessedFormat, plainRetry;
     private boolean guidePending, pendingDuration, failed, firstFrame, requestPlay = true;
     private long resumeProgramme = -1, resumePosition, resumeLiveTime = C.TIME_UNSET;
     private long resumeFromEnd = C.TIME_UNSET, lastWindowRecovery = -1;
@@ -111,6 +113,40 @@ public final class LiveTvActivity extends Activity {
         return new Intent(context, LiveTvActivity.class).setAction(TUNE_LIVE)
                 .putExtra("channel", channelId)
                 .addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+    }
+
+    /** The viewer added or removed a stream while the player is open. Called on the main thread. */
+    static void lineupChanged() {
+        if (resumedPlayer != null) resumedPlayer.refreshLineup();
+    }
+
+    // Station numbers are positions in this list, so they move together when the line-up changes.
+    private void refreshLineup() {
+        List<LiveGuide.Channel> latest = LiveGuide.channels();
+        if (channels == null || latest == channels) return;
+        String current = channels.get(station).id;
+        channels = latest;
+        station = Math.max(0, stationIndex(current));
+        previousStation = -1;
+        includeNewStreams();
+        if (view != null && view.listVisible()) closeChannelList();
+        if (!channels.get(station).id.equals(current)) tuneTo(station, 0);
+    }
+
+    /** US and own streams join "My channels" once. Removing one from the favourites is remembered. */
+    private void includeNewStreams() {
+        Set<String> seen = new LinkedHashSet<>(getPreferences(MODE_PRIVATE)
+                .getStringSet("introduced", Collections.<String>emptySet()));
+        boolean changed = false;
+        for (LiveGuide.Channel item : channels) {
+            if (!item.direct() || !seen.add(item.id)) continue;
+            mine.add(item.id);
+            changed = true;
+        }
+        if (!changed) return;
+        android.content.SharedPreferences.Editor edit = getPreferences(MODE_PRIVATE).edit().putStringSet("introduced", seen);
+        if (getPreferences(MODE_PRIVATE).contains("mine")) edit.putString("mine", String.join(",", mine));
+        edit.apply();
     }
 
     private static int stationIndex(String channelId) {
@@ -180,6 +216,7 @@ public final class LiveTvActivity extends Activity {
                 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        CustomStreamStore.load(this);
         channels = LiveGuide.channels();
         if (channels.isEmpty()) { finish(); return; }
         String selected = getIntent().getStringExtra("channel");
@@ -195,8 +232,9 @@ public final class LiveTvActivity extends Activity {
         station = Math.max(0, stationIndex(selected));
         String saved = getPreferences(MODE_PRIVATE).getString("mine", null);
         for (LiveGuide.Channel item : channels) {
-            if (saved == null ? !item.regional : ("," + saved + ",").contains("," + item.id + ",")) mine.add(item.id);
+            if (saved == null ? !item.regional && !item.direct() : ("," + saved + ",").contains("," + item.id + ",")) mine.add(item.id);
         }
+        includeNewStreams();
         Intent intent = getIntent();
         if (resumeProgramme >= 0 && resumeProgramme == intent.getLongExtra("programmeStart", -1)
                 && channel().id.equals(intent.getStringExtra("channel"))) {
@@ -211,6 +249,7 @@ public final class LiveTvActivity extends Activity {
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (!TUNE_LIVE.equals(intent.getAction())) return;
+        refreshLineup();
         int index = stationIndex(intent.getStringExtra("channel"));
         if (index < 0) return;
         setIntent(intent);
@@ -227,6 +266,7 @@ public final class LiveTvActivity extends Activity {
     @Override protected void onStart() {
         super.onStart();
         if (isFinishing()) return;
+        refreshLineup();
         // Start the picture after one second of media. Changing channel should feel like a television.
         player = new ExoPlayer.Builder(this).setLoadControl(new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(15000, 50000, 1000, 2000).build()).build();
@@ -303,6 +343,13 @@ public final class LiveTvActivity extends Activity {
                     return;
                 }
                 Log.w("SeniorLive", channel().id + ": " + problem.getErrorCodeName());
+                if (guessedFormat && !firstFrame && replay == null && liveUrl != null
+                        && (problem.errorCode == PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED
+                        || problem.errorCode == PlaybackException.ERROR_CODE_PARSING_CONTAINER_UNSUPPORTED)) {
+                    plainRetry = true;
+                    play(liveUrl, false, 0);
+                    return;
+                }
                 long moment = SystemClock.elapsedRealtime();
                 if (replay == null && guideSelection == null && requestPlay
                         && (lastAutoRetry < 0 || moment - lastAutoRetry > 30000)) {
@@ -334,7 +381,7 @@ public final class LiveTvActivity extends Activity {
         return length > 1000 && length <= 360 * 60000L ? length : 0;
     }
     private String recordMode() {
-        if (failed || (guideSelection != null && replay == null)) return "unavailable";
+        if (failed || channel().direct() || (guideSelection != null && replay == null)) return "unavailable";
         if (replay != null) return firstFrame ? "remember" : "unavailable";
         if (liveUrl == null) return "unavailable";
         LiveGuide.Programme displayed = airing(screenTime());
@@ -346,6 +393,7 @@ public final class LiveTvActivity extends Activity {
 
     /** A short delay lets several quick presses pass through channels without starting each stream. */
     private void tune(long delay) {
+        plainRetry = false;
         int generation = ++tuneGeneration;
         ++mediaGeneration;
         cancel(streamTask);
@@ -473,7 +521,20 @@ public final class LiveTvActivity extends Activity {
         pausedPeriodTime = pausedAirtime = C.TIME_UNSET;
         failed = firstFrame = false;
         MediaItem.Builder item = new MediaItem.Builder().setUri(url);
-        if (hls || url.toLowerCase(Locale.ROOT).contains(".m3u8")) item.setMimeType(MimeTypes.APPLICATION_M3U8);
+        String type = hls || url.toLowerCase(Locale.ROOT).contains(".m3u8") ? MimeTypes.APPLICATION_M3U8 : null;
+        guessedFormat = false;
+        if (replay == null && "custom".equals(channel().provider)) {
+            String path = String.valueOf(android.net.Uri.parse(url).getPath()).toLowerCase(Locale.ROOT);
+            if (url.toLowerCase(Locale.ROOT).contains(".m3u8")) type = MimeTypes.APPLICATION_M3U8;
+            else if (path.endsWith(".mpd")) type = MimeTypes.APPLICATION_MPD;
+            else if (path.matches(".*\\.(mp4|m4v|mkv|webm|ts|mp3|aac|m4a)")) type = null;
+            else {
+                // Many addresses carry no file ending. Try HLS first, then let the player inspect the data.
+                type = plainRetry ? null : MimeTypes.APPLICATION_M3U8;
+                guessedFormat = !plainRetry;
+            }
+        }
+        if (type != null) item.setMimeType(type);
         if (position > 0) player.setMediaItem(item.build(), position);
         else player.setMediaItem(item.build());
         player.prepare();
@@ -545,8 +606,20 @@ public final class LiveTvActivity extends Activity {
             row.favourite = !listMine && mine.contains(channels.get(index).id);
             row.playing = index == station;
             fill(row, LiveGuide.knownNowNext(channels.get(index), now), now);
+            if (channels.get(index).direct()) {
+                row.now = channels.get(index).directLabel();
+                row.loaded = true;
+            }
             if (index <= focusStation) selection = listRows.size();
             listRows.add(row);
+        }
+        if (!listMine) {
+            LiveTvControls.Row manage = new LiveTvControls.Row();
+            manage.index = MANAGE_STREAMS;
+            manage.name = "Add your own stream";
+            manage.now = "Add or remove web streams";
+            manage.loaded = true;
+            listRows.add(manage);
         }
         listPainted = now;
         view.showList(listRows, selection, listMine, clock(now) + " local time");
@@ -571,6 +644,7 @@ public final class LiveTvActivity extends Activity {
         List<LiveTvControls.Row> queue = new ArrayList<>(listRows);
         Collections.sort(queue, (a, b) -> Integer.compare(Math.abs(listRows.indexOf(a) - around), Math.abs(listRows.indexOf(b) - around)));
         for (LiveTvControls.Row row : queue) {
+            if (row.index == MANAGE_STREAMS || channels.get(row.index).direct()) continue;
             LiveGuide.Channel item = channels.get(row.index);
             listTasks.add(listPool.submit(() -> {
                 LiveGuide.Programme[] found;
@@ -594,6 +668,7 @@ public final class LiveTvActivity extends Activity {
         if (now - listPainted > 20000) {
             boolean stale = false;
             for (LiveTvControls.Row row : listRows) {
+                if (row.index == MANAGE_STREAMS || channels.get(row.index).direct()) continue;
                 LiveGuide.Programme[] pair = LiveGuide.knownNowNext(channels.get(row.index), now);
                 if (pair[0] == null && !row.now.isEmpty()) stale = true;
                 else if (pair[0] != null) fill(row, pair, now);
@@ -612,6 +687,7 @@ public final class LiveTvActivity extends Activity {
     void showChannelTab(boolean own) {
         if (!view.listVisible() || own == listMine) return;
         int focusStation = listRows.isEmpty() ? station : listRows.get(view.listSelection()).index;
+        if (focusStation == MANAGE_STREAMS) focusStation = station;
         listMine = own;
         populateList(focusStation);
     }
@@ -620,6 +696,10 @@ public final class LiveTvActivity extends Activity {
         if (!view.listVisible() || position < 0 || position >= listRows.size()) return;
         int index = listRows.get(position).index;
         closeChannelList();
+        if (index == MANAGE_STREAMS) {
+            startActivity(new Intent(this, CustomStreamsActivity.class));
+            return;
+        }
         Log.i("SeniorLive", "Channel selected: " + channels.get(index).id);
         if (index == station && !failed && replay == null) { showStrip(false); return; }
         tuneTo(index, 0);
@@ -628,6 +708,7 @@ public final class LiveTvActivity extends Activity {
     private void toggleFavourite() {
         if (listRows.isEmpty()) return;
         LiveTvControls.Row row = listRows.get(view.listSelection());
+        if (row.index == MANAGE_STREAMS) return;
         String id = channels.get(row.index).id;
         boolean added = !mine.remove(id);
         if (added) mine.add(id);
@@ -1227,7 +1308,7 @@ public final class LiveTvActivity extends Activity {
         LiveGuide.Programme item = replay == null ? airing(stamp) : replay;
         int kind = !requestPlay ? LiveTvControls.PAUSED : replay != null ? LiveTvControls.ARCHIVE
                 : firstFrame && now - stamp > 60000 ? LiveTvControls.SHIFTED : LiveTvControls.LIVE;
-        String info = item == null ? "Live guide" : item.title;
+        String info = item != null ? item.title : channel().direct() ? channel().directLabel() : "Live guide";
         String from = item == null ? "" : clock(item.start), until = item == null ? "" : clock(item.end);
         if (item != null && kind == LiveTvControls.LIVE && item.end > now)
             until += "   ·   Remaining " + Math.max(1, (item.end - now + 30000) / 60000) + " Min";
@@ -1277,6 +1358,7 @@ public final class LiveTvActivity extends Activity {
 
     private void chooseDuration() {
         if (player == null || view.durationDialog != null) return;
+        if (channel().direct()) { say("Recording is not available for this stream."); return; }
         if (guideSelection != null && replay == null) { say("Opening the selected programme."); return; }
         if (replay != null) {
             if (!firstFrame) { say("The programme is still opening."); return; }

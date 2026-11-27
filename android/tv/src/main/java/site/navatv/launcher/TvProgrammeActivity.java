@@ -50,7 +50,7 @@ public final class TvProgrammeActivity extends Activity {
     private static final DateTimeFormatter SHORT_DATE = DateTimeFormatter.ofPattern("EEE, d MMM", Locale.UK).withZone(ZONE);
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ExecutorService worker = Executors.newFixedThreadPool(2);
-    private final List<LiveGuide.Channel> channels = LiveGuide.channels();
+    private final List<LiveGuide.Channel> channels = LiveGuide.guideChannels();
     private final IdleTimer idle = new IdleTimer(this, () -> true);
     private Future<?> lookup;
     private int request;

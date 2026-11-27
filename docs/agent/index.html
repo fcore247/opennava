@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenNava · Instructions for AI agents</title>
+<meta name="description" content="Step-by-step instructions an AI agent can follow to set up OpenNava on a person's own TV.">
+<link rel="canonical" href="https://opennava.site/agent/">
+<link rel="alternate" type="text/markdown" href="./agent.md" title="Markdown for agents">
+<style>
+:root{color-scheme:dark}body{margin:0;background:#101115;color:#e9e8f2;font:16px/1.65 system-ui,sans-serif}
+main{max-width:820px;margin:0 auto;padding:28px 20px 80px}a{color:#cabaff}
+.hint{border:1px solid #cabaff66;background:#cabaff14;border-radius:14px;padding:14px 18px;font-size:14.5px}
+h1{font-size:30px;line-height:1.2}h2{margin-top:38px;border-top:1px solid #ffffff1f;padding-top:22px;font-size:21px}
+code{background:#ffffff14;border-radius:5px;padding:1px 5px;font-size:.9em}
+pre{background:#07080b;border:1px solid #ffffff1f;border-radius:12px;padding:14px 16px;overflow-x:auto}pre code{background:none;padding:0}
+.table{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:14.5px}th,td{border:1px solid #ffffff24;padding:8px 10px;text-align:left;vertical-align:top}
+</style>
+</head>
+<body>
+<main>
+<p class="hint" id="de"><strong>Für Menschen:</strong> Gib deinem KI-Agenten diesen Satz: <code>Richte OpenNava auf meinem Fernseher ein. Folge der Anleitung unter https://opennava.site/agent</code><br>
+<strong>For people:</strong> Give your AI agent this sentence: <code>Set up OpenNava on my TV. Follow the instructions at https://opennava.site/agent</code><br>
+<strong>For agents:</strong> the same instructions as plain Markdown: <a href="./agent.md">agent.md</a></p>
+<h1 id="opennava-instructions-for-ai-agents">OpenNava: instructions for AI agents</h1>
+<p>You are helping a person set up <strong>OpenNava</strong> on their own television. OpenNava has two parts:</p>
+<div class="table"><table><thead><tr><th>Part</th><th>Package</th><th>Release file</th></tr></thead><tbody><tr><td>TV launcher (Android TV, Google TV, Fire TV)</td><td><code>site.navatv.rustpreview</code></td><td><code>OpenNava-Rust-TV.apk</code></td></tr><tr><td>Phone app (Android 11 or newer)</td><td><code>site.navatv.companion</code></td><td><code>OpenNava-Companion.apk</code></td></tr></tbody></table></div>
+<p>Canonical address of this file: <a href="https://opennava.site/agent/agent.md">https://opennava.site/agent/agent.md</a><br>Source code and releases: <a href="https://github.com/fcore247/opennava">https://github.com/fcore247/opennava</a></p>
+<h2 id="0-check-the-release-first">0. Check the release first</h2>
+<p>These instructions describe the version with the guided first-time setup, with one TV launcher only.</p>
+<ol><li>Read <a href="https://github.com/fcore247/opennava/releases/latest">https://github.com/fcore247/opennava/releases/latest</a>.</li><li><strong>If the newest release is 1.1.4 or older, stop.</strong> Tell the person that the version described here has not been published yet. Do not install an older release and present it as this one.</li><li>Releases that still list <code>OpenNava.apk</code> are from before this change. You do not need that file.</li></ol>
+<h2 id="rules">Rules</h2>
+<ul><li>Work only on a television the person owns or may administer.</li><li><strong>Ask before</strong> you install, update or uninstall anything.</li><li>The person turns on developer options and debugging themselves, and confirms every authorisation dialog on the TV themselves.</li><li>The person types pairing codes, passwords and account sign-ins themselves. Never ask for a password, and never sign in to YouTube or Google for them.</li><li>Do not change the default launcher, factory-reset the TV, clear app data or remove other apps unless the person asks for exactly that.</li><li>Use only files from the release page above, and verify them.</li><li>If a step fails, report the exact output. Do not work around a signature, checksum or permission error.</li></ul>
+<h2 id="you-need">You need</h2>
+<ul><li>A computer on the same network as the TV, with Android SDK Platform Tools (<code>adb</code>)</li><li>About 100 MB of free space on the TV</li></ul>
+<h2 id="1-download-and-verify">1. Download and verify</h2>
+<pre><code>mkdir opennava-download &amp;&amp; cd opennava-download
+curl -fLO https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Rust-TV.apk
+curl -fLO https://github.com/fcore247/opennava/releases/latest/download/SHA256SUMS
+grep &#x27; OpenNava-Rust-TV.apk$&#x27; SHA256SUMS | shasum -a 256 -c -     # Linux: sha256sum -c -</code></pre>
+<p>Continue only if the result is <code>OK</code>.</p>
+<h2 id="2-connect-to-the-tv">2. Connect to the TV</h2>
+<p>Ask the person to do this on the TV:</p>
+<ul><li><strong>Google TV / Android TV:</strong> Settings → System → About → press "Android TV OS build" seven times. Then System → Developer options → turn on <strong>USB debugging</strong> and, where offered, <strong>Wireless debugging</strong>.</li><li><strong>Fire TV:</strong> Settings → My Fire TV → About → press the device name seven times. Then Developer options → <strong>ADB debugging</strong>.</li></ul>
+<p>With wireless debugging, the person opens <strong>Pair device with pairing code</strong> and runs the pairing command, typing the code themselves:</p>
+<pre><code>adb pair &lt;tv-address&gt;:&lt;pairing-port&gt;</code></pre>
+<p>Then connect. The connection port is on the main Wireless debugging screen. Fire TV usually uses 5555.</p>
+<pre><code>adb connect &lt;tv-address&gt;:&lt;port&gt;
+adb devices -l</code></pre>
+<p>The person confirms <strong>Allow debugging</strong> on the TV. Make sure you address the right device, and pass <code>-s &lt;serial&gt;</code> to every following command.</p>
+<h2 id="3-install-the-tv-launcher">3. Install the TV launcher</h2>
+<pre><code>adb -s &lt;serial&gt; install -r OpenNava-Rust-TV.apk
+adb -s &lt;serial&gt; shell am start -n site.navatv.rustpreview/.HomeEntryActivity</code></pre>
+<p>The TV now shows the first-time setup: an intro, then a QR code that downloads the phone app.</p>
+<h2 id="4-the-phone">4. The phone</h2>
+<p>The person does this part on their phone:</p>
+<ol><li>Scan the first code on the TV and install <strong>OpenNava Companion</strong>.</li><li>Open the app and choose language and country (Germany, Austria, Switzerland or United States).</li><li>Press <strong>Next</strong> on the TV, then scan the second code with the app.</li><li>Confirm the debugging request on the TV, or type the pairing code the app asks for.</li></ol>
+<p>If they have no Android phone, they can choose <strong>Skip</strong> on the TV.</p>
+<h2 id="5-optional-set-up-the-person-s-media-libraries">5. Optional: set up the person's media libraries</h2>
+<p>OpenNava can show libraries the person adds: a video RSS/Atom feed, or an <code>opennava.mediathek/1</code> JSON document with directly playable video addresses. Only add content the person is allowed to watch. Web pages, DRM and videos behind a login do not play.</p>
+<p>The repository contains a Model Context Protocol server for this (Python 3.8 or newer, no extra packages):</p>
+<pre><code>git clone https://github.com/fcore247/opennava
+claude mcp add opennava -- python3 &quot;$PWD/opennava/tools/opennava_mcp.py&quot;</code></pre>
+<p>Other MCP clients start the same command as a stdio server. If several Android devices are connected, set <code>OPENNAVA_TV</code> to the TV's ADB serial.</p>
+<div class="table"><table><thead><tr><th>Tool</th><th>Purpose</th></tr></thead><tbody><tr><td><code>library_format</code></td><td>The format description. Read it first.</td></tr><tr><td><code>check_library</code></td><td>Validate an address or document without touching the TV</td></tr><tr><td><code>list_libraries</code>, <code>add_library</code>, <code>remove_library</code></td><td>Manage libraries (up to 20, 400 videos each)</td></tr><tr><td><code>list_channels</code></td><td>Channel IDs for linking earlier shows to live channels</td></tr><tr><td><code>list_streams</code>, <code>add_stream</code>, <code>remove_stream</code></td><td>Manage the person's own live streams</td></tr></tbody></table></div>
+<p>Show the person what you are going to add and wait for their agreement.</p>
+<h2 id="6-finish">6. Finish</h2>
+<p>Tell the person what you installed, which version, on which device, and which libraries you added. Remind them that they can switch debugging off again if they do not use the phone app. The phone app needs debugging to stay on.</p>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="table"><table><thead><tr><th>Problem</th><th>What to check</th></tr></thead><tbody><tr><td><code>adb connect</code> fails</td><td>Same network? Debugging still on? Did the port change?</td></tr><tr><td><code>unauthorized</code></td><td>The person has not confirmed the dialog on the TV yet.</td></tr><tr><td><code>INSTALL_FAILED_UPDATE_INCOMPATIBLE</code></td><td>A build with another signature is installed. Do not uninstall it without asking: that deletes its data.</td></tr><tr><td><code>INSTALL_FAILED_INSUFFICIENT_STORAGE</code></td><td>Ask the person to free some space.</td></tr><tr><td>The phone cannot connect</td><td>Phone and TV on the same Wi-Fi? Guest networks often block this.</td></tr></tbody></table></div>
+<p><a href="../">← Live demo</a></p>
+</main>
+</body>
+</html>

@@ -35,8 +35,6 @@ final class PhoneRecordingsPage {
         stop();
         open = true;
         device = a.device;
-        a.body.addView(u.title("Recordings", 44, INK));
-        u.space(a.body, 17);
         list = u.column();
         a.body.addView(list);
         if (!a.connected()) {
@@ -85,7 +83,7 @@ final class PhoneRecordingsPage {
         list.removeAllViews();
         if (library.recordings.isEmpty() && library.reminders.isEmpty()) {
             message("No saved programmes yet", "Your recordings and reminders from the TV guide will appear here.",
-                    "Open TV guide", () -> a.go("programme"));
+                    "Open Live TV", () -> a.go("live"));
             return;
         }
         section("Saved programmes", library.recordings);
@@ -114,9 +112,9 @@ final class PhoneRecordingsPage {
         u.space(list, 8);
         for (PhoneLibrary.Entry entry : entries) {
             LinearLayout card = u.column();
-            card.setBackground(u.shape(WHITE, 22, LINE));
+            card.setBackground(u.shape(CARD, 22, LINE));
             u.pad(card, 17, 15, 17, 14);
-            if (!entry.station.isEmpty()) card.addView(u.text(entry.station, 14, GREEN, 690));
+            if (!entry.station.isEmpty()) card.addView(u.text(entry.station, 14, LILAC, 690));
             u.space(card, 4);
             card.addView(u.title(entry.title, 30, INK));
             if (entry.start > 0) {

@@ -42,6 +42,23 @@ final class DevicePage {
         discovery.start();
     }
 
+    /** Takes over a connection the first-time setup has made. */
+    void adopt(TvConnection candidate, TvConnection.Device device, String invite) {
+        cancelReconnect();
+        TvConnection old = a.tv;
+        a.tv = candidate;
+        a.device = device;
+        prefs.edit().putString("invite", invite).apply();
+        remember(device);
+        a.commands.execute(old::disconnect);
+        a.refreshConnectionHeader();
+    }
+
+    /** Whether this phone has ever been connected to a TV. */
+    boolean hasSavedTv() {
+        return !prefs.getString("host", "").isEmpty() || !SavedTv.list(prefs).isEmpty();
+    }
+
     void stop() {
         discovery.stop();
         found.clear();
@@ -151,30 +168,16 @@ final class DevicePage {
         tvs.add(0, new SavedTv(device.androidId, device.host, device.port, device.name, routes));
         edit.putString("connectedInvite", routes).putString("knownTvs", SavedTv.encode(tvs));
         edit.apply();
-        String checked = "lastUpdateCheck." + device.androidId;
-        // Starting with 1.1.2 the TV owns its daily check and next-start installation.
-        if (device.seniorVersion > 0 && device.seniorVersion < TvConnection.FIRST_TV_WITH_STARTUP_UPDATES
-                && site.navatv.updates.Updates.enabled(a)
-                && System.currentTimeMillis() - prefs.getLong(checked, 0) > java.util.concurrent.TimeUnit.HOURS.toMillis(12)) {
-            TvConnection connection = a.tv;
-            a.browse.execute(() -> {
-                try {
-                    String result = connection.updatePairedTv(device, true);
-                    if (result.equals("The TV is up to date.") || result.endsWith("installed on the TV."))
-                        prefs.edit().putLong(checked, System.currentTimeMillis()).apply();
-                } catch (Exception ignored) { /* Retry on the next connection. */ }
-            });
-        }
+        a.sendRegion();
     }
 
     void build() {
-        a.body.addView(u.title("Devices", 44, INK));
         u.space(a.body, 15);
         if (a.connected()) active();
         else {
             LinearLayout card = u.column();
             u.pad(card, 20, 18, 20, 18);
-            card.setBackground(u.shape(GREEN, 24, 0));
+            card.setBackground(u.shape(CARD, 24, LINE));
             card.addView(new Art(a, "tv", APRICOT), u.lp(27, 27));
             u.space(card, 13);
             card.addView(u.title("Connect a TV", 31, WHITE));
@@ -184,7 +187,7 @@ final class DevicePage {
                             "Control your TV over Wi-Fi or Tailscale."
                                 + " Enable ADB debugging on your TV.",
                             14,
-                            0xffdbe3d9,
+                            MUTED,
                             480));
             a.body.addView(card);
         }
@@ -260,19 +263,19 @@ final class DevicePage {
     private void active() {
         TvConnection.Device d = a.device;
         LinearLayout card = u.column();
-        card.setBackground(u.shape(GREEN, 24, 0));
+        card.setBackground(u.shape(CARD, 24, LINE));
         u.pad(card, 20, 20, 20, 18);
         LinearLayout status = u.row();
         View dot = new View(a);
-        dot.setBackground(u.shape(0xffbddea0, 6, 0));
+        dot.setBackground(u.shape(0xff7ee2a8, 6, 0));
         status.addView(dot, u.lp(8, 8));
         u.gap(status, 7);
-        status.addView(u.text("Connected", 12, 0xffdbe7d4, 620));
+        status.addView(u.text("Connected", 12, MUTED, 620));
         card.addView(status);
         u.space(card, 9);
         card.addView(u.title(d.name, 34, WHITE));
         u.space(card, 4);
-        card.addView(u.text(d.host + " · Port " + d.port, 14, 0xffd8e1d6, 480));
+        card.addView(u.text(d.host + " · Port " + d.port, 14, MUTED, 480));
         u.space(card, 15);
         LinearLayout actions = u.row();
         actions.addView(u.button("Control", "remote", false, () -> a.go("remote")), u.weight(48));
@@ -327,41 +330,6 @@ final class DevicePage {
         } else if (d.seniorVersion >= 20) {
             u.space(a.body, 12);
             a.body.addView(u.text("This TV supports programme selection.", 14, MUTED, 540));
-        }
-        if (d.seniorVersion >= 20 && d.homeMigrationPending) {
-            u.space(a.body, 10);
-            a.body.addView(
-                    row(
-                            "Set up Home button",
-                            "Launch the updated TV app.",
-                            "home",
-                            () ->
-                                    a.homeDialog()
-                                            .setTitle("Set up the Home button?")
-                                            .setMessage(
-                                                    "The Home button on this Fire TV will open"
-                                                        + " the updated OpenNava launcher.")
-                                            .setNegativeButton("Cancel", null)
-                                            .setPositiveButton(
-                                                    "Apply",
-                                                    (dialog, w) -> {
-                                                        a.updating = true;
-                                                        a.render();
-                                                        a.runTv(
-                                                                () -> a.tv.migrateFireHome(),
-                                                                next -> {
-                                                                    a.device = next;
-                                                                    a.updating = false;
-                                                                    a.render();
-                                                                },
-                                                                e -> {
-                                                                    a.updating = false;
-                                                                    a.device = a.tv.device();
-                                                                    a.render();
-                                                                    a.problem(a.error(e));
-                                                                });
-                                                    })
-                                            .show()));
         }
     }
 
@@ -456,10 +424,7 @@ final class DevicePage {
                                         ? ". You can then launch programmes directly from"
                                               + " your phone."
                                         : ". Your saved"
-                                              + " settings will stay in place.")
-                                + (a.device.homeMigrationPending
-                                        ? " The existing OpenNava Home button setting will be carried over."
-                                        : ""))
+                                              + " settings will stay in place."))
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton(
                         fresh ? "Install" : "Update",
@@ -488,7 +453,7 @@ final class DevicePage {
         LinearLayout b = u.row();
         b.setMinimumHeight(u.d(67));
         u.pad(b, 15, 10, 12, 10);
-        b.addView(new Art(a, icon, GREEN), u.lp(23, 23));
+        b.addView(new Art(a, icon, LILAC), u.lp(23, 23));
         u.gap(b, 12);
         LinearLayout t = u.column();
         t.addView(u.text(title, 15, INK, 700));
@@ -497,7 +462,7 @@ final class DevicePage {
         b.addView(t, u.weight(WRAP));
         u.gap(b, 4);
         b.addView(new Art(a, "right", MUTED), u.lp(16, 16));
-        u.action(b, WHITE, 17, LINE, onTap);
+        u.action(b, CARD, 17, LINE, onTap);
         return b;
     }
 

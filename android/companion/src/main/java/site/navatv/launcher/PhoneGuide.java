@@ -27,7 +27,7 @@ public final class PhoneGuide {
             name = source.name;
             provider = source.provider;
             regional = source.regional;
-            hasGuide = !id.equals("rtl") && !id.equals("panoramabilder");
+            hasGuide = !source.direct() && !id.equals("rtl") && !id.equals("panoramabilder");
         }
     }
 
@@ -66,6 +66,12 @@ public final class PhoneGuide {
             next = following;
         }
     }
+
+    /** Mirror the connected television's own streams into the phone's line-up. */
+    public static void setCustomStreams(List<CustomStreams.Entry> own) { LiveGuide.setCustomStreams(own); }
+
+    /** The country chosen during setup decides which stations the phone lists. */
+    public static void setCountry(String code) { LiveGuide.setCountry(code); }
 
     public static List<Channel> channels(boolean includeRtl) {
         List<Channel> result = new ArrayList<>();

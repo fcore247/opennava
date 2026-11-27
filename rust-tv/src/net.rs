@@ -42,3 +42,23 @@ pub fn get(url: &str, limit: usize) -> Result<Vec<u8>, String> {
         limit,
     )
 }
+
+/// The viewer's own library addresses may use plain HTTP, for example on a home server.
+pub fn get_own(url: &str, limit: usize) -> Result<Vec<u8>, String> {
+    let agent: ureq::Agent = ureq::Agent::config_builder()
+        .max_redirects(3)
+        .timeout_connect(Some(Duration::from_secs(5)))
+        .timeout_global(Some(Duration::from_secs(15)))
+        .build()
+        .into();
+    bytes(
+        agent
+            .get(url)
+            .header(
+                "User-Agent",
+                concat!("OpenNava-Rust/", env!("CARGO_PKG_VERSION")),
+            )
+            .call(),
+        limit,
+    )
+}

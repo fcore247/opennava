@@ -24,16 +24,19 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 
 /** A controller instance belongs to one phone. Network and package operations run off the UI thread. */
 public final class TvConnection {
-    public static final String TV_PACKAGE = "site.navatv.launcher";
+    /** The one TV app: the native OpenNava launcher. */
+    public static final String TV_PACKAGE = "site.navatv.rustpreview";
     private static final String RUST_TV = "site.navatv.rustpreview";
-    private static final String OLD_NavaTV = "site.navatv.full";
+    /** The first version of it that takes every command of this phone app. */
+    static final int NATIVE_TV_VERSION = 14;
     private static final int MIN_COMPANION_TV_VERSION = 100;
     static final int FIRST_TV_WITH_STARTUP_UPDATES = 112;
     private static final int BUNDLED_TV_VERSION = BuildConfig.VERSION_CODE;
     private static final int LIVE_TUNE_VERSION = 37;
-    private static final String LIVE_CALL = "content call --uri content://site.navatv.launcher.companion --method ";
+    private static final String LIVE_CALL = "content call --user \"$(am get-current-user)\""
+            + " --uri content://site.navatv.rustpreview.live --method ";
     private static final Pattern LIVE_CHANNEL = Pattern.compile("\\bchannel=([a-z0-9_-]{1,64})\\b");
-    private static final String APK_ASSET = "OpenNava.apk";
+    private static final String APK_ASSET = "OpenNava-TV.apk";
     private static final Pattern VERSION = Pattern.compile("(?m)^\\s*versionCode=(\\d+)");
     private static final Pattern VERSION_NAME = Pattern.compile("(?m)^\\s*versionName=([^\\r\\n]+)");
     private static final Pattern TEXT = Pattern.compile("[A-Za-z0-9 ._@,:+!?/()=-]{1,220}");
@@ -45,8 +48,8 @@ public final class TvConnection {
         public final String name, model, host;
         final String androidId;
         public final int port, seniorVersion, navaVersion;
-        public final boolean canUpdateSenior, homeMigrationPending, supportsLiveTune, hasRtl;
-        Device(String host, int port, String name, String model, int senior, int nava, boolean television, boolean migrateHome, String tvVersionName, String androidId) {
+        public final boolean canUpdateSenior, supportsLiveTune, hasRtl;
+        Device(String host, int port, String name, String model, int senior, int nava, boolean television, String tvVersionName, String androidId) {
             this.host = host;
             this.port = port;
             this.name = name;
@@ -55,7 +58,6 @@ public final class TvConnection {
             this.seniorVersion = senior;
             this.navaVersion = nava;
             this.canUpdateSenior = television && senior < BUNDLED_TV_VERSION;
-            this.homeMigrationPending = migrateHome;
             this.supportsLiveTune = senior >= LIVE_TUNE_VERSION;
             this.hasRtl = tvVersionName.toLowerCase(Locale.ROOT).endsWith("-rtl");
         }
@@ -140,6 +142,200 @@ public final class TvConnection {
         }
     }
 
+    static final int FIRST_TV_WITH_OWN_STREAMS = 120;
+
+    /** Reads the television without sending it anything. */
+    TvStatus status() throws Exception { return TvStatus.parse(shell(TvStatus.COMMAND)); }
+
+    java.util.List<site.navatv.launcher.CustomStreams.Entry> ownStreams() throws Exception {
+        String result = shell(LIVE_CALL + "channels_get");
+        if (!result.contains("channels64=")) throw new IOException("Update the TV app to use your own streams.");
+        return site.navatv.launcher.CustomStreams.parse(bundleText(result, "channels64"));
+    }
+
+    /** Long lists exceed adbd's command limit, so they travel through stdin. */
+    void addOwnStreams(java.util.List<site.navatv.launcher.CustomStreams.Entry> entries) throws Exception {
+        for (int start = 0; start < entries.size(); start += 15) {
+            String json = site.navatv.launcher.CustomStreams.write(
+                    entries.subList(start, Math.min(entries.size(), start + 15)));
+            byte[] input = (java.util.Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(json.getBytes(StandardCharsets.UTF_8)) + "\n").getBytes(StandardCharsets.US_ASCII);
+            String result = shell(active(), "IFS= read -r streams && " + LIVE_CALL
+                    + "channels_add --arg \"$streams\"", input);
+            if (!result.contains("handled=true"))
+                throw new IOException("The TV could not save these streams. It keeps up to "
+                        + site.navatv.launcher.CustomStreams.LIMIT + ".");
+        }
+    }
+
+    void removeOwnStream(String id) throws Exception {
+        if (!id.matches("custom-[0-9a-f]{12}")) throw new IOException("Unknown stream.");
+        if (!shell(LIVE_CALL + "channels_remove --arg " + id).contains("handled=true"))
+            throw new IOException("The TV could not remove this stream.");
+    }
+
+    private static final String RUST_CALL = "content call --user \"$(am get-current-user)\""
+            + " --uri content://site.navatv.rustpreview.companion --method ";
+
+    /** The page open in OpenNava Rust as {screen, provider, library, query}; empty if it cannot say. */
+    org.json.JSONObject rustScreen() throws Exception {
+        String json = bundleText(shell(RUST_CALL + "screen_state"), "rust64");
+        return json.isEmpty() ? new org.json.JSONObject() : new org.json.JSONObject(json);
+    }
+
+    java.util.List<site.navatv.launcher.OwnLibrary.Source> librarySources() throws Exception {
+        String result = shell(RUST_CALL + "library_sources_get");
+        if (!result.contains("sources64=")) throw new IOException("Install the current OpenNava Rust on your TV.");
+        return site.navatv.launcher.OwnLibrary.parseSources(bundleText(result, "sources64"));
+    }
+
+    void putLibrary(site.navatv.launcher.OwnLibrary.Source source) throws Exception {
+        String one = site.navatv.launcher.OwnLibrary.writeSources(java.util.Collections.singletonList(source));
+        byte[] input = (java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(
+                one.substring(1, one.length() - 1).getBytes(StandardCharsets.UTF_8)) + "\n")
+                .getBytes(StandardCharsets.US_ASCII);
+        String result = shell(active(), "IFS= read -r library && " + RUST_CALL
+                + "library_source_put --arg \"$library\"", input);
+        if (!result.contains("handled=true")) throw new IOException("The TV could not save this library.");
+    }
+
+    void removeLibrary(String id) throws Exception {
+        if (!id.matches("lib-[0-9a-f]{12}")) throw new IOException("Unknown library.");
+        if (!shell(RUST_CALL + "library_source_remove --arg " + id).contains("handled=true"))
+            throw new IOException("The TV could not remove this library.");
+    }
+
+    /** Tells both TV apps the language and country chosen on the phone, such as "en-us". */
+    void setLocale(String value) throws Exception {
+        if (!value.matches("(de|en)-(de|at|ch|us)")) throw new IOException("Unknown language or country.");
+        shell(RUST_CALL + "locale_set --arg " + value);
+        // A live player that is already open rebuilds its channel list.
+        shell(LIVE_CALL + "locale_set --arg " + value);
+    }
+
+    /** Lets the setup screen on the TV follow what the phone is showing. Older TV apps just ignore it. */
+    void setupStep(String step) throws Exception {
+        if (!step.matches("connected|tour-[1-9]|done")) throw new IOException("Unknown setup step.");
+        shell(RUST_CALL + "setup_phone --arg " + step);
+    }
+
+    /** The apps this TV can open, as a JSON array from OpenNava Rust. */
+    String installedApps() throws Exception {
+        String result;
+        try { result = shell(RUST_CALL + "apps_get"); }
+        catch (IOException refused) {
+            if (!String.valueOf(refused.getMessage()).startsWith("TV declined")) throw refused;
+            result = "";
+        }
+        if (!result.contains("apps64=")) throw new IOException("Install the newest OpenNava Rust on your TV to see its apps.");
+        return bundleText(result, "apps64");
+    }
+
+    byte[] appPicture(String pkg) throws Exception {
+        if (!pkg.matches("[A-Za-z0-9_]+(\\.[A-Za-z0-9_]+)+")) throw new IOException("Unknown app.");
+        String encoded = shell("content read --user \"$(am get-current-user)\" --uri"
+                + " content://site.navatv.rustpreview.companion/appart/" + pkg + " | base64");
+        return java.util.Base64.getMimeDecoder().decode(encoded.trim());
+    }
+
+    void launchApp(String component) throws Exception {
+        if (!component.matches("[A-Za-z0-9_.]+/[A-Za-z0-9_.$]+")) throw new IOException("Unknown app.");
+        String result = shell("am start --user current -n " + quote(component));
+        if (result.contains("Error") || result.contains("Exception"))
+            throw new IOException("Your TV could not open this app.");
+    }
+
+    /** For TVs that cannot report their apps: open the first of these packages that is installed. */
+    void launchPackage(String[] packages) throws Exception {
+        for (String pkg : packages) {
+            if (!pkg.matches("[A-Za-z0-9_.]+")) continue;
+            String result = shell("monkey -p " + pkg + " -c android.intent.category.LEANBACK_LAUNCHER"
+                    + " -c android.intent.category.LAUNCHER 1 2>&1 || true");
+            if (result.contains("Events injected: 1")) return;
+        }
+        throw new IOException("This app is not installed on your TV.");
+    }
+
+    void openNavaTube() throws Exception {
+        // Only a TV app that reports its apps also understands the NavaTube request.
+        installedApps();
+        String result = shell("am start -n " + RUST_TV + "/.CompanionPlayActivity -d opennava://command/"
+                + UUID.randomUUID() + " --es open_page navatube");
+        if (result.contains("Error") || result.contains("Exception"))
+            throw new IOException("NavaTube could not be opened on your TV.");
+    }
+
+    /** NavaTube's account and video lists. The Google account itself never leaves the TV. */
+    org.json.JSONObject navaTube(String method, String argument) throws Exception {
+        if (!method.matches("status|sign_in|cancel|sign_out|feed|more|now")) throw new IOException("Unknown NavaTube action.");
+        String command = "content call --user \"$(am get-current-user)\""
+                + " --uri content://site.navatv.rustpreview.navatube --method " + method;
+        if (!argument.isEmpty()) {
+            // A search is Base64 encoded for the TV; a page cursor is already a plain ID.
+            String safe = "feed".equals(method) ? java.util.Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(argument.getBytes(StandardCharsets.UTF_8)) : argument;
+            if (!safe.matches("[A-Za-z0-9_-]{1,1200}")) throw new IOException("Unknown NavaTube request.");
+            command += " --arg " + safe;
+        }
+        String result;
+        try { result = shell(command); }
+        catch (IOException refused) {
+            if (!String.valueOf(refused.getMessage()).startsWith("TV declined")) throw refused;
+            result = "";
+        }
+        if (!result.contains("nava64=")) throw new IOException("Install the newest OpenNava Rust on your TV to use NavaTube here.");
+        return new org.json.JSONObject(bundleText(result, "nava64"));
+    }
+
+    void playNavaTube(String id, String title, String author) throws Exception {
+        if (!id.matches("[A-Za-z0-9_-]{11}")) throw new IOException("Unknown video.");
+        String result = shell("am start -n " + RUST_TV + "/.CompanionPlayActivity -d opennava://command/"
+                + UUID.randomUUID() + " --es video_id " + id
+                + " --es title " + quote(title.length() > 200 ? title.substring(0, 200) : title)
+                + " --es author " + quote(author.length() > 120 ? author.substring(0, 120) : author));
+        if (result.contains("Error") || result.contains("Exception"))
+            throw new IOException("Your TV could not play this video.");
+    }
+
+    /** Copies the photos the TV does not have yet, then tells it which ones to rotate and how often. */
+    void putBackgrounds(java.util.List<String> ids, java.util.List<File> files, int seconds) throws Exception {
+        AdbConnection session = active();
+        String state = shell(session, RUST_CALL + "backgrounds_get");
+        if (!state.contains("backgrounds64=")) throw new IOException("Install the newest OpenNava Rust on your TV.");
+        String json = bundleText(state, "backgrounds64");
+        org.json.JSONArray present = new org.json.JSONObject(json.isEmpty() ? "{}" : json).optJSONArray("images");
+        java.util.Set<String> onTv = new java.util.HashSet<>();
+        for (int i = 0; present != null && i < present.length(); i++) onTv.add(present.optString(i));
+        for (int i = 0; i < ids.size(); i++) {
+            String id = ids.get(i);
+            if (!id.matches("bg-[0-9a-f]{12}")) throw new IOException("Unknown photo.");
+            if (onTv.contains(id)) continue;
+            String remote = "/data/local/tmp/opennava-" + UUID.randomUUID() + ".jpg";
+            try {
+                push(session, files.get(i), remote);
+                shell(session, "content write --user \"$(am get-current-user)\" --uri"
+                        + " content://site.navatv.rustpreview.companion/background/" + id + " < " + remote);
+            } finally {
+                if (session.isConnectionEstablished()) try { shell(session, "rm -f " + remote); } catch (Exception ignored) {}
+            }
+        }
+        String request = new org.json.JSONObject().put("interval", seconds)
+                .put("images", new org.json.JSONArray(ids)).toString();
+        String encoded = java.util.Base64.getUrlEncoder().withoutPadding()
+                .encodeToString(request.getBytes(StandardCharsets.UTF_8));
+        if (!shell(session, RUST_CALL + "backgrounds_set --arg " + encoded).contains("handled=true"))
+            throw new IOException("The TV could not save these photos.");
+    }
+
+    /** A video from the viewer's own library plays in the Rust launcher's player. */
+    void playOwn(String url, String title) throws Exception {
+        String label = title.length() > 200 ? title.substring(0, 200) : title;
+        String result = shell("am start -n " + RUST_TV + "/.CompanionPlayActivity -d opennava://command/"
+                + UUID.randomUUID() + " --es stream_url " + quote(url) + " --es title " + quote(label));
+        if (result.contains("Error") || result.contains("Exception"))
+            throw new IOException("Install the current OpenNava Rust on your TV.");
+    }
+
     ScreenState screenState() throws Exception {
         String result = shell(LIVE_CALL + "screen_state");
         String screen = bundleValue(result, "screen");
@@ -155,9 +351,7 @@ public final class TvConnection {
         return new ScreenState(screen, provider, result);
     }
 
-    private static final String[] HOME_PROVIDERS = {
-            "site.navatv.rustpreview.companion", "site.navatv.launcher.companion"
-    };
+    private static final String[] HOME_PROVIDERS = {"site.navatv.rustpreview.companion"};
 
     private AdbConnection homeSession(Device expected) throws IOException {
         AdbConnection session = active();
@@ -301,21 +495,14 @@ public final class TvConnection {
         int launcher = versionCode(launcherPackage);
         Matcher name = VERSION_NAME.matcher(launcherPackage);
         String tvVersionName = name.find() ? name.group(1).trim() : "";
-        int nava = versionCode(packageVersion(OLD_NavaTV));
-        if (!tv && launcher < 0 && nava < 0) throw new IOException("This address is not a supported TV.");
+        if (!tv && launcher < 0) throw new IOException("This address is not a supported TV.");
         if (alias.isEmpty() || alias.equals("null") || alias.equalsIgnoreCase(model))
             alias = mf.equalsIgnoreCase("Amazon") ? "Fire TV" : model;
-        boolean migrateHome = false;
-        if (mf.equalsIgnoreCase("Amazon") && nava >= 0) {
-            String services = shell("settings get secure enabled_accessibility_services").trim();
-            for (String active : services.split(":")) {
-                if ((OLD_NavaTV + "/" + OLD_NavaTV + ".NavaHomeService").equals(active)
-                        || (OLD_NavaTV + "/.NavaHomeService").equals(active)) migrateHome = true;
-            }
-        }
         String androidId = shell("settings get secure android_id").trim();
         if (!androidId.matches("(?i)[0-9a-f]{1,16}")) androidId = "";
-        return new Device(host, port, alias, model, launcher, nava, tv, migrateHome, tvVersionName, androidId);
+        // The rest of the app asks by feature level: missing, too old, or able to do everything.
+        int level = launcher < 0 ? -1 : launcher >= NATIVE_TV_VERSION ? BUNDLED_TV_VERSION : 1;
+        return new Device(host, port, alias, model, level, -1, tv, tvVersionName, androidId);
     }
 
     private String packageVersion(String pkg) throws Exception {
@@ -354,26 +541,14 @@ public final class TvConnection {
             shell(session, "input keyevent 3");
             return;
         }
-        String otherLauncher = "de.flori.aura.mediatheken";
-        String otherFull = "de.flori.aura.tv";
-        String candidates = TV_PACKAGE + " " + otherLauncher + " " + OLD_NavaTV + " " + otherFull + " " + RUST_TV;
-        String pkg = shell(session, "for p in " + candidates + "; do "
-                + "if pm path --user current \"$p\" 2>/dev/null | grep -q '^package:'; then echo \"$p\"; break; fi; done").trim();
-        String action;
-        String component = pkg + "/.MainActivity";
-        if (RUST_TV.equals(pkg)) {
-            String entry = RUST_TV + "/.HomeEntryActivity";
-            String resolved = shell(session, "cmd package resolve-activity --brief --user current -n " + entry).trim();
-            component = resolved.endsWith(entry) || resolved.endsWith(RUST_TV + "/" + RUST_TV + ".HomeEntryActivity")
-                    ? entry : RUST_TV + "/android.app.NativeActivity";
-        }
-        if (RUST_TV.equals(pkg) || TV_PACKAGE.equals(pkg) || otherLauncher.equals(pkg)) {
-            action = "-a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER";
-        } else if (OLD_NavaTV.equals(pkg) || otherFull.equals(pkg)) {
-            action = "-a " + pkg + ".VISIT_HOME";
-        } else {
+        String entry = RUST_TV + "/.HomeEntryActivity";
+        String found = shell(session, "cmd package resolve-activity --brief --user current -n " + entry + " 2>/dev/null || true").trim();
+        if (!found.endsWith(entry) && !found.endsWith(RUST_TV + "/" + RUST_TV + ".HomeEntryActivity"))
             throw new IOException("Install OpenNava on the connected TV to open its home screen.");
-        }
+        startHome(session, "-a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER", entry);
+    }
+
+    private static void startHome(AdbConnection session, String action, String component) throws Exception {
         String result = shell(session, "am start -W --user current --activity-clear-top --activity-single-top "
                 + action + " -n " + component);
         if (result.contains("Error") || result.contains("Exception") || !result.contains("Status: ok"))
@@ -384,7 +559,7 @@ public final class TvConnection {
         switch (keyCode) {
             case 3: case 4: case 19: case 20: case 21: case 22: case 23: case 24: case 25: case 26:
             case 66: case 67: case 82: case 85: case 86: case 87: case 88: case 89: case 90:
-            case 126: case 127: case 164: break;
+            case 126: case 127: case 164: case 224: break;
             default: throw new IOException("Unknown remote control key.");
         }
         shell("input keyevent " + keyCode);
@@ -394,11 +569,6 @@ public final class TvConnection {
         if (text == null || !TEXT.matcher(text).matches())
             throw new IOException("Direct text entry supports unaccented Latin letters. Library search also supports accented characters.");
         shell("input text " + quote(text.replace(" ", "%s")));
-    }
-
-    public void search(String provider, String query) throws Exception {
-        String value = query == null ? "" : query.trim();
-        companion(value.isEmpty() ? "open" : "search", provider, value, "");
     }
 
     public void play(String provider, String programmeRef) throws Exception { openMedia(provider, programmeRef, "", false); }
@@ -448,7 +618,6 @@ public final class TvConnection {
         if (device.seniorVersion < MIN_COMPANION_TV_VERSION) throw new IOException("Install the TV update under Devices.");
         if (!"ard".equals(provider) && !"zdf".equals(provider) && !"arte".equals(provider))
             throw new IOException("Unknown library.");
-        if ("search".equals(operation) && value.length() > 220) throw new IOException("Enter a shorter search.");
         String requestedTitle = title == null ? "" : title;
         if (requestedTitle.length() > 300) requestedTitle = requestedTitle.substring(0,300);
         launchCompanion("--es operation " + operation + " --es provider " + provider
@@ -456,7 +625,11 @@ public final class TvConnection {
     }
 
     private void launchCompanion(String extras) throws Exception {
-        String result = shell("am start -n " + TV_PACKAGE + "/.CompanionActivity -a " + TV_PACKAGE + ".COMPANION " + extras);
+        // Android compares intents without their extras. Without distinct data it would treat a second command
+        // as "already running", bring the old task forward and silently drop the new channel or programme.
+        String result = shell("am start -n " + TV_PACKAGE + "/site.navatv.launcher.CompanionActivity"
+                + " -a site.navatv.launcher.COMPANION -d "
+                + "opennava://command/" + UUID.randomUUID() + " " + extras);
         if (result.contains("Error") || result.contains("Exception")) throw new IOException("The TV could not open this action.");
     }
 
@@ -573,7 +746,7 @@ public final class TvConnection {
                 while ((count = in.read(buffer)) != -1) { sha.update(buffer,0,count); out.write(buffer,0,count); }
             }
             PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(local.getPath(),0);
-            if (archive == null || !TV_PACKAGE.equals(archive.packageName) || archive.getLongVersionCode() != BUNDLED_TV_VERSION)
+            if (archive == null || !TV_PACKAGE.equals(archive.packageName) || archive.getLongVersionCode() != NATIVE_TV_VERSION)
                 throw new IOException("The bundled TV app is invalid.");
             push(session, local, remote);
             String digest = shell("sha256sum " + remote).trim();
@@ -581,34 +754,14 @@ public final class TvConnection {
             String result = shell("pm install -r " + remote).trim();
             if (!result.equals("Success")) throw new IOException("Installation declined: " + result);
             Device refreshed = discover(selected.host, selected.port);
-            if (refreshed.seniorVersion != BUNDLED_TV_VERSION) throw new IOException("Could not confirm the installed version.");
+            if (refreshed.canUpdateSenior) throw new IOException("Could not confirm the installed version.");
             target = refreshed;
-            return refreshed.homeMigrationPending ? migrateFireHome() : refreshed;
+            return refreshed;
         } finally {
             if (session == link && session.isConnectionEstablished()) {
                 try { shell("rm -f " + remote); } catch (Exception ignored) {}
             }
             local.delete();
-        }
-    }
-
-    /** Transfer only the legacy Fire TV Home service that is already active on this TV. */
-    public Device migrateFireHome() throws Exception {
-        Device current = device();
-        if (current == null || current.seniorVersion < MIN_COMPANION_TV_VERSION)
-            throw new IOException("Install the current TV app first.");
-        if (!current.homeMigrationPending) return current;
-        try (InputStream script = context.getAssets().open("fire-home.sh")) {
-            ByteArrayOutputStream text = new ByteArrayOutputStream();
-            byte[] buffer = new byte[2048];
-            int count;
-            while ((count = script.read(buffer)) != -1) text.write(buffer, 0, count);
-            shell(text.toString("UTF-8"));
-            target = discover(current.host, current.port);
-            if (target.homeMigrationPending) throw new IOException("The old service is still active.");
-            return target;
-        } catch (Exception source) {
-            throw new IOException("The TV app is installed. Home button migration is incomplete.", source);
         }
     }
 

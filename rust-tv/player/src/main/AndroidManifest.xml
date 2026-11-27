@@ -3,7 +3,6 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
     <uses-feature android:name="android.hardware.usb.host" android:required="false" tools:replace="android:required"/>
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="site.navatv.launcher.permission.HOME_LAYOUT"/>
     <uses-permission android:name="site.navatv.keys.permission.RUST_HOME"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.BLUETOOTH" tools:node="remove"/>
@@ -15,13 +14,12 @@
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
     <queries>
         <package android:name="de.rtli.tvnow"/>
-        <package android:name="site.navatv.launcher"/>
         <package android:name="site.navatv.keys"/>
         <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LEANBACK_LAUNCHER"/></intent>
         <intent><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent>
     </queries>
     <application android:name=".YoutubeSession" android:icon="@mipmap/ic_opennava" android:banner="@drawable/tv_banner" android:label="OpenNava Rust"
-        android:allowBackup="false" android:usesCleartextTraffic="false" tools:replace="android:label"
+        android:allowBackup="false" android:usesCleartextTraffic="true" tools:replace="android:label"
         android:theme="@android:style/Theme.Material.NoActionBar.Fullscreen" android:enableOnBackInvokedCallback="false">
         <activity android:name="android.app.NativeActivity" android:configChanges="orientation|keyboardHidden|screenSize"
                   android:exported="true" android:screenOrientation="landscape">
@@ -47,14 +45,27 @@
         <activity android:name="site.navatv.launcher.TvProgrammeActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name="site.navatv.launcher.RecordingsActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name="site.navatv.launcher.PlayerActivity" android:exported="false" android:screenOrientation="landscape"/>
+        <activity android:name="site.navatv.launcher.CustomStreamsActivity" android:exported="false" android:screenOrientation="landscape"
+            android:windowSoftInputMode="adjustResize"/>
         <activity android:name="site.navatv.launcher.LiveLibraryActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name="site.navatv.launcher.LiveTvActivity" android:exported="false"
             android:screenOrientation="landscape" android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode|screenLayout|smallestScreenSize"/>
         <activity android:name="site.navatv.launcher.HomePersonalizationActivity" android:exported="false" android:screenOrientation="landscape"/>
-        <activity android:name="site.navatv.launcher.LauncherChoiceActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name="site.navatv.launcher.PhoneLinkActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name=".YoutubeAccountActivity" android:exported="false" android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode|screenLayout|smallestScreenSize"/>
+        <!-- The paired phone's commands and live-TV questions; only the authorised ADB shell may reach them. -->
+        <activity android:name="site.navatv.launcher.CompanionActivity" android:exported="true" android:permission="android.permission.DUMP"
+            android:theme="@android:style/Theme.NoDisplay"/>
+        <provider android:name="site.navatv.launcher.CompanionProvider" android:authorities="site.navatv.rustpreview.live"
+            android:exported="true" android:permission="android.permission.DUMP"/>
+        <activity android:name=".SetupActivity" android:exported="false" android:screenOrientation="landscape"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode|screenLayout|smallestScreenSize"/>
+        <activity android:name=".ResetActivity" android:exported="false" android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden|keyboard|navigation|uiMode|screenLayout|smallestScreenSize"/>
+        <activity android:name=".CompanionPlayActivity" android:exported="true" android:permission="android.permission.DUMP"
+            android:theme="@android:style/Theme.NoDisplay"/>
         <activity android:name=".StreamActivity" android:exported="false" android:screenOrientation="landscape"/>
         <activity android:name="site.navatv.updates.UpdateActivity" android:exported="false"
             android:theme="@android:style/Theme.Material.NoActionBar"/>
@@ -67,8 +78,8 @@
         </service>
         <service android:name="site.navatv.updates.UpdateJob" android:exported="false" android:permission="android.permission.BIND_JOB_SERVICE"/>
         <receiver android:name="site.navatv.updates.InstallResult" android:exported="false"/>
-        <provider android:name=".PreviousHomeProvider" android:authorities="site.navatv.rustpreview.homepreference"
-            android:exported="true" android:permission="site.navatv.launcher.permission.HOME_LAYOUT"/>
+        <provider android:name=".NavaTubeProvider" android:authorities="site.navatv.rustpreview.navatube"
+            android:exported="true" android:permission="android.permission.DUMP"/>
         <provider android:name="site.navatv.launcher.HomeLayoutProvider" android:authorities="site.navatv.rustpreview.companion"
             android:exported="true" android:permission="android.permission.DUMP"/>
     </application>

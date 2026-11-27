@@ -15,13 +15,17 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 RELEASES = 'https://github.com/fcore247/opennava/releases'
+# What setup and update install, and the entry of each in the release manifest. The TV launcher keeps its
+# manifest key "preview", because installed launchers look it up under that name.
 APPS = {
-    'tv': ('site.navatv.launcher', 'OpenNava.apk', 26),
+    'tv': ('site.navatv.rustpreview', 'OpenNava-Rust-TV.apk', 26),
     'phone': ('site.navatv.companion', 'OpenNava-Companion.apk', 30),
 }
+KEYS = {'tv': 'preview', 'phone': 'phone'}
 
-# The preview is installed only after the viewer opts in on the TV.
-PREVIEW = ('site.navatv.rustpreview', 'OpenNava-Rust-TV.apk', 26)
+
+def entry(manifest, kind):
+    return manifest['apps'][KEYS[kind]]
 
 
 class Failure(Exception):
@@ -116,18 +120,15 @@ def version_code(adb, serial, user, package):
 def validate_manifest(manifest):
     if manifest.get('schema') != 1 or not re.fullmatch(r'\d+\.\d+\.\d+', manifest.get('version', '')):
         raise Failure('Unsupported release manifest.')
-    expected = dict(APPS)
-    if 'preview' in manifest.get('apps', {}):
-        expected['preview'] = PREVIEW
-        name = manifest['apps']['preview'].get('versionName', '')
-        if not isinstance(name, str) or not re.fullmatch(r'\d+\.\d+\.\d+', name):
-            raise Failure('Invalid preview version.')
-    for kind, (package, asset, _) in expected.items():
-        item = manifest.get('apps', {}).get(kind, {})
+    for kind, (package, asset, _) in APPS.items():
+        item = manifest.get('apps', {}).get(KEYS[kind], {})
         if (item.get('package') != package or item.get('asset') != asset
                 or type(item.get('versionCode')) is not int or item['versionCode'] < 1
                 or not re.fullmatch(r'[0-9a-f]{64}', item.get('sha256', ''))):
             raise Failure(f'Invalid release metadata for {kind}.')
+    name = manifest['apps']['preview'].get('versionName', '')
+    if not isinstance(name, str) or not re.fullmatch(r'\d+\.\d+\.\d+', name):
+        raise Failure('Invalid TV app version.')
     return manifest
 
 
@@ -149,7 +150,7 @@ def metadata(latest=False):
 
 
 def apk(manifest, kind, directory, local_dir=None):
-    item = manifest['apps'][kind]
+    item = entry(manifest, kind)
     name = item['asset']
     if local_dir:
         path = Path(local_dir) / name

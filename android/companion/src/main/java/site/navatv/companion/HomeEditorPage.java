@@ -170,7 +170,7 @@ final class HomeEditorPage {
             u.space(a.body, 16);
             LinearLayout heading = u.row();
             heading.addView(u.title(folder.name, 32, INK), u.weight(WRAP));
-            TextView more = u.text("•••", 18, GREEN, 720);
+            TextView more = u.text("•••", 18, LILAC, 720);
             more.setGravity(Gravity.CENTER);
             more.setContentDescription(text(R.string.home_folder_options));
             u.action(more, PALE, 18, LINE, () -> menu(folder, null));
@@ -289,10 +289,10 @@ final class HomeEditorPage {
 
     private void segment(LinearLayout group, boolean grid) {
         boolean selected = grid == layout.grid;
-        TextView item = u.text(text(grid ? R.string.home_grid : R.string.home_row), 15, selected ? WHITE : GREEN, 650);
+        TextView item = u.text(text(grid ? R.string.home_grid : R.string.home_row), 15, selected ? ON_LILAC : INK, 650);
         item.setGravity(Gravity.CENTER);
         item.setSelected(selected);
-        u.action(item, selected ? GREEN : PALE, 15, 0, () -> {
+        u.action(item, selected ? LILAC : PALE, 15, 0, () -> {
             if (editable() && layout.grid != grid) { layout.grid = grid; edit(); }
         });
         group.addView(item, u.weight(46));
@@ -309,7 +309,7 @@ final class HomeEditorPage {
             TextView empty = u.text(text(folder == null ? R.string.home_empty : R.string.home_folder_empty), 15, MUTED, 530);
             empty.setGravity(Gravity.CENTER);
             empty.setMinimumHeight(u.d(94));
-            empty.setBackground(u.shape(WHITE, 18, LINE));
+            empty.setBackground(u.shape(CARD, 18, LINE));
             a.body.addView(empty);
             return;
         }
@@ -344,14 +344,14 @@ final class HomeEditorPage {
         LinearLayout card = u.column();
         u.pad(card, 9, 11, 9, 10);
         card.setMinimumHeight(u.d(108));
-        int[] colors = {0xffdae4dc, 0xffe5deee, 0xffdce7ef, 0xffefdecf};
-        int color = item.isFolder() ? 0xffd9e7ce : colors[Math.floorMod(item.id.hashCode(), colors.length)];
-        if (item.isFolder()) card.addView(new Art(a, "folder", GREEN), u.lp(28, 28));
+        int[] colors = {0xff1f2b2a, 0xff272238, 0xff1d2838, 0xff2f2620};
+        int color = item.isFolder() ? 0xff263126 : colors[Math.floorMod(item.id.hashCode(), colors.length)];
+        if (item.isFolder()) card.addView(new Art(a, "folder", LILAC), u.lp(28, 28));
         else {
             String first = label.isEmpty() ? "·" : label.substring(0, label.offsetByCodePoints(0, 1));
-            TextView badge = u.text(first, 16, GREEN, 760);
+            TextView badge = u.text(first, 16, LILAC, 760);
             badge.setGravity(Gravity.CENTER);
-            badge.setBackground(u.shape(0x99ffffff, 10, 0));
+            badge.setBackground(u.shape(0x33ffffff, 10, 0));
             card.addView(badge, u.lp(32, 32));
         }
         u.space(card, 8);

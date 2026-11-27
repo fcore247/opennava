@@ -6,13 +6,15 @@ def playerSources = layout.buildDirectory.dir('nativePlayerSources')
 def collectSources = tasks.register('collectPlayerSources', Sync) {
     from('../../android/tv/src/main/java/site/navatv/full') {
         include 'NavaPlayerActivity.java', 'NavaMediaSources.java', 'YouTubePlayback.java',
-                'NavaYouTube.java', 'ThumbnailProxy.java', 'MediathekService.java'
+                'NavaYouTube.java', 'ThumbnailProxy.java', 'MediathekService.java', 'NowPlaying.java'
         into 'site/navatv/full'
     }
     from('../../android/tv/src/main/java/site/navatv/launcher') {
-        include 'HomeLayoutStore.java', 'HomeLayoutProvider.java', 'LauncherChoice.java', 'LauncherChoiceActivity.java', 'PhoneLinkActivity.java', 'PhoneLinkAddress.java'
+        include 'HomeLayoutStore.java', 'HomeLayoutProvider.java', 'CompanionProvider.java', 'CompanionActivity.java', 'CompanionLibrary.java', 'PhoneLinkActivity.java', 'PhoneLinkAddress.java'
         include 'PlayerChrome.java', 'CompactPlaybackControls.java', 'HomePersonalizationActivity.java', 'PlaybackLoadingMark.java',
-                'LiveGuide.java', 'ArteCatalog.java', 'MediathekService.java'
+                'LiveGuide.java', 'ArteCatalog.java', 'MediathekService.java',
+                'CustomStreams.java', 'CustomStreamStore.java', 'CustomStreamsActivity.java',
+                'OwnLibrary.java', 'LibraryStore.java', 'BackgroundStore.java', 'AppShelf.java', 'SetupState.java', 'RegionStore.java'
         include 'LiveTvActivity.java', 'LiveTvControls.java', 'LiveTvMediaSession.java',
                 'TvProgrammeActivity.java', 'ProgrammeReminders.java', 'RecordingsActivity.java',
                 'Recordings.java', 'RecordingHls.java', 'RecordingService.java', 'RecordingArchiveJob.java',
@@ -35,6 +37,7 @@ def collectNotices = tasks.register('collectNotices', Sync) {
         include 'Manrope.ttf', 'InstrumentSerif-Regular.ttf'
         into 'assets/fonts'
     }
+    from('../assets/ReenieBeanie.ttf') { into 'assets/fonts' }
     from('../../android/tv/src/main/assets/assets/landschaften') {
         include 'night.jpg', 'dawn.jpg', 'day.jpg', 'evening.jpg'
         into 'assets/landschaften'
@@ -50,13 +53,17 @@ def collectNotices = tasks.register('collectNotices', Sync) {
 android {
     namespace 'site.navatv.rustpreview'
     compileSdk 36
+    buildFeatures { buildConfig = true }
     buildToolsVersion '36.0.0'
     defaultConfig {
         applicationId 'site.navatv.rustpreview'
         minSdk 26
         targetSdk 34
-        versionCode 12
-        versionName '0.2.6'
+        versionCode 14
+        versionName '0.3.0'
+        // Where the first QR code of the setup points. A test build overrides it with -PcompanionDownload=…
+        buildConfigField 'String', 'COMPANION_DOWNLOAD', '"' + (providers.gradleProperty('companionDownload').orNull
+                ?: 'https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk') + '"'
         ndk { abiFilters 'armeabi-v7a', 'arm64-v8a' }
     }
     sourceSets.main {
@@ -81,6 +88,7 @@ dependencies {
     implementation 'com.google.zxing:core:3.5.4'
     implementation 'androidx.media3:media3-exoplayer:1.11.1'
     implementation 'androidx.media3:media3-exoplayer-hls:1.11.1'
+    implementation 'androidx.media3:media3-exoplayer-dash:1.11.1'
     implementation fileTree(dir: sdkPlayer, include: ['*.aar'])
     new File(sdkPlayer, 'dependencies.txt').eachLine { coordinate ->
         def artifact = coordinate.startsWith('com.eclipsesource.j2v8:j2v8:') ? coordinate + '@aar' : coordinate

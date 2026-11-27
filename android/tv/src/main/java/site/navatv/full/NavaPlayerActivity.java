@@ -91,6 +91,7 @@ public final class NavaPlayerActivity extends Activity {
     private String videoId;
     private String mediathekId, providerLabel = "YOUTUBE";
     private boolean mediathekMode, liveMedia;
+    private String playingTitle, playingAuthor;
     private final android.util.SparseArray<Typeface> navaFonts = new android.util.SparseArray<>();
     private long resumePosition;
     private int loadGeneration;
@@ -109,9 +110,20 @@ public final class NavaPlayerActivity extends Activity {
             if (!started) return;
             updateProgress();
             checkPlaybackProgress();
+            publishNowPlaying();
             ui.postDelayed(this, 500);
         }
     };
+
+    private void publishNowPlaying() {
+        if (player == null || failed) {
+            NowPlaying.clear(this);
+            return;
+        }
+        NowPlaying.publish(this, mediathekMode ? "library" : "youtube", videoId, playingTitle, playingAuthor,
+                player.getCurrentPosition(), player.getDuration(),
+                player.getPlayWhenReady() && player.getPlaybackState() != Player.STATE_ENDED, liveMedia);
+    }
 
     public static Intent intent(Context context, String videoId) {
         return new Intent(context, NavaPlayerActivity.class).putExtra(EXTRA_VIDEO_ID, videoId);
@@ -143,6 +155,8 @@ public final class NavaPlayerActivity extends Activity {
         GlobalPreferences.instance(getApplicationContext());
         if (!mediathekMode) service = YouTubeServiceManager.instance();
         sources = new NavaMediaSources(this);
+        playingTitle = getIntent().getStringExtra(EXTRA_TITLE);
+        playingAuthor = getIntent().getStringExtra(EXTRA_AUTHOR);
         buildUi();
     }
 
@@ -261,6 +275,8 @@ public final class NavaPlayerActivity extends Activity {
                         try {
                             liveMedia = item.live;
                             providerLabel = "ZDF".equals(item.channel) ? "ZDF" : "ARD";
+                            playingTitle = item.title;
+                            playingAuthor = item.author;
                             if (compact != null) compact.setMetadata(providerLabel, item.title, item.author);
                             else {
                                 brand.setText("OpenNava   /   " + providerLabel);
@@ -306,6 +322,8 @@ public final class NavaPlayerActivity extends Activity {
 
     private void openFormat(PreparedVideo result) {
         MediaItemFormatInfo info = result.info;
+        if (notEmpty(info.getTitle())) playingTitle = info.getTitle();
+        if (notEmpty(info.getAuthor())) playingAuthor = info.getAuthor();
         if (compact != null) compact.setMetadata("YouTube",
                 notEmpty(info.getTitle()) ? info.getTitle() : null,
                 notEmpty(info.getAuthor()) ? info.getAuthor() : null);
@@ -741,6 +759,7 @@ public final class NavaPlayerActivity extends Activity {
     }
 
     @Override protected void onStop() {
+        NowPlaying.clear(this);
         started = false; ++loadGeneration;
         if (loadingPanel != null) loadingPanel.setVisibility(View.GONE);
         ui.removeCallbacksAndMessages(null);

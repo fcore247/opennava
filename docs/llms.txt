@@ -1,0 +1,12 @@
+# OpenNava
+
+> An open TV launcher for Android TV, Google TV and Fire TV with a companion phone app.
+
+## For AI agents
+
+- [Setup instructions](https://opennava.site/agent/agent.md): install OpenNava on a person's own TV and add their media libraries.
+
+## Links
+
+- [Live demo](https://opennava.site/)
+- [Source and releases](https://github.com/fcore247/opennava)

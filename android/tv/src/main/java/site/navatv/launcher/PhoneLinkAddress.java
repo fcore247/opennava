@@ -31,12 +31,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /** Finds a local ADB connection endpoint without authenticating or opening a shell. */
-final class PhoneLinkAddress {
+public final class PhoneLinkAddress {
     String tail, lan;
     int port;
     boolean needsPhoneCheck;
 
-    static PhoneLinkAddress find(Context context, int suppliedPort) throws Exception {
+    public boolean hasHost() { return host() != null; }
+    public int port() { return port; }
+
+    public static PhoneLinkAddress find(Context context, int suppliedPort) throws Exception {
         PhoneLinkAddress result = new PhoneLinkAddress();
         ConnectivityManager cm = context.getSystemService(ConnectivityManager.class);
         if (cm != null) {
@@ -95,7 +98,7 @@ final class PhoneLinkAddress {
 
     String host() { return tail != null ? tail : lan; }
 
-    Uri invitation(Context context) {
+    public Uri invitation(Context context) {
         String name = Settings.Global.getString(context.getContentResolver(), "device_name");
         if (name == null || name.trim().isEmpty()) name = Build.MODEL;
         name = name.trim();

@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from zipfile import ZipFile, BadZipFile
 
-from navatv import APPS, PREVIEW, ROOT, Failure, command, find_tool, validate_manifest, verify_signer_and_package
+from navatv import APPS, KEYS, ROOT, Failure, command, find_tool, validate_manifest, verify_signer_and_package
 
 REPO = 'fcore247/opennava'
 
@@ -31,19 +31,19 @@ def release_files(directory, version):
     if not re.fullmatch(r'\d+\.\d+\.\d+', version):
         raise Failure('Use a stable version such as 1.0.0 (without v).')
     apps = {}
-    for kind, (package, name, _) in {**APPS, 'preview': PREVIEW}.items():
+    for key, (package, name, _) in ((KEYS[kind], spec) for kind, spec in APPS.items()):
         path = directory / name
         metadata = command(find_tool('aapt'), 'dump', 'badging', path).splitlines()[0]
         app = re.search(r"^package: name='([^']+)' versionCode='(\d+)' versionName='([^']+)'", metadata)
-        if not app or app.group(1) != package or (kind != 'preview' and app.group(3) != version):
+        if not app or app.group(1) != package or (key != 'preview' and app.group(3) != version):
             raise Failure(f'Unexpected package or version for {name}.')
         item = dict(package=package, versionCode=int(app.group(2)), asset=name, sha256=digest(path))
-        if kind == 'preview':
+        if key == 'preview':
             item['versionName'] = app.group(3)
         verify_signer_and_package(path, item)
-        apps[kind] = item
-    with ZipFile(directory / APPS['phone'][1]) as bundle, bundle.open('assets/OpenNava.apk') as payload:
-        if sha(payload) != apps['tv']['sha256']:
+        apps[key] = item
+    with ZipFile(directory / APPS['phone'][1]) as bundle, bundle.open('assets/OpenNava-TV.apk') as payload:
+        if sha(payload) != apps['preview']['sha256']:
             raise Failure('The companion embeds a different TV APK. Rebuild it using this release\'s signed TV payload.')
     manifest = validate_manifest(dict(schema=1, version=version, apps=apps))
     data = (json.dumps(manifest, indent=2) + '\n').encode()

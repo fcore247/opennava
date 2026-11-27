@@ -118,7 +118,7 @@ final class CompanionLibrary {
             enable = request.getBoolean("enabled");
             String station = request.getString("channel");
             LiveGuide.Channel found = null;
-            for (LiveGuide.Channel c : LiveGuide.channels(BuildConfig.RTL_ENABLED)) if (c.id.equals(station)) { found = c; break; }
+            for (LiveGuide.Channel c : LiveGuide.channels()) if (c.id.equals(station)) { found = c; break; }
             channel = found;
             if (channel == null || title.trim().isEmpty() || title.length() > 600 || start <= 0)
                 throw new IllegalArgumentException("Invalid programme.");

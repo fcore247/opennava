@@ -19,7 +19,13 @@ pub struct CatalogItem {
     pub provider: usize,
     pub subtitle: String,
     pub thumbnail: String,
+    /// The name of the viewer's own library; empty for the built-in broadcasters.
+    #[serde(default)]
+    pub source: String,
 }
+
+/// Provider number of items from the viewer's own libraries. Their ID is the playable address.
+pub const OWN: usize = 5;
 
 #[derive(Debug, Default)]
 pub struct CatalogPage {
@@ -110,6 +116,7 @@ fn episode(
         provider,
         subtitle: subtitle.chars().take(450).collect(),
         thumbnail: thumbnail(image),
+        source: String::new(),
     })
 }
 fn ard_item(t: &Value) -> Option<CatalogItem> {
@@ -533,6 +540,9 @@ fn parse_stream(item: &CatalogItem, data: &Value) -> Result<String, String> {
     })
 }
 pub fn resolve(item: &CatalogItem) -> Result<String, String> {
+    if item.provider == OWN {
+        return crate::own::web(&item.id).ok_or_else(|| "Ungültige Videoadresse.".into());
+    }
     if !valid_detail(item.provider, &item.id) {
         return Err("Ungültige Sendungsadresse.".into());
     }

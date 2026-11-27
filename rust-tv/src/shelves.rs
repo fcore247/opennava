@@ -58,6 +58,7 @@ impl Selection {
     }
     fn service(&self) -> &str {
         match self {
+            Self::Broadcast(x) if !x.source.is_empty() => &x.source,
             Self::Broadcast(x) => provider_name(x.provider),
             Self::Video { channel, .. } => channel,
         }
@@ -148,7 +149,7 @@ impl Ui {
     pub(crate) fn request_page(&mut self) -> Action {
         if !matches!(
             self.page,
-            Page::Youtube | Page::YoutubeSearch | Page::Search | Page::Channel(_)
+            Page::Youtube | Page::YoutubeSearch | Page::Search | Page::Channel(_) | Page::Own(_)
         ) {
             return Action::None;
         }
@@ -189,6 +190,13 @@ impl Ui {
                     }
                 }
             }
+            Page::Own(i) => match self.libraries.get(i) {
+                Some(library) => Action::OwnCatalog {
+                    request,
+                    library: library.clone(),
+                },
+                None => Action::None,
+            },
             Page::Channel(provider) => Action::Catalog {
                 request,
                 provider,
@@ -202,7 +210,8 @@ impl Ui {
         }
     }
     pub fn catalog_loaded(&mut self, request: u64, result: Result<Vec<CatalogItem>, String>) {
-        if self.is_current_request(request) && matches!(self.page, Page::Channel(_)) {
+        if self.is_current_request(request) && matches!(self.page, Page::Channel(_) | Page::Own(_))
+        {
             self.finish_feed(
                 result.map(|items| items.into_iter().map(Selection::Broadcast).collect()),
             );
@@ -379,7 +388,9 @@ impl Ui {
                 self.shelf.error = Some(error);
             }
         }
-        if matches!(self.page, Page::Channel(_)) && (self.focus == 0 || self.focus == 900) {
+        if matches!(self.page, Page::Channel(_) | Page::Own(_))
+            && (self.focus == 0 || self.focus == 900)
+        {
             self.focus = if self.shelf.items.is_empty() { 80 } else { 50 };
         }
     }
@@ -553,7 +564,11 @@ impl Ui {
     pub fn wanted_images(&self) -> Vec<String> {
         let page = self.per_page();
         let urls: Vec<_> = match self.page {
-            Page::Channel(_) | Page::Search | Page::YoutubeSearch | Page::Youtube => self
+            Page::Channel(_)
+            | Page::Own(_)
+            | Page::Search
+            | Page::YoutubeSearch
+            | Page::Youtube => self
                 .shelf
                 .items
                 .iter()
@@ -587,7 +602,7 @@ impl Ui {
         let Ok((w, h)) = reader.into_dimensions() else {
             return;
         };
-        if w == 0 || h == 0 || u64::from(w) * u64::from(h) > 6_000_000 {
+        if w == 0 || h == 0 || u64::from(w) * u64::from(h) > 10_000_000 {
             return;
         }
         let Ok(img) = image::load_from_memory(&bytes) else {
@@ -647,6 +662,7 @@ impl Ui {
             Selection::Broadcast(t) => match t.provider {
                 1 => [28, 58, 106, 255],
                 2 => [109, 59, 28, 255],
+                crate::catalog::OWN => [58, 48, 104, 255],
                 _ => [100, 52, 46, 255],
             },
             Selection::Video { .. } => [63, 39, 55, 255],
@@ -858,6 +874,7 @@ mod tests {
     }
     fn item(id: &str) -> CatalogItem {
         CatalogItem {
+            source: String::new(),
             id: id.into(),
             title: "Morgenmagazin".into(),
             provider: 2,

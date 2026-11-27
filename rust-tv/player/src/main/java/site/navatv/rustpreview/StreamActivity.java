@@ -44,6 +44,10 @@ public final class StreamActivity extends Activity {
         @Override public void run() {
             if (player == null) return;
             updateControls();
+            if (failed) site.navatv.full.NowPlaying.clear(StreamActivity.this);
+            else site.navatv.full.NowPlaying.publish(StreamActivity.this, "stream", "",
+                    getIntent().getStringExtra("title"), "", player.getCurrentPosition(), player.getDuration(),
+                    player.getPlayWhenReady(), player.isCurrentWindowDynamic());
             handler.postDelayed(this, 500);
         }
     };
@@ -57,7 +61,7 @@ public final class StreamActivity extends Activity {
         super.onCreate(state);
         String source = getIntent().getStringExtra("stream_url");
         uri = source == null ? Uri.EMPTY : Uri.parse(source);
-        if (!"https".equals(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null) {
+        if (!("https".equals(uri.getScheme()) || "http".equals(uri.getScheme())) || uri.getHost() == null || uri.getUserInfo() != null) {
             finish();
             return;
         }
@@ -119,11 +123,11 @@ public final class StreamActivity extends Activity {
         if (path.endsWith(".m3u8")) {
             // Preserve the master playlist, including its AAC audio group, map and byte ranges.
             media = new HlsMediaSource.Factory(network).createMediaSource(uri);
-        } else if (path.endsWith(".mp4")) {
+        } else if (path.matches(".*\\.(mp4|m4v|mkv|webm|ts|mp3|m4a|aac)")) {
             media = new ExtractorMediaSource.Factory(network).createMediaSource(uri);
         } else {
-            showFailure();
-            return;
+            // Addresses of own libraries often carry no file ending; most of those are HLS.
+            media = new HlsMediaSource.Factory(network).createMediaSource(uri);
         }
         DefaultTrackSelector tracks = new DefaultTrackSelector();
         tracks.setParameters(tracks.buildUponParameters().setPreferredAudioLanguage("de"));
@@ -178,6 +182,7 @@ public final class StreamActivity extends Activity {
 
     @Override protected void onStop() {
         handler.removeCallbacks(tick);
+        site.navatv.full.NowPlaying.clear(this);
         if (player != null) {
             resumeAt = player.getCurrentPosition();
             shouldPlay = player.getPlayWhenReady();

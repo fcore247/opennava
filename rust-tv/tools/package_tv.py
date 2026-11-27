@@ -124,6 +124,7 @@ def verify_package(apk, rust_libraries, tools, env, expected_signer):
                                   env=env, text=True)
     for value in (PACKAGE, 'android:banner', 'android.app.NativeActivity', 'site.navatv.launcher',
                   'android.intent.category.LEANBACK_LAUNCHER', 'site.navatv.full.NavaPlayerActivity',
+                  'site.navatv.launcher.CompanionActivity', 'site.navatv.rustpreview.live',
                   PACKAGE + '.StreamActivity', PACKAGE + '.YoutubeAccountActivity',
                   'site.navatv.launcher.LiveTvActivity', 'site.navatv.launcher.TvProgrammeActivity',
                   'site.navatv.launcher.RecordingsActivity', 'site.navatv.launcher.RecordingService',

@@ -11,8 +11,8 @@ android {
         applicationId 'site.navatv.launcher'
         minSdk 26
         targetSdk 34
-        versionCode 114
-        versionName '1.1.4'
+        versionCode 120
+        versionName '1.2.0'
         buildConfigField 'boolean', 'RTL_ENABLED', 'false'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
@@ -31,4 +31,5 @@ dependencies {
     }
     implementation 'androidx.media3:media3-exoplayer:1.11.1'
     implementation 'androidx.media3:media3-exoplayer-hls:1.11.1'
+    implementation 'androidx.media3:media3-exoplayer-dash:1.11.1'
 }

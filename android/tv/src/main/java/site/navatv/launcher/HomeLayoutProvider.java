@@ -8,28 +8,31 @@ import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
 
-/** Same-signer canonical layout in classic; authenticated shell endpoint in the standalone preview. */
+/** The authenticated shell endpoint of the paired phone. */
 public final class HomeLayoutProvider extends ContentProvider {
     @Override public boolean onCreate() { return true; }
 
     @Override public Bundle call(String method, String arg, Bundle extras) {
-        boolean classic = "site.navatv.launcher".equals(getContext().getPackageName());
-        String permission = classic ? "site.navatv.launcher.permission.HOME_LAYOUT" : Manifest.permission.DUMP;
-        getContext().enforceCallingOrSelfPermission(permission, "Home layout access");
+        getContext().enforceCallingOrSelfPermission(Manifest.permission.DUMP, "Home layout access");
         long caller = Binder.clearCallingIdentity();
         try {
-            if (classic && ("launcher_get".equals(method) || "launcher_set".equals(method) || "launcher_adopt_rust".equals(method))) {
-                Bundle result = new Bundle();
-                if ("launcher_adopt_rust".equals(method)) site.navatv.updates.LauncherProfile.adoptRust(getContext());
-                if ("launcher_set".equals(method)) result.putBoolean("saved", site.navatv.updates.LauncherProfile.save(getContext(), arg));
-                result.putString("launcher", site.navatv.updates.LauncherProfile.get(getContext()));
-                return result;
-            }
-            if (!classic) return HomeLayoutStore.companion(getContext(), method, arg);
-            if ("read".equals(method)) return HomeLayoutStore.read(getContext());
-            if ("write".equals(method) || "adopt".equals(method)) return HomeLayoutStore.write(getContext(), arg, "adopt".equals(method));
-            throw new IllegalArgumentException("Unknown home layout method");
+            if (AppShelf.handles(method)) return AppShelf.companion(getContext());
+            if (SetupState.handles(method)) return SetupState.companion(getContext(), arg);
+            if (RegionStore.handles(method)) return RegionStore.companion(getContext(), arg);
+            if (BackgroundStore.handles(method)) return BackgroundStore.companion(getContext(), method, arg);
+            if (LibraryStore.handles(method)) return LibraryStore.companion(getContext(), method, arg);
+            return HomeLayoutStore.companion(getContext(), method, arg);
         } finally { Binder.restoreCallingIdentity(caller); }
+    }
+
+    @Override public android.os.ParcelFileDescriptor openFile(Uri uri, String mode) throws java.io.FileNotFoundException {
+        getContext().enforceCallingOrSelfPermission(Manifest.permission.DUMP, "Background upload");
+        if (!uri.getPathSegments().isEmpty() && "appart".equals(uri.getPathSegments().get(0))) {
+            long caller = Binder.clearCallingIdentity();
+            try { return AppShelf.open(getContext(), uri, mode); }
+            finally { Binder.restoreCallingIdentity(caller); }
+        }
+        return BackgroundStore.open(getContext(), uri, mode);
     }
 
     @Override public String getType(Uri uri) { return null; }

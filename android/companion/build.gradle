@@ -9,8 +9,8 @@ android {
         applicationId 'site.navatv.companion'
         minSdk 30
         targetSdk 34
-        versionCode 114
-        versionName '1.1.4'
+        versionCode 120
+        versionName '1.2.0'
     }
     sourceSets.main.java.srcDir(layout.buildDirectory.dir('shared-java'))
     sourceSets.main.assets.srcDir(layout.buildDirectory.dir('shared-assets'))
@@ -30,7 +30,8 @@ dependencies {
 def tvSource = rootProject.file('tv/src/main')
 def catalogue = tasks.register('prepareCatalogue', Sync) {
     from(new File(tvSource, 'java')) {
-        include 'site/navatv/launcher/MediathekService.java', 'site/navatv/launcher/LiveGuide.java', 'site/navatv/launcher/ArteCatalog.java'
+        include 'site/navatv/launcher/MediathekService.java', 'site/navatv/launcher/LiveGuide.java', 'site/navatv/launcher/ArteCatalog.java',
+                'site/navatv/launcher/CustomStreams.java', 'site/navatv/launcher/OwnLibrary.java'
     }
     into layout.buildDirectory.dir('shared-java')
 }
@@ -38,7 +39,10 @@ def assets = tasks.register('prepareCompanionAssets', Sync) {
     from(new File(tvSource, 'assets/assets')) {
         include 'ard-cover.jpg', 'zdf-cover.jpg', 'arte-cover.jpg', 'fonts/*'
     }
-    from(rootProject.file('build/payload/OpenNava.apk'))
+    from(rootProject.file('build/payload/OpenNava-TV.apk'))
+    from(rootProject.file('../rust-tv/assets')) { include 'ocean.jpg', 'forest.jpg'; into 'home' }
+    // The handwritten Opennava logo of the television.
+    from(rootProject.file('../rust-tv/assets')) { include 'ReenieBeanie.ttf', 'OFL-ReenieBeanie.txt'; into 'fonts' }
     into layout.buildDirectory.dir('shared-assets')
 }
 tasks.named('preBuild').configure { dependsOn catalogue, assets }

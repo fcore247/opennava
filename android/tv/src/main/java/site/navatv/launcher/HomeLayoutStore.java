@@ -22,8 +22,6 @@ import java.util.Set;
 
 /** Full-mode home shared by the launcher, its separately installed preview and the paired phone. */
 public final class HomeLayoutStore {
-    private static final String CLASSIC = "site.navatv.launcher";
-    public static final Uri CHANGES = Uri.parse("content://" + CLASSIC + ".homelayout");
     private static final String PREFS = "tv-home-layout";
     private static final int B64 = Base64.URL_SAFE | Base64.NO_WRAP | Base64.NO_PADDING;
     private static final String INITIAL = "{\"revision\":0,\"layout\":\"row\",\"items\":[]}";
@@ -37,7 +35,7 @@ public final class HomeLayoutStore {
                 if (info.activityInfo == null || !info.activityInfo.enabled || !info.activityInfo.applicationInfo.enabled
                         || !info.activityInfo.exported) continue;
                 String name = info.activityInfo.packageName;
-                if (name.equals(ctx.getPackageName()) || name.equals(CLASSIC) || name.equals("site.navatv.full")
+                if (name.equals(ctx.getPackageName()) || name.equals("site.navatv.launcher") || name.equals("site.navatv.full")
                         || name.equals("site.navatv.rustpreview") || name.equals("com.google.android.apps.tv.launcherx")
                         || name.equals("com.amazon.tv.launcher") || name.equals("com.amazon.tv.settings.v2")) continue;
                 boolean userApp = (info.activityInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) == 0;
@@ -53,13 +51,6 @@ public final class HomeLayoutStore {
 
     private static SharedPreferences prefs(Context ctx) { return ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE); }
 
-    private static boolean usesClassic(Context ctx) {
-        if (CLASSIC.equals(ctx.getPackageName())) return false;
-        ProviderInfo info = ctx.getPackageManager().resolveContentProvider(CHANGES.getAuthority(), 0);
-        return info != null && CLASSIC.equals(info.packageName)
-                && ctx.getPackageManager().checkSignatures(ctx.getPackageName(), CLASSIC) == PackageManager.SIGNATURE_MATCH;
-    }
-
     private static Bundle result(boolean handled, String code) {
         Bundle result = new Bundle();
         result.putBoolean("handled", handled);
@@ -69,41 +60,15 @@ public final class HomeLayoutStore {
 
     private static String local(Context ctx) { return prefs(ctx).getString("layout", INITIAL); }
 
-    private static String state(Context ctx) throws JSONException {
-        if (!usesClassic(ctx)) return local(ctx);
-        Bundle bundle = ctx.getContentResolver().call(CHANGES, "read", null, null);
-        if (bundle == null || bundle.getString("layout") == null) throw new IllegalStateException("Home layout unavailable");
-        String current = bundle.getString("layout");
-        String saved = local(ctx);
-        if (INITIAL.equals(current) && !INITIAL.equals(saved)) {
-            // A standalone preview may already have a layout when the matching classic launcher is installed.
-            JSONObject migration = new JSONObject(saved);
-            migration.put("revision", 0);
-            Bundle imported = ctx.getContentResolver().call(CHANGES, "adopt", migration.toString(), null);
-            if (imported != null && imported.getBoolean("handled")) current = imported.getString("layout");
-            else {
-                if (imported == null || !"conflict".equals(imported.getString("code"))) {
-                    throw new IllegalStateException("Could not migrate the saved home");
-                }
-                Bundle latest = ctx.getContentResolver().call(CHANGES, "read", null, null);
-                if (latest == null || latest.getString("layout") == null) throw new IllegalStateException("Home layout unavailable");
-                current = latest.getString("layout");
-            }
-        }
-        if (!current.equals(saved)) prefs(ctx).edit().putString("layout", current).apply();
-        return current;
-    }
+    private static String state(Context ctx) { return local(ctx); }
 
     public static String layout(Context ctx) {
         try { return state(ctx); }
-        catch (RuntimeException | JSONException unavailable) { return ""; }
+        catch (RuntimeException unavailable) { return ""; }
     }
 
     public static String revision(Context ctx) {
-        try {
-            String source = CLASSIC.equals(ctx.getPackageName()) || usesClassic(ctx) ? "classic:" : "local:";
-            return source + new JSONObject(state(ctx)).getLong("revision");
-        }
+        try { return "local:" + new JSONObject(state(ctx)).getLong("revision"); }
         catch (RuntimeException | JSONException e) { return "unavailable"; }
     }
 
@@ -134,10 +99,10 @@ public final class HomeLayoutStore {
         if (!"home_set".equals(method) || arg == null || arg.length() > 40000) return result(false, "invalid");
         try {
             String raw = new String(Base64.decode(arg, B64), StandardCharsets.UTF_8);
-            Bundle saved = usesClassic(ctx) ? ctx.getContentResolver().call(CHANGES, "write", raw, null) : write(ctx, raw, false);
+            Bundle saved = write(ctx, raw, false);
             if (saved == null) return result(false, "unavailable");
             String layout = saved.getString("layout");
-            if (layout != null && !CLASSIC.equals(ctx.getPackageName())) prefs(ctx).edit().putString("layout", layout).apply();
+            if (layout != null) prefs(ctx).edit().putString("layout", layout).apply();
             saved.remove("layout");
             return saved;
         } catch (IllegalArgumentException e) { return result(false, "invalid"); }
@@ -209,7 +174,7 @@ public final class HomeLayoutStore {
             }
             String json = new JSONObject().put("revision", rev + 1).put("layout", layout).put("items", checked).toString();
             if (!prefs(ctx).edit().putString("layout", json).commit()) return result(false, "storage");
-            Uri changes = CLASSIC.equals(ctx.getPackageName()) ? CHANGES : Uri.parse("content://" + ctx.getPackageName() + ".companion");
+            Uri changes = Uri.parse("content://" + ctx.getPackageName() + ".companion");
             ctx.getContentResolver().notifyChange(changes, null);
             Bundle reply = result(true, null);
             reply.putString("layout", json);

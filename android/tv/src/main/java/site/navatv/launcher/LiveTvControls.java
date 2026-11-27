@@ -360,7 +360,9 @@ final class LiveTvControls {
         selectedRow = Math.max(0, Math.min(selection, rows.size() - 1));
         paintTab(tabMine, "My channels", mine);
         paintTab(tabAll, "All channels", !mine);
-        panelCount.setText(rows.size() + " Channel");
+        int stations = 0;
+        for (Row row : rows) if (row.index >= 0) stations++;
+        panelCount.setText(stations + " Channel");
         emptyList.setVisibility(rows.isEmpty() ? View.VISIBLE : View.GONE);
         panelClock.setText(time);
         adapter.notifyDataSetChanged();
@@ -465,7 +467,7 @@ final class LiveTvControls {
             boolean chosen = position == selectedRow;
             cells.box.setBackground(chosen ? chrome.shape(0xffe4e2fb, 15, PEARL)
                     : row.playing ? chrome.shape(0xff2a293b, 15, VIOLET_EDGE) : null);
-            cells.number.setText(String.format(java.util.Locale.GERMANY, "%02d", row.index + 1));
+            cells.number.setText(row.index < 0 ? "+" : String.format(java.util.Locale.GERMANY, "%02d", row.index + 1));
             cells.number.setTextColor(chosen ? PEARL : LAVENDER);
             cells.number.setBackground(chrome.shape(chosen ? 0xff45415f : 0xff262638, 10, chosen ? 0xff45415f : VIOLET_EDGE));
             cells.name.setText(row.favourite ? row.name + "  ★" : row.name);

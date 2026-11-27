@@ -25,7 +25,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 
-/** The public broadcasters' linear channels, programme schedules and exact catch-up references. */
+/** German public broadcasters with schedules and catch-up, free US streams and the viewer's own streams. */
 final class LiveGuide {
     private static final String ARD_ITEM = "https://api.ardmediathek.de/page-gateway/pages/ard/item/";
     private static final String ARD_EPG = "https://programm-api.ard.de/";
@@ -38,6 +38,10 @@ final class LiveGuide {
         final String id, name, provider;
         private final String sourceId;
         final boolean regional;
+
+        /** US and viewer-added channels play a fixed address and have no schedule or catch-up. */
+        boolean direct() { return "us".equals(provider) || "custom".equals(provider); }
+        String directLabel() { return "us".equals(provider) ? "US live stream" : "My stream"; }
         private Channel(String id, String name, String crid, boolean regional) {
             this(id, name, crid.isEmpty() ? "zdf" : "arte".equals(id) ? "arte" : "ard",
                     crid.isEmpty() ? id + "-live-beitrag-100" :
@@ -117,7 +121,56 @@ final class LiveGuide {
         return Collections.unmodifiableList(channels);
     }
 
-    static List<Channel> channels() { return CHANNELS; }
+    // Free streams from the broadcasters' own distribution, appended so German channel numbers stay put.
+    private static final List<Channel> US_CHANNELS = Collections.unmodifiableList(java.util.Arrays.asList(
+            us("us-cbsnews", "CBS News 24/7",
+                    "https://cbsn-us.cbsnstream.cbsnews.com/out/v1/55a8648e8f134e82a470f83d562deeca/master.m3u8"),
+            us("us-cbs-baltimore", "CBS News Baltimore",
+                    "https://lineup.cbsivideo.com/playout/8877a7d5-b094-4ac8-bc72-75a5fed68e5b/index.m3u8"),
+            us("us-cbs-sacramento", "CBS News Sacramento",
+                    "https://lineup.cbsivideo.com/playout/c1ed69db-6b71-4581-a937-a70ab4089f8a/index.m3u8"),
+            us("us-bloomberg", "Bloomberg TV US", "https://www.bloomberg.com/media-manifest/streams/us.m3u8"),
+            us("us-bloomberg-originals", "Bloomberg Originals", "https://www.bloomberg.com/media-manifest/streams/qt.m3u8"),
+            us("us-pbskids-east", "PBS Kids Eastern",
+                    "https://livestream.pbskids.org/out/v1/14507d931bbe48a69287e4850e53443c/est.m3u8"),
+            us("us-pbskids-pacific", "PBS Kids Pacific",
+                    "https://livestream.pbskids.org/out/v1/11f2e6b73eaa4887b3746cb863960e79/pst.m3u8"),
+            us("us-nasa", "NASA TV", "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8")));
+
+    private static Channel us(String id, String name, String url) { return new Channel(id, name, "us", url, false); }
+
+    /** "us" shows the American stations, a German-speaking country the German ones, empty shows all. */
+    private static String country = "";
+    private static List<CustomStreams.Entry> custom = Collections.emptyList();
+    private static volatile List<Channel> lineup = build();
+
+    private static List<Channel> build() {
+        List<Channel> all = new ArrayList<>();
+        if (!"us".equals(country)) all.addAll(CHANNELS);
+        if (country.isEmpty() || "us".equals(country)) all.addAll(US_CHANNELS);
+        for (CustomStreams.Entry item : custom) all.add(new Channel(item.id, item.name, "custom", item.url, false));
+        return Collections.unmodifiableList(all);
+    }
+
+    static synchronized void setCustomStreams(List<CustomStreams.Entry> own) {
+        custom = own;
+        lineup = build();
+    }
+
+    static synchronized void setCountry(String code) {
+        if (country.equals(code)) return;
+        country = code;
+        lineup = build();
+    }
+
+    static List<Channel> channels() { return lineup; }
+
+    /** Channels with a published programme guide. */
+    static List<Channel> guideChannels() {
+        List<Channel> result = new ArrayList<>();
+        for (Channel channel : lineup) if (!channel.direct()) result.add(channel);
+        return result;
+    }
     static List<Channel> channels(boolean includeRtl) { return channels(); }
 
     private static final Map<String, String> STREAMS = new java.util.concurrent.ConcurrentHashMap<>();
@@ -125,6 +178,7 @@ final class LiveGuide {
 
     /** A recently resolved live address, so that changing channel does not wait for the broadcaster's API. */
     static String cachedStream(Channel channel) {
+        if (channel.direct()) return channel.sourceId;
         Long at = STREAM_TIMES.get(channel.id);
         return at != null && System.currentTimeMillis() - at < 20 * 60000L ? STREAMS.get(channel.id) : null;
     }
@@ -184,7 +238,7 @@ final class LiveGuide {
     }
 
     static String stream(Channel channel) throws Exception {
-
+        if (channel.direct()) return channel.sourceId;
         if ("arte".equals(channel.provider)) {
             JSONObject live = MediathekService.getJson(ArteCatalog.LIVE);
             return ArteCatalog.stream(ArteCatalog.liveEntry(live), live);
@@ -230,7 +284,7 @@ final class LiveGuide {
     };
 
     static List<Programme> programmes(Channel channel, long atMillis) throws Exception {
-
+        if (channel.direct()) return new ArrayList<>();
         LocalDate day = tvDay(atMillis);
         List<Programme> rows = load(channel, day, atMillis);
         if (channel.regional) return rows;

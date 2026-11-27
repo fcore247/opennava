@@ -20,12 +20,29 @@ import site.navatv.full.YoutubeBridge;
 public final class YoutubeSession extends Application {
     private static final AtomicLong revision = new AtomicLong();
 
+    private static final java.util.concurrent.CountDownLatch ready = new java.util.concurrent.CountDownLatch(1);
+
+    /** A cold start can deliver the companion's call while the SDK is still restoring the account. */
+    static boolean awaitReady() {
+        try { return ready.await(12, java.util.concurrent.TimeUnit.SECONDS); }
+        catch (InterruptedException stopped) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
+    }
+
+    /** Changes whenever somebody signs in or out, from the TV or from the phone. */
+    public static long accountRevision() {
+        return revision.get();
+    }
+
     @Override public void onCreate() {
         super.onCreate();
         site.navatv.launcher.ProgrammeReminders.install(this);
         GlobalPreferences.instance(this);
         // Complete the SDK's local restore before a cold launch can reach search or playback.
         YouTubeAccountManager.instance(service()).init();
+        ready.countDown();
     }
 
     static YouTubeSignInService service() {

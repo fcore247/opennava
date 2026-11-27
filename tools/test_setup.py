@@ -11,10 +11,11 @@ import update
 
 
 def manifest():
-    return {'schema': 1, 'version': '1.0.0', 'apps': {
-        k: dict(package=spec[0], asset=spec[1], versionCode=100,
-                sha256=hashlib.sha256(spec[0].encode()).hexdigest())
-        for k, spec in navatv.APPS.items()}}
+    apps = {navatv.KEYS[k]: dict(package=spec[0], asset=spec[1], versionCode=100,
+                                 sha256=hashlib.sha256(spec[0].encode()).hexdigest())
+            for k, spec in navatv.APPS.items()}
+    apps['preview']['versionName'] = '0.3.0'
+    return {'schema': 1, 'version': '1.0.0', 'apps': apps}
 
 
 class SetupTests(unittest.TestCase):
@@ -28,30 +29,31 @@ class SetupTests(unittest.TestCase):
     def test_release_rejects_unexpected_artifacts_and_bad_local_bytes(self):
         release = manifest()
         with tempfile.TemporaryDirectory() as tmp:
-            name = release['apps']['tv']['asset']
+            name = release['apps']['preview']['asset']
             (Path(tmp) / name).write_bytes(b'damaged')
             with self.assertRaisesRegex(navatv.Failure, 'SHA-256'):
                 navatv.apk(release, 'tv', tmp, tmp)
-        release['apps']['tv']['asset'] = '../something.apk'
+        release['apps']['preview']['asset'] = '../something.apk'
         with self.assertRaises(navatv.Failure):
             navatv.validate_manifest(release)
 
-    def test_optional_preview_never_becomes_an_automatic_update_target(self):
+    def test_the_tv_launcher_and_phone_app_are_required(self):
         release = manifest()
         self.assertEqual(navatv.validate_manifest(release), release)
-        package, asset, _ = navatv.PREVIEW
-        preview = dict(package=package, asset=asset, versionName='0.1.2', versionCode=3, sha256='a' * 64)
-        release['apps']['preview'] = preview
-        self.assertEqual(navatv.validate_manifest(release), release)
-        self.assertEqual(set(navatv.APPS), {'tv', 'phone'})
-        for field, invalid in [('versionName', 'bad'), ('package', 'wrong'), ('asset', 'OpenNava.apk')]:
-            release['apps']['preview'] = {**preview, field: invalid}
+        for key in ('preview', 'phone'):
+            broken = manifest()
+            del broken['apps'][key]
             with self.assertRaises(navatv.Failure):
-                navatv.validate_manifest(release)
+                navatv.validate_manifest(broken)
+        for field, invalid in [('versionName', 'bad'), ('package', 'wrong'), ('asset', 'OpenNava.apk')]:
+            broken = manifest()
+            broken['apps']['preview'][field] = invalid
+            with self.assertRaises(navatv.Failure):
+                navatv.validate_manifest(broken)
 
     def test_verification_checks_actual_signer(self):
         digest = (navatv.ROOT / 'release-key.sha256').read_text().strip()
-        item = manifest()['apps']['tv']
+        item = manifest()['apps']['preview']
         with mock.patch.object(navatv, 'find_tool', side_effect=lambda cmd: cmd), mock.patch.object(navatv, 'command') as run:
             run.side_effect = ['Signer #1 certificate SHA-256 digest: ' + '0' * 64]
             with self.assertRaisesRegex(navatv.Failure, 'signing certificate'):
@@ -59,11 +61,6 @@ class SetupTests(unittest.TestCase):
             run.side_effect = ['Signer #1 certificate SHA-256 digest: ' + digest, "package: name='other.app' versionCode='100'"]
             with self.assertRaisesRegex(navatv.Failure, 'Package name'):
                 navatv.verify_signer_and_package(Path('sample.apk'), item)
-
-    def test_tv_profile_is_read_back(self):
-        with mock.patch.object(setup, 'shell', side_effect=['Status: ok', 'Result: Bundle[{profile=senior}]']) as run:
-            setup.profile('adb', 'TV', '0', 'senior')
-            self.assertIn('get_profile', run.call_args.args)
 
     def test_offline_timer_does_not_download(self):
         with mock.patch('sys.argv', ['update.py', '--scheduled', '--tv', 'TV']), \
@@ -86,18 +83,18 @@ class SetupTests(unittest.TestCase):
                 update.main()
                 install.assert_not_called()
 
-    def test_setup_retry_applies_profile_without_reinstall(self):
-        with mock.patch('sys.argv', ['setup.py', '--profile', 'full', '--tv', 'TV']), \
+    def test_setup_retry_opens_the_launcher_without_reinstall(self):
+        with mock.patch('sys.argv', ['setup.py', '--tv', 'TV']), \
              mock.patch.object(setup, 'find_tool', return_value='adb'), \
              mock.patch.object(setup, 'target', return_value='TV'), \
              mock.patch.object(setup, 'device_map', return_value={'TV': 'device'}), \
              mock.patch.object(setup, 'active_user', return_value='0'), \
              mock.patch.object(setup, 'version_code', return_value=100), \
              mock.patch.object(setup, 'metadata', return_value=manifest()), \
-             mock.patch.object(setup, 'profile') as profile, mock.patch.object(setup, 'install') as install:
+             mock.patch.object(setup, 'shell') as run, mock.patch.object(setup, 'install') as install:
             setup.main()
             install.assert_not_called()
-            profile.assert_called_once_with('adb', 'TV', '0', 'full')
+            self.assertIn(setup.HOME_ACTIVITY, run.call_args.args)
 
 
 if __name__ == '__main__':

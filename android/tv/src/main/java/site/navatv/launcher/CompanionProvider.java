@@ -21,15 +21,24 @@ import java.util.function.Supplier;
 public final class CompanionProvider extends ContentProvider {
     private final Handler main = new Handler(Looper.getMainLooper());
 
-    @Override public boolean onCreate() { return true; }
+    @Override public boolean onCreate() {
+        // Providers start before any activity or service, so the line-up is complete from the first screen.
+        CustomStreamStore.load(getContext());
+        return true;
+    }
 
     @Override public Bundle call(String method, String arg, Bundle extras) {
         // call() has no implicit read/write operation. Check the caller before switching threads.
         getContext().enforceCallingOrSelfPermission(Manifest.permission.DUMP, "Companion access requires DUMP");
-        if ("home_get".equals(method) || "home_set".equals(method)) {
-            long caller = android.os.Binder.clearCallingIdentity();
-            try { return HomeLayoutStore.companion(getContext(), method, arg); }
-            finally { android.os.Binder.restoreCallingIdentity(caller); }
+        if (RegionStore.handles(method)) {
+            Bundle out = RegionStore.companion(getContext(), arg);
+            main.post(LiveTvActivity::lineupChanged);
+            return out;
+        }
+        if (method != null && method.startsWith("channels_")) {
+            Bundle out = CustomStreamStore.companion(getContext(), method, arg);
+            if (!"channels_get".equals(method) && out.getBoolean("handled")) main.post(LiveTvActivity::lineupChanged);
+            return out;
         }
         if ("library_list".equals(method))
             return CompanionLibrary.list(getContext(), onMain(() -> ProgrammeReminders.entries(getContext())));
@@ -67,10 +76,6 @@ public final class CompanionProvider extends ContentProvider {
 
     private Bundle invoke(String method, String arg) {
         switch (method) {
-            case "get_profile":
-                Bundle profile = new Bundle();
-                profile.putString("profile", VisitorMode.isVisitor(getContext()) ? "full" : "senior");
-                return profile;
             case "screen_state": return screen();
             case "live_state": return LiveTvActivity.companionState();
             case "live_control": return CompanionLibrary.result(LiveTvActivity.companionControl(arg));
@@ -84,15 +89,8 @@ public final class CompanionProvider extends ContentProvider {
         PowerManager power = getContext().getSystemService(PowerManager.class);
         Activity activity = ProgrammeReminders.foreground();
         String screen = "other";
-        if (power != null && !power.isInteractive() || activity instanceof AmbientActivity) screen = "idle";
-        else if (activity instanceof MainActivity) {
-            MainActivity catalog = (MainActivity) activity;
-            String provider = catalog.companionProvider();
-            screen = provider.isEmpty() ? "home" : "catalog";
-            out.putString("provider", provider);
-            out.putString("section", catalog.companionPage());
-            out.putString("query64", CompanionLibrary.encode(catalog.companionQuery()));
-        } else if (activity instanceof LiveTvActivity) {
+        if (power != null && !power.isInteractive()) screen = "idle";
+        else if (activity instanceof LiveTvActivity) {
             LiveTvActivity live = (LiveTvActivity) activity;
             screen = "live";
             out.putAll(LiveTvActivity.companionState());
@@ -111,7 +109,7 @@ public final class CompanionProvider extends ContentProvider {
             if ("ard".equals(provider) || "zdf".equals(provider) || "arte".equals(provider)) out.putString("provider", provider);
             out.putString("title64", CompanionLibrary.encode(player.companionTitle()));
             if (player.fromRecordings()) out.putString("origin", "recordings");
-        } else if (activity != null && (activity.getClass().getName().startsWith("site.navatv.full.") || activity instanceof PhoneLinkActivity)) {
+        } else if (activity instanceof PhoneLinkActivity) {
             screen = "visitor";
         }
         out.putString("screen", screen);

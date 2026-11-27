@@ -42,6 +42,10 @@ pub enum Job {
         request: u64,
         item: CatalogItem,
     },
+    OwnCatalog {
+        request: u64,
+        library: crate::own::Library,
+    },
 }
 #[derive(Clone, Copy)]
 pub enum SearchScope {
@@ -261,6 +265,9 @@ impl Worker {
                             rows
                         };
                         Reply::Catalog(request, provider, found)
+                    }
+                    Job::OwnCatalog { request, library } => {
+                        Reply::Catalog(request, crate::catalog::OWN, crate::own::fetch(&library))
                     }
                     Job::Resolve { request, item } => {
                         let url = catalog::resolve(&item);

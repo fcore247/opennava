@@ -40,6 +40,18 @@ final class ChannelWheel extends FrameLayout {
     private int position;
     private boolean dragging;
     private long lastTick;
+    private boolean userMoved;
+    private Consumer<Channel> settled, picked;
+
+    /** The viewer let go of the wheel on a channel, or tapped the channel on the reading line. */
+    void listen(Consumer<Channel> settled, Consumer<Channel> picked) {
+        this.settled = settled;
+        this.picked = picked;
+    }
+
+    String selectedId() { return stations.isEmpty() ? "" : stations.get(position).id; }
+
+    boolean busy() { return dragging || userMoved; }
 
     ChannelWheel(MainActivity a, Consumer<Channel> preview) {
         super(a);
@@ -50,7 +62,7 @@ final class ChannelWheel extends FrameLayout {
         barrel = new FrameLayout(a);
         addView(barrel, new LayoutParams(MATCH, MATCH, Gravity.CENTER));
         View band = new View(a);
-        band.setBackground(u.shape(0xffe0e9da, 19, 0xffcbd9c4));
+        band.setBackground(u.shape(0xff262b3d, 19, 0xff4a4470));
         barrel.addView(band, new LayoutParams(MATCH, rowHeight, Gravity.CENTER));
 
         list = new RecyclerView(a);
@@ -70,8 +82,17 @@ final class ChannelWheel extends FrameLayout {
         list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override public void onScrolled(RecyclerView rv, int dx, int dy) { paintRows(); }
             @Override public void onScrollStateChanged(RecyclerView rv, int state) {
-                if (state == RecyclerView.SCROLL_STATE_DRAGGING) dragging = true;
-                if (state == RecyclerView.SCROLL_STATE_IDLE) dragging = false;
+                if (state == RecyclerView.SCROLL_STATE_DRAGGING) dragging = userMoved = true;
+                if (state != RecyclerView.SCROLL_STATE_IDLE) return;
+                dragging = false;
+                if (userMoved && !stations.isEmpty() && settled != null) {
+                    // The snap helper may still nudge the row; report once it rests on the line.
+                    post(() -> {
+                        if (list.getScrollState() != RecyclerView.SCROLL_STATE_IDLE || !userMoved) return;
+                        userMoved = false;
+                        settled.accept(centered());
+                    });
+                }
             }
         });
         new LinearSnapHelper().attachToRecyclerView(list);
@@ -82,6 +103,7 @@ final class ChannelWheel extends FrameLayout {
 
     void show(List<Channel> group, String initialId) {
         list.stopScroll();
+        userMoved = false;
         stations = group;
         position = 0;
         for (int i = 0; i < group.size(); i++) if (group.get(i).id.equals(initialId)) position = i;
@@ -194,14 +216,23 @@ final class ChannelWheel extends FrameLayout {
             line.setLayoutParams(new RecyclerView.LayoutParams(MATCH, rowHeight));
             line.setGravity(Gravity.CENTER_VERTICAL);
             u.pad(line, 17, 0, 11, 0);
-            number = u.text("", 17, 0xff49624c, 590);
+            number = u.text("", 15, 0xff8c93a8, 640);
             number.setFontFeatureSettings("tnum");
             line.addView(number, u.lp(Math.max(42, (int)(33 * getResources().getConfiguration().fontScale)), WRAP));
-            name = u.text("", 22, GREEN, 670);
+            name = u.text("", 22, INK, 740);
             name.setMaxLines(2);
             name.setEllipsize(TextUtils.TruncateAt.END);
             line.addView(name, u.weight(WRAP));
-            line.setOnClickListener(v -> moveTo(getBindingAdapterPosition(), true));
+            line.setOnClickListener(v -> {
+                int index = getBindingAdapterPosition();
+                if (index < 0 || index >= stations.size()) return;
+                if (index == position) {
+                    if (picked != null) picked.accept(stations.get(index));
+                } else {
+                    userMoved = true;
+                    moveTo(index, true);
+                }
+            });
         }
     }
 

@@ -9,15 +9,18 @@ import android.view.*;
 import android.widget.*;
 
 class Surface {
-    static final int PAPER = 0xfff6f4ed,
-            INK = 0xff232e28,
-            MUTED = 0xff536158,
-            LINE = 0xffd8dbd1,
-            PALE = 0xffe8ebe2,
-            GREEN = 0xff244337,
-            WHITE = 0xfffffcf4,
-            ACCENT = 0xff9c442a,
-            APRICOT = 0xfff0af8f,
+    static final int PAPER = 0xff0e1016,
+            INK = 0xfff4f3f9,
+            MUTED = 0xffa0a6b8,
+            LINE = 0xff2a2f3e,
+            PALE = 0xff222736,
+            CARD = 0xff181c27,
+            LILAC = 0xffcabaff,
+            ON_LILAC = 0xff1b1530,
+            WHITE = 0xfffcfbff,
+            RED = 0xffff6b6b,
+            ACCENT = 0xffffb59a,
+            APRICOT = 0xffffb59a,
             WRAP = -2,
             MATCH = -1;
     final Context context;
@@ -68,7 +71,7 @@ class Surface {
 
     TextView text(String s, float size, int color, int weight) {
         TextView t = new TextView(context);
-        t.setText(s);
+        t.setText(L.t(s));
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
         t.setTextColor(color);
         t.setTypeface(sans);
@@ -86,6 +89,22 @@ class Surface {
         return t;
     }
 
+    private Typeface script;
+
+    /** The handwritten Opennava logo, the same one the television shows. It is never translated. */
+    TextView logo(float size, int color) {
+        if (script == null) script = face("fonts/ReenieBeanie.ttf", Typeface.SERIF);
+        TextView mark = text("", size, color, 400);
+        mark.setFontVariationSettings(null);
+        mark.setTypeface(script);
+        mark.setText("Opennava");
+        // The handwriting reaches past its measured box on both sides.
+        mark.setPadding(d(size * .14f), 0, d(size * .18f), 0);
+        mark.setSingleLine();
+        mark.setContentDescription("OpenNava");
+        return mark;
+    }
+
     GradientDrawable shape(int color, float radius, int stroke) {
         GradientDrawable g = new GradientDrawable();
         g.setColor(color);
@@ -97,7 +116,7 @@ class Surface {
     void action(View view, int color, int radius, int stroke, Runnable click) {
         view.setBackground(
                 new RippleDrawable(
-                        ColorStateList.valueOf(0x259e9f8e), shape(color, radius, stroke), null));
+                        ColorStateList.valueOf(0x33cabaff), shape(color, radius, stroke), null));
         view.setOnClickListener(v -> click.run());
         view.setFocusable(true);
     }
@@ -116,26 +135,17 @@ class Surface {
         return v;
     }
 
-    void addHomeBar(LinearLayout page, Runnable home) {
-        LinearLayout bar = column();
-        bar.setGravity(Gravity.CENTER);
-        pad(bar, 14, 4, 14, 5);
-        LinearLayout button = button("Home", "home", false, home);
-        bar.addView(button, lp(152, WRAP));
-        page.addView(bar, lp(MATCH, WRAP));
-    }
-
     LinearLayout button(String name, String icon, boolean primary, Runnable click) {
         LinearLayout b = row();
         b.setGravity(Gravity.CENTER);
         pad(b, 12, 0, 12, 0);
         b.setMinimumHeight(d(48));
         if (icon != null) {
-            b.addView(new Art(context, icon, primary ? WHITE : INK), lp(20, 20));
+            b.addView(new Art(context, icon, primary ? ON_LILAC : INK), lp(20, 20));
             gap(b, 7);
         }
-        b.addView(text(name, 14, primary ? WHITE : INK, 650));
-        action(b, primary ? GREEN : PALE, 16, primary ? 0 : LINE, click);
+        b.addView(text(name, 14, primary ? ON_LILAC : INK, 700));
+        action(b, primary ? LILAC : PALE, 16, 0, click);
         b.setContentDescription(name);
         return b;
     }

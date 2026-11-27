@@ -3,7 +3,10 @@
 pub(crate) mod home;
 #[path = "shelves.rs"]
 mod shelves;
+#[path = "backgrounds.rs"]
+mod backgrounds;
 use crate::catalog::CatalogItem;
+use crate::own::Library;
 use fontdue::{Font, FontSettings};
 use home::HomeLayout;
 use image::{RgbaImage, imageops::FilterType};
@@ -42,7 +45,8 @@ pub enum Action {
     LaunchApp(String),
     Personalization,
     ConnectPhone,
-    ChooseLauncher,
+    Setup,
+    Reset,
     Updates,
     SetFireHome(bool),
     YoutubeCatalog {
@@ -84,12 +88,15 @@ pub enum Action {
         request: u64,
         item: CatalogItem,
     },
+    OwnCatalog {
+        request: u64,
+        library: Library,
+    },
     MediaPlay {
         url: String,
         title: String,
     },
     OpenUrl(String),
-    ReturnClassic,
     Exit,
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -98,6 +105,8 @@ enum Page {
     HomeFolder(usize),
     Library,
     Channel(usize),
+    /// One of the viewer's own libraries, by position.
+    Own(usize),
     Youtube,
     YoutubeSearch,
     Programme,
@@ -116,11 +125,13 @@ enum Command {
     LaunchApp(String),
     Personalization,
     ConnectPhone,
-    ChooseLauncher,
+    Setup,
+    Reset,
     Updates,
     SetFireHome(bool),
     Provider(usize),
     More(isize),
+    LibraryTurn(isize),
     HomeTurn(isize),
     CloseFolder(usize),
     Pick(usize),
@@ -138,7 +149,10 @@ enum Command {
     Numbers,
     Save(usize),
     Shade,
-    ReturnClassic,
+    Chapter(usize),
+    Photo(usize),
+    DefaultBackground,
+    NextInterval,
     Exit,
 }
 #[derive(Clone)]
@@ -203,12 +217,16 @@ const TITLES: [Title; 6] = [
 ];
 
 pub struct Ui {
+    chapter: usize,
+    backgrounds: backgrounds::Backgrounds,
     home: HomeLayout,
     update_available: bool,
     fire_home_enabled: Option<bool>,
     home_offset: usize,
     home_icons: HashMap<String, RgbaImage>,
     shelf: Shelf,
+    libraries: Vec<Library>,
+    library_offset: usize,
     page: Page,
     focus: usize,
     controls: Vec<Control>,
@@ -272,7 +290,11 @@ impl Ui {
             );
         }
         Self {
+            chapter: 0,
+            backgrounds: backgrounds::Backgrounds::default(),
             shelf: Shelf::default(),
+            libraries: Vec::new(),
+            library_offset: 0,
             home: HomeLayout::default(),
             update_available: false,
             fire_home_enabled: None,
@@ -314,6 +336,82 @@ impl Ui {
             }
         }
         self.storage = Some(path);
+        self.reload_locale();
+        self.reload_libraries();
+        self.refresh_backgrounds();
+    }
+    /// The paired phone chooses language and country. Returns true when the screen has to be redrawn.
+    pub fn reload_locale(&mut self) -> bool {
+        let Some(dir) = &self.storage else {
+            return false;
+        };
+        let latest = std::fs::read_to_string(dir.join("locale.json")).unwrap_or_default();
+        if !crate::lang::apply(&latest) {
+            return false;
+        }
+        // A broadcaster page or search filter may no longer exist in the new country.
+        self.provider = 0;
+        self.library_offset = 0;
+        self.go(Page::Home);
+        true
+    }
+    /// The German broadcasters' own libraries, which viewers in the USA do not get.
+    fn built_in_libraries() -> usize {
+        if crate::lang::american() { 0 } else { 3 }
+    }
+    /// The companion changes this file while the launcher runs. Returns true when it differs.
+    pub fn reload_libraries(&mut self) -> bool {
+        let Some(dir) = &self.storage else {
+            return false;
+        };
+        let latest = crate::own::registry(dir);
+        if latest == self.libraries {
+            return false;
+        }
+        // Positions may have moved, so leave a library page that no longer matches.
+        if let Page::Own(i) = self.page
+            && latest.get(i).map(|l| &l.id) != self.libraries.get(i).map(|l| &l.id)
+        {
+            self.libraries = latest;
+            self.library_offset = 0;
+            self.go(Page::Library);
+            return true;
+        }
+        self.libraries = latest;
+        self.library_offset = 0;
+        true
+    }
+    /// What the paired phone should mirror. Written to screen.json by the Android loop.
+    pub fn screen_report(&self) -> String {
+        let (screen, provider, library, query) = match self.page {
+            Page::Library => ("libraries", "", String::new(), String::new()),
+            Page::Channel(p) => (
+                "catalog",
+                ["", "ard", "zdf", "arte"][p.min(3)],
+                String::new(),
+                String::new(),
+            ),
+            Page::Own(i) => (
+                "catalog",
+                "own",
+                self.libraries
+                    .get(i)
+                    .map(|l| l.id.clone())
+                    .unwrap_or_default(),
+                String::new(),
+            ),
+            Page::Search => (
+                "search",
+                ["", "ard", "zdf", "arte", ""][self.provider.min(4)],
+                String::new(),
+                self.query.clone(),
+            ),
+            Page::Youtube | Page::YoutubeSearch => ("youtube", "", String::new(), String::new()),
+            Page::Programme => ("programme", "", String::new(), String::new()),
+            _ => ("home", "", String::new(), String::new()),
+        };
+        serde_json::json!({"screen": screen, "provider": provider, "library": library, "query": query})
+            .to_string()
     }
     fn persist(&mut self) {
         let Some(dir) = &self.storage else {
@@ -346,6 +444,17 @@ impl Ui {
         self.go(Page::Home);
     }
 
+    /// The paired phone asked for the video page.
+    #[cfg(target_os = "android")]
+    pub(crate) fn open_navatube(&mut self) -> Action {
+        self.execute(Command::Page(Page::Youtube))
+    }
+
+    #[cfg(target_os = "android")]
+    pub(crate) fn in_youtube(&self) -> bool {
+        self.page == Page::Youtube
+    }
+
     fn go(&mut self, page: Page) {
         self.shelf.loading_more = false;
         self.shelf.request = self.shelf.request.wrapping_add(1);
@@ -356,6 +465,7 @@ impl Ui {
             Page::HomeFolder(_) => 1000,
             Page::Search | Page::YoutubeSearch => 300,
             Page::Settings if self.update_available => 5,
+            Page::Settings => backgrounds::CHAPTER_ID,
             Page::Watchlist
                 if !self.prefs.saved.is_empty() || !self.prefs.programmes.is_empty() =>
             {
@@ -364,6 +474,13 @@ impl Ui {
             _ => 0,
         };
         self.message.clear();
+        // Outside the German-speaking countries the search covers YouTube.
+        if page == Page::Search && crate::lang::american() {
+            self.provider = YOUTUBE_PROVIDER;
+        }
+        if page == Page::Settings {
+            self.chapter = if self.update_available { 3 } else { 0 };
+        }
     }
     fn active_query(&mut self) -> &mut String {
         if self.page == Page::YoutubeSearch {
@@ -384,17 +501,28 @@ impl Ui {
         );
         match command {
             Command::Page(page) => {
+                if page == Page::Library {
+                    self.reload_libraries();
+                }
                 self.go(page);
                 return self.request_page();
             }
             Command::LaunchApp(package) => return Action::LaunchApp(package),
             Command::Personalization => return Action::Personalization,
             Command::ConnectPhone => return Action::ConnectPhone,
-            Command::ChooseLauncher => return Action::ChooseLauncher,
+            Command::Setup => return Action::Setup,
+            Command::Reset => return Action::Reset,
             Command::Updates => return Action::Updates,
             Command::SetFireHome(enabled) => return Action::SetFireHome(enabled),
             Command::CloseFolder(i) => self.close_folder(i),
             Command::HomeTurn(direction) => self.turn_home(direction),
+            Command::LibraryTurn(direction) => {
+                let total = Self::built_in_libraries() + self.libraries.len();
+                let last = (total.max(1) - 1) / 3 * 3;
+                self.library_offset =
+                    (self.library_offset as isize + direction * 3).clamp(0, last as isize) as usize;
+                self.focus = 0;
+            }
             Command::More(direction) => {
                 self.turn_page(direction);
             }
@@ -447,7 +575,13 @@ impl Ui {
                 self.prefs.darker = !self.prefs.darker;
                 self.persist();
             }
-            Command::ReturnClassic => return Action::ReturnClassic,
+            Command::Chapter(i) => {
+                self.chapter = i;
+                self.focus = backgrounds::CHAPTER_ID + i;
+            }
+            Command::Photo(i) => self.toggle_photo(i),
+            Command::DefaultBackground => self.default_background(),
+            Command::NextInterval => self.step_interval(1, true),
             Command::Exit => return Action::Exit,
         }
         if updates_search && matches!(self.page, Page::Search | Page::YoutubeSearch) {
@@ -456,7 +590,7 @@ impl Ui {
         Action::None
     }
     pub fn key(&mut self, key: Key) -> Action {
-        if self.home_key(key) {
+        if self.settings_key(key) || self.home_key(key) || self.library_key(key) {
             return Action::None;
         }
         if let Some(index) = self.focused_result_index() {
@@ -486,7 +620,7 @@ impl Ui {
                     Page::Home => Page::Exit,
                     Page::TvApps => Page::Apps,
                     Page::Detail(_) => Page::Watchlist,
-                    Page::Channel(_) => Page::Library,
+                    Page::Channel(_) | Page::Own(_) => Page::Library,
                     _ => Page::Home,
                 });
                 return Action::None;
@@ -593,6 +727,7 @@ impl Ui {
         color: [u8; 4],
         hand: bool,
     ) {
+        let text = &*crate::lang::tr(text);
         let font = if hand { &self.handwriting } else { &self.font };
         let mut cursor = x;
         for c in text.chars() {
@@ -635,6 +770,7 @@ impl Ui {
         size: u16,
         color: [u8; 4],
     ) {
+        let text = &*crate::lang::tr(text);
         let width: f32 = text
             .chars()
             .map(|c| self.font.metrics(c, size as f32).advance_width)
@@ -649,6 +785,191 @@ impl Ui {
             false,
         );
     }
+    /// The remote moves past the outer tiles to reach further libraries.
+    fn library_key(&mut self, key: Key) -> bool {
+        if self.page != Page::Library || self.libraries.is_empty() {
+            return false;
+        }
+        let built_in = Self::built_in_libraries();
+        let total = built_in + self.libraries.len();
+        let direction: isize = match key {
+            Key::Right if self.focus == 2 && self.library_offset + 3 < total => 1,
+            Key::Left if self.focus == 0 && self.library_offset > 0 => -1,
+            _ => return false,
+        };
+        self.library_offset = (self.library_offset as isize + direction * 3) as usize;
+        self.focus = if direction > 0 { 0 } else { 2 };
+        true
+    }
+    /// Broadcaster and own libraries share one tile layout, three to a page.
+    fn draw_libraries(&mut self, c: &mut Pixmap) {
+        let built_in = Self::built_in_libraries();
+        let total = built_in + self.libraries.len();
+        let offset = self.library_offset.min(total.max(1) - 1) / 3 * 3;
+        for slot in 0..3 {
+            let index = offset + slot;
+            if index >= total {
+                break;
+            }
+            let rect = [64. + slot as f32 * 388., 195., 376., 335.];
+            if index < built_in {
+                let (name, art, logo) = [
+                    ("ARD Mediathek", "ard", "ard-logo"),
+                    ("ZDF Mediathek", "zdf", "zdf-logo"),
+                    ("ARTE", "arte", "arte-logo"),
+                ][index];
+                self.tile(
+                    c,
+                    slot,
+                    name,
+                    art,
+                    rect,
+                    Command::Page(Page::Channel(index + 1)),
+                    Some(logo),
+                );
+            } else {
+                let library = self.libraries[index - built_in].clone();
+                let art = ["mountains", "ocean", "forest"][(index - built_in) % 3];
+                let label = self.ellipsis(&library.name, 27, 300.);
+                // An empty logo name keeps the tile free of the broadcaster badges.
+                self.tile(
+                    c,
+                    slot,
+                    &label,
+                    art,
+                    rect,
+                    Command::Page(Page::Own(index - built_in)),
+                    Some(""),
+                );
+                let initial: String = library
+                    .name
+                    .chars()
+                    .take(1)
+                    .collect::<String>()
+                    .to_uppercase();
+                let badge = [rect[0] + 24., rect[1] + 22., 56., 56.];
+                fill(c, badge, 17., colour(&library.color));
+                self.centered(c, &initial, badge, 28, WHITE);
+            }
+        }
+        if offset > 0 {
+            self.button(
+                c,
+                77,
+                "‹ Zurück",
+                [475., 551., 150., 45.],
+                Command::LibraryTurn(-1),
+                false,
+            );
+        }
+        if offset + 3 < total {
+            self.button(
+                c,
+                78,
+                "Weitere ›",
+                [655., 551., 150., 45.],
+                Command::LibraryTurn(1),
+                false,
+            );
+        }
+    }
+    fn text_width(&self, text: &str, size: u16) -> f32 {
+        crate::lang::tr(text)
+            .chars()
+            .map(|c| self.font.metrics(c, size as f32).advance_width)
+            .sum()
+    }
+    /// The home screen's search entry: a pill with a lit lens that glows while focused.
+    fn search_field(&mut self, c: &mut Pixmap, id: usize, rect: [f32; 4]) {
+        self.control(id, rect, Command::Page(Page::Search));
+        let focused = self.focus == id;
+        let [x, y, w, h] = rect;
+        let radius = h / 2.;
+        // A soft shadow lifts the field off the photograph; focus turns it into a lavender halo.
+        for step in (1..=5).rev() {
+            let spread = step as f32 * 2.2;
+            let (dy, color) = if focused {
+                (0., [196, 170, 255, 34 - step as u8 * 5])
+            } else {
+                (3., [4, 8, 18, 30 - step as u8 * 4])
+            };
+            fill(
+                c,
+                [
+                    x - spread,
+                    y - spread + dy,
+                    w + spread * 2.,
+                    h + spread * 2.,
+                ],
+                radius + spread,
+                color,
+            );
+        }
+        if focused {
+            // Two pills make a ring whose colour runs from lavender to apricot.
+            gradient(c, rect, radius, [190, 168, 255, 255], [246, 184, 168, 255]);
+            gradient(
+                c,
+                [x + 3., y + 3., w - 6., h - 6.],
+                radius - 3.,
+                [58, 54, 86, 255],
+                [36, 40, 62, 255],
+            );
+        } else {
+            gradient(c, rect, radius, [40, 50, 70, 226], [22, 31, 47, 226]);
+            stroke(c, rect, radius, [235, 230, 245, 52], 1.);
+        }
+        let lens = h - 16.;
+        let badge = [x + 8., y + 8., lens, lens];
+        if focused {
+            gradient(
+                c,
+                badge,
+                lens / 2.,
+                [214, 198, 255, 255],
+                [247, 196, 180, 255],
+            );
+        } else {
+            fill(c, badge, lens / 2., [232, 217, 251, 34]);
+        }
+        icon(
+            c,
+            "search",
+            badge[0] + (lens - 20.) / 2.,
+            badge[1] + (lens - 20.) / 2.,
+            20.,
+            if focused { [32, 28, 52, 255] } else { ACCENT },
+        );
+        let baseline = y + h / 2. + 8.;
+        self.text(
+            c,
+            "Was möchtest du ansehen?",
+            x + h + 14.,
+            baseline,
+            23,
+            if focused { WHITE } else { SOFT },
+            false,
+        );
+        if focused {
+            let label = "OK  ·  Suchen";
+            let width = self.text_width(label, 16) + 32.;
+            let chip = [x + w - width - 13., y + 13., width, h - 26.];
+            fill(c, chip, chip[3] / 2., ACCENT);
+            self.centered(c, label, chip, 16, [32, 28, 52, 255]);
+        } else {
+            let label = "Mediatheken  ·  YouTube";
+            let left = x + w - self.text_width(label, 16) - 28.;
+            self.text(
+                c,
+                label,
+                left,
+                baseline - 2.,
+                16,
+                [193, 199, 211, 150],
+                false,
+            );
+        }
+    }
     fn picture(&mut self, canvas: &mut Pixmap, name: &str, rect: [f32; 4], radius: f32) {
         let (w, h) = (rect[2] as u32, rect[3] as u32);
         let key = (name.to_owned(), w, h);
@@ -658,6 +979,7 @@ impl Ui {
                 .get(name)
                 .or_else(|| self.shelf.images.get(name))
                 .or_else(|| self.home_icons.get(name))
+                .or_else(|| self.backgrounds.thumbs.get(name))
                 .expect("registered picture");
             let image = if name.ends_with("logo") {
                 image::imageops::resize(source, w, h, FilterType::Lanczos3)
@@ -758,8 +1080,10 @@ impl Ui {
                 Some(&mask),
             );
         }
-        if let Some(logo) = logo {
+        if let Some(logo) = logo.filter(|name| !name.is_empty()) {
             self.picture(c, logo, [rect[0] + 24., rect[1] + 22., 108., 54.], 0.);
+        } else if logo.is_some() {
+            // The caller draws its own badge.
         } else if art == "forest" {
             fill(
                 c,
@@ -842,6 +1166,7 @@ impl Ui {
             Page::Home | Page::HomeFolder(_) => ("", ""),
             Page::Library => ("Mediatheken", "Sender auswählen"),
             Page::Channel(p) => (provider_name(p), "Aktuelle Sendungen"),
+            Page::Own(_) => ("", "Deine Mediathek"),
             Page::Youtube => ("YouTube", ""),
             Page::YoutubeSearch => ("YouTube durchsuchen", ""),
             Page::Programme => ("", ""),
@@ -849,7 +1174,7 @@ impl Ui {
             Page::Apps => ("Apps", "Bereits auf deinem Fernseher"),
             Page::Search => ("Suche", "Mediatheken und YouTube"),
             Page::Watchlist => ("Merkliste", "Auf diesem Gerät gespeichert"),
-            Page::Settings => ("Einstellungen", "Für die Rust-Vorschau"),
+            Page::Settings => ("Einstellungen", ""),
             Page::Detail(_) => ("", ""),
             Page::Exit => (
                 "Vorschau verlassen",
@@ -858,6 +1183,11 @@ impl Ui {
         };
         self.text(&mut c, title, 64., 124., 29, WHITE, false);
         self.text(&mut c, hint, 64., 153., 15, SOFT, false);
+        if let Page::Own(i) = self.page
+            && let Some(name) = self.libraries.get(i).map(|l| l.name.clone())
+        {
+            self.text(&mut c, &name, 64., 124., 29, WHITE, false);
+        }
         match self.page {
             Page::HomeFolder(_) => self.draw_home_apps(&mut c),
             Page::Home => {
@@ -884,20 +1214,35 @@ impl Ui {
                                 [64. + i as f32 * 388., 148., 376., 300.]
                             },
                             command,
-                            None,
+                            // An empty logo keeps German station badges off the American tile.
+                            (crate::lang::american() && art == "forest").then_some(""),
                         );
                     }
                 }
                 let search_y = if custom { 512. } else { 491. };
+                self.search_field(&mut c, 3, [250., search_y, 780., 66.]);
+            }
+            Page::Library if !self.libraries.is_empty() || crate::lang::american() => {
+                self.draw_libraries(&mut c)
+            }
+            Page::Apps if crate::lang::american() => {
+                self.tile(
+                    &mut c,
+                    0,
+                    "Netflix",
+                    "mountains",
+                    [64., 195., 376., 335.],
+                    Command::Launch(vec!["com.netflix.ninja"]),
+                    Some(""),
+                );
                 self.button(
                     &mut c,
-                    3,
-                    "Was möchtest du ansehen?",
-                    [250., search_y, 780., 66.],
-                    Command::Page(Page::Search),
+                    4,
+                    "Weitere TV-Apps",
+                    [460., 551., 360., 50.],
+                    Command::Page(Page::TvApps),
                     false,
                 );
-                icon(&mut c, "search", 278., search_y + 20., 24., SOFT);
             }
             Page::Library | Page::Apps => {
                 let apps = self.page == Page::Apps;
@@ -941,6 +1286,26 @@ impl Ui {
                     );
                 }
             }
+            Page::TvApps if crate::lang::american() => {
+                for (i, (name, art, pkgs)) in [
+                    ("PBS", "ocean", vec!["org.pbs.video", "com.pbs.video"]),
+                    ("Pluto TV", "mountains", vec!["tv.pluto.android"]),
+                    ("Tubi", "forest", vec!["com.tubitv"]),
+                ]
+                .into_iter()
+                .enumerate()
+                {
+                    self.tile(
+                        &mut c,
+                        i,
+                        name,
+                        art,
+                        [64. + i as f32 * 388., 195., 376., 335.],
+                        Command::Launch(pkgs),
+                        Some(""),
+                    );
+                }
+            }
             Page::TvApps => {
                 for (i, (name, art, pkgs)) in [
                     ("ARD", "ard", vec![ARD]),
@@ -965,7 +1330,7 @@ impl Ui {
                     );
                 }
             }
-            Page::Channel(_) => self.draw_shelf(&mut c, false),
+            Page::Channel(_) | Page::Own(_) => self.draw_shelf(&mut c, false),
             Page::Youtube => {
                 self.button(
                     &mut c,
@@ -989,7 +1354,7 @@ impl Ui {
             Page::Search | Page::YoutubeSearch => {
                 let is_youtube = self.page == Page::YoutubeSearch;
                 self.draw_shelf(&mut c, true);
-                if !is_youtube {
+                if !is_youtube && !crate::lang::american() {
                     for p in 0..=YOUTUBE_PROVIDER {
                         self.button(
                             &mut c,
@@ -1115,147 +1480,22 @@ impl Ui {
                     self.prefs.saved.contains(&i),
                 );
             }
-            Page::Settings => {
-                let spacing = if self.fire_home_enabled.is_some() {
-                    64.
-                } else {
-                    70.
-                };
-                let row = |index: f32| [64., 170. + index * spacing, 430., 58.];
-                self.button(
-                    &mut c,
-                    4,
-                    "Personalisierung",
-                    row(0.),
-                    Command::Personalization,
-                    false,
-                );
-                self.button(
-                    &mut c,
-                    0,
-                    if self.prefs.darker {
-                        "Hintergrund: sehr dunkel"
-                    } else {
-                        "Hintergrund: dunkel"
-                    },
-                    row(1.),
-                    Command::Shade,
-                    false,
-                );
-                self.button(
-                    &mut c,
-                    3,
-                    "YouTube-Konto verwalten",
-                    row(2.),
-                    Command::YoutubeAccount,
-                    false,
-                );
-                self.button(
-                    &mut c,
-                    1,
-                    "Zur klassischen Ansicht",
-                    row(3.),
-                    Command::ReturnClassic,
-                    false,
-                );
-                self.button(
-                    &mut c,
-                    2,
-                    "Vorschau schließen",
-                    row(4.),
-                    Command::Page(Page::Exit),
-                    false,
-                );
-                self.button(
-                    &mut c,
-                    5,
-                    if self.update_available {
-                        "Update verfügbar"
-                    } else {
-                        "Nach Updates suchen"
-                    },
-                    row(5.),
-                    Command::Updates,
-                    false,
-                );
-                if let Some(enabled) = self.fire_home_enabled {
-                    self.button(
-                        &mut c,
-                        6,
-                        if enabled {
-                            "Home-Taste: OpenNava"
-                        } else {
-                            "Home-Taste: Amazon"
-                        },
-                        row(6.),
-                        Command::SetFireHome(!enabled),
-                        false,
-                    );
-                }
-                self.button(
-                    &mut c,
-                    7,
-                    "Handy verbinden",
-                    [585., 170., 430., 58.],
-                    Command::ConnectPhone,
-                    false,
-                );
-                self.button(
-                    &mut c,
-                    8,
-                    "Startoberfläche wählen",
-                    [585., row(1.)[1], 430., 58.],
-                    Command::ChooseLauncher,
-                    false,
-                );
-                self.text(
-                    &mut c,
-                    "Ein eigener Platz zum Ausprobieren.",
-                    585.,
-                    322.,
-                    29,
-                    WHITE,
-                    true,
-                );
-                for (row, text) in [
-                    "Die bisherigen Apps und ihre Daten bleiben erhalten.",
-                    if self.fire_home_enabled.is_some() {
-                        "Unter „Home-Taste“ wechselst du die Startseite."
-                    } else {
-                        "Die Home-Taste funktioniert weiter wie bisher."
-                    },
-                    "Diese Merkliste bleibt lokal in der Rust-App.",
-                    "Luna-Synchronisierung ist noch nicht angebunden.",
-                ]
-                .iter()
-                .enumerate()
-                {
-                    self.text(&mut c, text, 585., 377. + row as f32 * 39., 19, SOFT, false);
-                }
-            }
+            Page::Settings => self.draw_settings(&mut c),
             Page::Exit => {
                 self.text(&mut c, "Wohin möchtest du?", 365., 310., 62, WHITE, true);
                 self.button(
                     &mut c,
                     0,
                     "Weiter ausprobieren",
-                    [108., 393., 330., 64.],
+                    [292., 393., 330., 64.],
                     Command::Page(Page::Home),
-                    false,
-                );
-                self.button(
-                    &mut c,
-                    1,
-                    "Zur klassischen Ansicht",
-                    [475., 393., 330., 64.],
-                    Command::ReturnClassic,
                     false,
                 );
                 self.button(
                     &mut c,
                     2,
                     "Vorschau schließen",
-                    [842., 393., 330., 64.],
+                    [658., 393., 330., 64.],
                     Command::Exit,
                     false,
                 );
@@ -1335,8 +1575,19 @@ impl Ui {
 
 const YOUTUBE_PROVIDER: usize = 4;
 
+fn colour(value: &str) -> [u8; 4] {
+    let part = |at: usize| {
+        value
+            .get(at..at + 2)
+            .and_then(|hex| u8::from_str_radix(hex, 16).ok())
+    };
+    match (part(1), part(3), part(5)) {
+        (Some(r), Some(g), Some(b)) => [r, g, b, 255],
+        _ => [139, 124, 246, 255],
+    }
+}
 fn provider_name(p: usize) -> &'static str {
-    ["Alle", "ARD", "ZDF", "ARTE", "YouTube"]
+    ["Alle", "ARD", "ZDF", "ARTE", "YouTube", "Mediathek"]
         .get(p)
         .copied()
         .unwrap_or("")
@@ -1362,6 +1613,31 @@ fn rounded(r: [f32; 4], radius: f32) -> tiny_skia::Path {
 fn fill(c: &mut Pixmap, r: [f32; 4], radius: f32, color: [u8; 4]) {
     let mut p = Paint::default();
     p.set_color(Color::from_rgba8(color[0], color[1], color[2], color[3]));
+    c.fill_path(
+        &rounded(r, radius),
+        &p,
+        FillRule::Winding,
+        Transform::identity(),
+        None,
+    );
+}
+/// A rounded rectangle shaded from left to right.
+fn gradient(c: &mut Pixmap, r: [f32; 4], radius: f32, from: [u8; 4], to: [u8; 4]) {
+    let tone = |v: [u8; 4]| Color::from_rgba8(v[0], v[1], v[2], v[3]);
+    let shader = tiny_skia::LinearGradient::new(
+        tiny_skia::Point::from_xy(r[0], r[1]),
+        tiny_skia::Point::from_xy(r[0] + r[2], r[1] + r[3]),
+        vec![
+            tiny_skia::GradientStop::new(0., tone(from)),
+            tiny_skia::GradientStop::new(1., tone(to)),
+        ],
+        tiny_skia::SpreadMode::Pad,
+        Transform::identity(),
+    );
+    let mut p = Paint::default();
+    if let Some(shader) = shader {
+        p.shader = shader;
+    }
     c.fill_path(
         &rounded(r, radius),
         &p,
@@ -1448,6 +1724,30 @@ mod tests {
         ui.render(W, H);
     }
     #[test]
+    fn remote_reaches_own_libraries_and_opens_their_native_page() {
+        let mut ui = Ui::new();
+        ui.libraries = (0..2)
+            .map(|i| Library {
+                id: format!("lib-{i}"),
+                name: format!("Eigene {i}"),
+                ..Library::default()
+            })
+            .collect();
+        ui.execute(Command::Page(Page::Library));
+        draw(&mut ui);
+        for _ in 0..3 {
+            ui.key(Key::Right);
+            draw(&mut ui);
+        }
+        assert_eq!((ui.library_offset, ui.focus), (3, 0));
+        let action = ui.key(Key::Select);
+        assert!(matches!(action, Action::OwnCatalog { library, .. } if library.id == "lib-0"));
+        assert!(ui.screen_report().contains("\"library\":\"lib-0\""));
+        draw(&mut ui);
+        ui.key(Key::Back);
+        assert_eq!(ui.page, Page::Library);
+    }
+    #[test]
     fn search_and_watchlist_persist_in_own_directory() {
         let dir = std::env::temp_dir().join(format!("opennava-rust-test-{}", std::process::id()));
         let mut ui = Ui::new();
@@ -1485,14 +1785,10 @@ mod tests {
         assert_eq!(ui.page, Page::Exit);
     }
     #[test]
-    fn return_to_classic_is_available_from_settings_and_exit() {
+    fn exit_page_stays_or_closes() {
         let mut ui = Ui::new();
-        for page in [Page::Settings, Page::Exit] {
-            ui.go(page);
-            draw(&mut ui);
-            ui.focus = 1;
-            assert!(matches!(ui.key(Key::Select), Action::ReturnClassic));
-        }
+        ui.go(Page::Exit);
+        draw(&mut ui);
         ui.focus = 2;
         assert!(matches!(ui.key(Key::Select), Action::Exit));
     }
@@ -1501,18 +1797,19 @@ mod tests {
         let mut ui = Ui::new();
         ui.go(Page::Settings);
         draw(&mut ui);
-        ui.key(Key::Up);
-        assert!(matches!(ui.key(Key::Select), Action::Personalization));
+        for _ in 0..2 {
+            ui.key(Key::Down);
+            draw(&mut ui);
+        }
         ui.key(Key::Right);
         assert!(matches!(ui.key(Key::Select), Action::ConnectPhone));
-        ui.key(Key::Down);
-        assert!(matches!(ui.key(Key::Select), Action::ChooseLauncher));
     }
 
     #[test]
     fn fire_home_toggle_only_appears_for_configured_service() {
         let mut ui = Ui::new();
         ui.go(Page::Settings);
+        ui.chapter = 3;
         draw(&mut ui);
         assert!(ui.controls.iter().all(|control| control.id != 6));
         for enabled in [true, false] {
@@ -1532,8 +1829,9 @@ mod tests {
             ui.set_update_available(available);
             assert!(!ui.set_update_available(available));
             ui.go(Page::Settings);
+            ui.chapter = 3;
             draw(&mut ui);
-            assert_eq!(ui.focus, if available { 5 } else { 0 });
+            assert_eq!(ui.focus, if available { 5 } else { 600 });
             ui.focus = 5;
             assert!(matches!(ui.key(Key::Select), Action::Updates));
         }
@@ -1584,6 +1882,10 @@ mod tests {
                 ui.controls.len(),
                 "Duplicate control IDs on {page:?}"
             );
+            if page == Page::Settings {
+                // Chapters swap the panel; backgrounds.rs checks each of them.
+                continue;
+            }
             let mut seen = std::collections::HashSet::new();
             let mut queue = vec![ui.focus];
             while let Some(id) = queue.pop() {

@@ -42,6 +42,20 @@ final class Art extends View {
         p.setStrokeJoin(Paint.Join.ROUND);
         p.setStrokeCap(Paint.Cap.ROUND);
         switch (name) {
+            case "history":
+                c.drawArc(4, 4, 20, 20, -150, 300, false, p);
+                line(c, 4.2f, 4.6f, 4.6f, 9.2f, 9, 8.4f);
+                line(c, 12, 8, 12, 12.4f, 15.2f, 14.2f);
+                break;
+            case "settings":
+                c.drawCircle(12, 12, 3.2f, p);
+                c.drawCircle(12, 12, 7, p);
+                for (int i = 0; i < 8; i++) {
+                    double angle = Math.PI * i / 4;
+                    line(c, 12 + 7 * (float) Math.cos(angle), 12 + 7 * (float) Math.sin(angle),
+                            12 + 9.6f * (float) Math.cos(angle), 12 + 9.6f * (float) Math.sin(angle));
+                }
+                break;
             case "arrowUpRight":
                 line(c, 5, 19, 18, 6);
                 line(c, 7.5f, 6, 18, 6, 18, 16.5f);
@@ -113,6 +127,33 @@ final class Art extends View {
                 line(c, 2.5f, 11.5f, 12, 3.2f, 21.5f, 11.5f);
                 line(c, 5.5f, 9, 5.5f, 20, 18.5f, 20, 18.5f, 9);
                 break;
+            case "account":
+                c.drawCircle(12, 8.2f, 3.8f, p);
+                c.drawArc(4.5f, 14, 19.5f, 28, 200, 140, false, p);
+                break;
+            case "back10":
+            case "skip10": {
+                boolean ahead = "skip10".equals(name);
+                c.save();
+                if (ahead) c.scale(-1, 1, 12, 12);
+                // An open circle with its arrow head at the top, turning back or ahead.
+                c.drawArc(3.2f, 3.6f, 20.8f, 21.2f, -80, -300, false, p);
+                line(c, 14.6f, 1.2f, 11.6f, 3.9f, 14.8f, 6.4f);
+                c.restore();
+                Paint.Style style = p.getStyle();
+                p.setStyle(Paint.Style.FILL);
+                p.setTextSize(7.6f);
+                p.setTextAlign(Paint.Align.CENTER);
+                p.setFakeBoldText(true);
+                c.drawText("10", 12, 15.2f, p);
+                p.setFakeBoldText(false);
+                p.setStyle(style);
+                break;
+            }
+            case "apps":
+                for (int x = 4; x <= 13; x += 9)
+                    for (int y = 4; y <= 13; y += 9) c.drawRoundRect(x, y, x + 7, y + 7, 2, 2, p);
+                break;
             case "menu":
                 for (int i = 7; i < 20; i += 5) line(c, 4, i, 20, i);
                 break;
@@ -156,6 +197,10 @@ final class Art extends View {
             case "volume":
                 line(c, 3, 10, 7, 10, 12, 6, 12, 18, 7, 14, 3, 14, 3, 10);
                 c.drawArc(9, 6, 19, 18, -53, 106, false, p);
+                break;
+            case "pencil":
+                line(c, 4, 20, 5.2f, 15.2f, 16, 4.4f, 19.6f, 8, 8.8f, 18.8f, 4, 20);
+                line(c, 13.8f, 6.6f, 17.4f, 10.2f);
                 break;
             case "plus":
                 line(c, 12, 5, 12, 19);
