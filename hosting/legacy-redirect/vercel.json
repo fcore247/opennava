@@ -4,12 +4,12 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "https://opennava.site/",
+      "destination": "https://open-nava.com/",
       "permanent": true
     },
     {
       "source": "/:path*",
-      "destination": "https://opennava.site/:path*",
+      "destination": "https://open-nava.com/:path*",
       "permanent": true
     }
   ]

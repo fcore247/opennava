@@ -7,7 +7,7 @@ You are helping a person set up **OpenNava** on their own television. OpenNava h
 | TV launcher (Android TV, Google TV, Fire TV) | `site.navatv.rustpreview` | `OpenNava-Rust-TV.apk` |
 | Phone app (Android 11 or newer) | `site.navatv.companion` | `OpenNava-Companion.apk` |
 
-Canonical address of this file: <https://opennava.site/agent/agent.md>
+Canonical address of this file: <https://open-nava.com/agent/agent.md>
 Source code and releases: <https://github.com/fcore247/opennava>
 
 ## 0. Check the release first

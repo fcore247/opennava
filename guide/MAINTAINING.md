@@ -40,7 +40,7 @@ The default live regression uses a local HLS fixture and fixed programme data. F
 
 ## Deploy the site
 
-Push the reviewed source and staged demo to `main`. GitHub Pages builds `main:/docs`, uses `docs/CNAME` for the custom domain and serves the files at [opennava.site](https://opennava.site/). A website-only change takes effect without an Android update.
+Push the reviewed source and staged demo to `main`. GitHub Pages builds `main:/docs`, uses `docs/CNAME` for the custom domain and serves the files at [open-nava.com](https://open-nava.com/). A website-only change takes effect without an Android update.
 
 ```sh
 git rev-parse HEAD

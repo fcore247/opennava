@@ -7,7 +7,7 @@ module.exports = defineConfig({
   expect: { timeout: 10_000 },
   workers: 1,
   use: {
-    baseURL: process.env.OPENNAVA_URL || 'https://opennava.site/',
+    baseURL: process.env.OPENNAVA_URL || 'https://open-nava.com/',
     browserName: 'chromium',
     reducedMotion: 'reduce',
     trace: 'retain-on-failure',

@@ -3,7 +3,7 @@
 A TV home screen for Android TV, Google TV and Android-based Fire TV, with a phone app that follows what
 is on the television.
 
-**[Try it in your browser](https://opennava.site/)** · **[Download the TV app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Rust-TV.apk)** · **[Download the phone app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)** · **[Set it up with your AI agent](https://opennava.site/agent/)**
+**[Try it in your browser](https://open-nava.com/)** · **[Download the TV app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Rust-TV.apk)** · **[Download the phone app](https://github.com/fcore247/opennava/releases/latest/download/OpenNava-Companion.apk)** · **[Set it up with your AI agent](https://open-nava.com/agent/)**
 
 ## What is in it
 

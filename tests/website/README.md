@@ -8,7 +8,7 @@ npx playwright install chromium
 npm test
 ```
 
-The default target is <https://opennava.site/>. To use a local checkout, start `python3 -m http.server 8000 --directory docs` at the repository root. Then run `OPENNAVA_URL=http://127.0.0.1:8000/ npm test` from this directory.
+The default target is <https://open-nava.com/>. To use a local checkout, start `python3 -m http.server 8000 --directory docs` at the repository root. Then run `OPENNAVA_URL=http://127.0.0.1:8000/ npm test` from this directory.
 
 `launcher.spec.cjs` covers keyboard and touch navigation, switching profiles, on-demand sample playback, and the TV keyboard. `multipage.spec.cjs` covers desktop and mobile menu navigation, the product downloads, the setup profile and language selection across pages. `live.spec.cjs` covers station changes, the guide, favourite channels, reminders, remote gestures, pause, stream-limited seeking, browser recordings, and leaving Live TV. It also checks what the visitor can do when a broadcaster is unavailable.
 

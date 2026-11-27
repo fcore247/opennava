@@ -1,6 +1,6 @@
 # Redirect navatv.site to OpenNava
 
-Visitors to `navatv.site` and `www.navatv.site` receive a permanent HTTP 308 redirect to `https://opennava.site`. The destination keeps the path and query string, so an existing link to a particular launcher profile still works. The canonical website has its own [GitHub Pages source](../../docs/).
+Visitors to `navatv.site` and `www.navatv.site` receive a permanent HTTP 308 redirect to `https://open-nava.com`. The destination keeps the path and query string, so an existing link to a particular launcher profile still works. The canonical website has its own [GitHub Pages source](../../docs/).
 
 | File | Purpose |
 | --- | --- |
@@ -15,7 +15,7 @@ Check the redirect and the destination separately:
 ```sh
 curl -sSI 'https://navatv.site/?profile=senior'
 curl -sSI 'https://www.navatv.site/demo/senior/index.html?from=old'
-curl -fsSI 'https://opennava.site/'
+curl -fsSI 'https://open-nava.com/'
 ```
 
-The first two responses should be 308 with a `Location` on `opennava.site`; the final request should be 200.
+The first two responses should be 308 with a `Location` on `open-nava.com`; the final request should be 200.

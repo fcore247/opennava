@@ -2,7 +2,7 @@
 
 Choose the home screen that suits the person holding the remote. Both profiles share the same TV installation. The optional phone app can browse programmes and control playback on a paired television.
 
-[Try the interactive TV](https://opennava.site/#preview) · [Installation and downloads](../README.md#set-it-up-with-your-ai-agent) · [Live remote controls](#live-tv-remote-controls) · [Pair an Android phone](#pair-an-android-phone)
+[Try the interactive TV](https://open-nava.com/#preview) · [Installation and downloads](../README.md#set-it-up-with-your-ai-agent) · [Live remote controls](#live-tv-remote-controls) · [Pair an Android phone](#pair-an-android-phone)
 
 ## Full launcher
 
@@ -46,7 +46,7 @@ A live channel controls how far it can be rewound. If a channel removes the poin
 
 ### Try live TV in the browser
 
-Open the [interactive television in senior view](https://opennava.site/?profile=senior#preview) and choose **Live TV**. In the full launcher, select a station from the live channels row. The browser requests the channel's stream and its current schedule directly from the broadcasters. The source can restrict programmes by region or limit how far back you can seek.
+Open the [interactive television in senior view](https://open-nava.com/?profile=senior#preview) and choose **Live TV**. In the full launcher, select a station from the live channels row. The browser requests the channel's stream and its current schedule directly from the broadcasters. The source can restrict programmes by region or limit how far back you can seek.
 
 Use **Up** and **Down** to change station. Hold **Up** for the guide or **Down** for the channel list. **Enter** brings up the controls, holding it pauses or resumes, and **Esc** takes you back. On a touch screen, tap the picture to reveal the controls. Recordings and reminders made in the preview belong to this browser. Local video capture requires a browser that supports recording the playing stream.
 

@@ -1,7 +1,7 @@
 # Set up OpenNava
 
 The step-by-step instructions for AI agents are in [docs/agent/agent.md](docs/agent/agent.md)
-(published at <https://opennava.site/agent/>). Read them completely before you touch a device.
+(published at <https://open-nava.com/agent/>). Read them completely before you touch a device.
 
 OpenNava is one TV launcher (`site.navatv.rustpreview`) and an optional Android phone app
 (`site.navatv.companion`). From a checkout of this repository the installer does the transfer and

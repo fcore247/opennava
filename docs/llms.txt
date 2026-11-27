@@ -4,9 +4,9 @@
 
 ## For AI agents
 
-- [Setup instructions](https://opennava.site/agent/agent.md): install OpenNava on a person's own TV and add their media libraries.
+- [Setup instructions](https://open-nava.com/agent/agent.md): install OpenNava on a person's own TV and add their media libraries.
 
 ## Links
 
-- [Live demo](https://opennava.site/)
+- [Live demo](https://open-nava.com/)
 - [Source and releases](https://github.com/fcore247/opennava)

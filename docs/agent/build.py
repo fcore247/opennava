@@ -67,7 +67,7 @@ PAGE = '''<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>OpenNava · Instructions for AI agents</title>
 <meta name="description" content="Step-by-step instructions an AI agent can follow to set up OpenNava on a person's own TV.">
-<link rel="canonical" href="https://opennava.site/agent/">
+<link rel="canonical" href="https://open-nava.com/agent/">
 <link rel="alternate" type="text/markdown" href="./agent.md" title="Markdown for agents">
 <style>
 :root{color-scheme:dark}body{margin:0;background:#101115;color:#e9e8f2;font:16px/1.65 system-ui,sans-serif}
@@ -81,8 +81,8 @@ pre{background:#07080b;border:1px solid #ffffff1f;border-radius:12px;padding:14p
 </head>
 <body>
 <main>
-<p class="hint" id="de"><strong>Für Menschen:</strong> Gib deinem KI-Agenten diesen Satz: <code>Richte OpenNava auf meinem Fernseher ein. Folge der Anleitung unter https://opennava.site/agent</code><br>
-<strong>For people:</strong> Give your AI agent this sentence: <code>Set up OpenNava on my TV. Follow the instructions at https://opennava.site/agent</code><br>
+<p class="hint" id="de"><strong>Für Menschen:</strong> Gib deinem KI-Agenten diesen Satz: <code>Richte OpenNava auf meinem Fernseher ein. Folge der Anleitung unter https://open-nava.com/agent</code><br>
+<strong>For people:</strong> Give your AI agent this sentence: <code>Set up OpenNava on my TV. Follow the instructions at https://open-nava.com/agent</code><br>
 <strong>For agents:</strong> the same instructions as plain Markdown: <a href="./agent.md">agent.md</a></p>
 __BODY__
 <p><a href="../">← Live demo</a></p>
